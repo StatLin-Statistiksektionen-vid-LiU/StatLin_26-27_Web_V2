@@ -40,7 +40,7 @@ async function English() {
       kicker="In English"
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
-          <ul className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
+          <ul className="overflow-hidden rounded-xl border border-line bg-white">
             {LINKS.map((l) => (
               <li key={l.href} className="border-b border-ink/10 last:border-0">
                 <Link href={l.href} className="group flex items-center justify-between gap-4 px-5 py-4 hover:bg-paper/60">
@@ -55,7 +55,7 @@ async function English() {
           </ul>
           <TranslateTip />
           {settings.contact_email && (
-            <a href={`mailto:${settings.contact_email}`} className="group flex items-center gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-5 transition-colors hover:border-ink/30">
+            <a href={`mailto:${settings.contact_email}`} className="group flex items-center gap-4 rounded-xl border border-line bg-white p-5 transition-colors hover:border-ink/20">
               <span className="grid size-11 shrink-0 place-items-center rounded-full bg-red text-white">
                 <Mail size={18} />
               </span>

@@ -75,7 +75,7 @@ export function CourseSearch({
       }}
       className="relative w-full max-w-xl"
     >
-      <div className="flex h-16 items-center gap-2 rounded-full border border-ink/10 bg-white pl-6 pr-2 text-ink shadow-[0_24px_60px_-30px_rgb(10_10_10/0.45)] transition-[border-color,box-shadow] focus-within:border-ink focus-within:shadow-[0_0_0_4px_rgb(255_7_7/0.18)]">
+      <div className="flex h-14 items-center gap-2 rounded-xl border border-line bg-white pl-5 pr-2 text-ink shadow-sm transition-[border-color,box-shadow] focus-within:border-ink/40 focus-within:shadow-[0_0_0_4px_rgb(255_7_7/0.12)]">
         <Search size={20} className="shrink-0 text-stone" />
         <input
           name="kod"
@@ -119,7 +119,7 @@ export function CourseSearch({
           enterKeyHint="search"
           className="h-full min-w-0 flex-1 bg-transparent font-mono text-lg uppercase tracking-tight outline-none placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-stone focus-visible:outline-none"
         />
-        <button type="submit" className="btn btn-red h-12 shrink-0 px-5">
+        <button type="submit" className="btn btn-red h-10 shrink-0 px-4">
           <span className="hidden sm:inline">Visa</span>
           <ArrowRight size={18} />
           <span className="sr-only sm:hidden">Visa statistiken</span>
@@ -131,7 +131,7 @@ export function CourseSearch({
         role="listbox"
         aria-label="Förslag på kurskoder"
         hidden={!expanded}
-        className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-[1.25rem] border border-ink/10 bg-white py-2 text-ink shadow-[0_30px_60px_-30px_rgb(10_10_10/0.5)]"
+        className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-30 overflow-hidden rounded-xl border border-line bg-white py-1.5 text-ink shadow-lg"
       >
         {suggestions.map((code, i) => (
           <li
@@ -145,14 +145,14 @@ export function CourseSearch({
               go(code);
             }}
             onMouseEnter={() => setActive(i)}
-            className={cn("cursor-pointer px-5 py-2.5 font-mono text-sm font-semibold text-red-deep", i === active && "bg-paper")}
+            className={cn("cursor-pointer px-5 py-2 font-mono text-sm font-medium text-red-deep", i === active && "bg-paper-2")}
           >
             {code}
           </li>
         ))}
       </ul>
 
-      <p id={`${listId}-fel`} aria-live="polite" className={cn("mt-3 px-6 text-sm font-semibold text-red-deep", !message && "sr-only")}>
+      <p id={`${listId}-fel`} aria-live="polite" className={cn("mt-3 px-5 text-sm font-semibold text-red-deep", !message && "sr-only")}>
         {message}
       </p>
     </form>

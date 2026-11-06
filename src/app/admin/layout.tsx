@@ -8,6 +8,7 @@ import { canManageFragelada } from "@/lib/auth/permissions";
 import { getSessionUser, loginPath, sessionExpiresSoon } from "@/lib/auth/session";
 import { readDb } from "@/lib/data/db";
 import { countUnseenQuestions, frageladaIsOpen } from "@/lib/data/fragelada";
+import { countNewCommitteeWishes } from "@/lib/data/onskelada";
 import { canManageNaringsliv, countNewInterest, countNewWishes } from "@/lib/data/naringsliv";
 import { countUnseenTasks } from "@/lib/data/tasks";
 import { formatTimestamp } from "@/lib/dates";
@@ -32,13 +33,15 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect(await loginPath());
   const naringsliv = canManageNaringsliv(user);
-  const [unseenTasks, expiresAt, unseenQuestions, db, newWishes, newInterest] = await Promise.all([
+  const [unseenTasks, expiresAt, unseenQuestions, db, newWishes, newInterest, ownWishes] = await Promise.all([
     countUnseenTasks(user.id),
     sessionExpiresSoon(),
     countUnseenQuestions(user.id),
     readDb(),
     naringsliv ? countNewWishes() : 0,
     naringsliv ? countNewInterest() : 0,
+    // Utskottets egen önskelåda. Styrelseposter utan eget utskott har ingen.
+    countNewCommitteeWishes(user.role === "committee" && user.committee_kind !== "styrelse" ? user.committee_id : null),
   ]);
   return (
     <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] print:block print:bg-white">
@@ -57,6 +60,7 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
         naringsliv={naringsliv}
         newWishes={newWishes}
         newInterest={newInterest}
+        ownWishes={ownWishes}
       />
       <div className="min-w-0">
         {user.must_change_password && (

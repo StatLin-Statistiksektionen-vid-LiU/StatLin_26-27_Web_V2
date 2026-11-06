@@ -7,7 +7,8 @@ import { EventCard, EventRow } from "@/components/content/event-card";
 import { Markdown } from "@/components/content/markdown";
 import { NewsCard } from "@/components/content/news-card";
 import { FixedBoxLink } from "@/components/fragelada/box-link";
-import { ArrowLeft, Instagram, Mail, MessageCircle } from "@/components/icons";
+import { ArrowLeft, Instagram, Mail, MessageCircle, Star } from "@/components/icons";
+import { WishBox } from "@/components/onskelada/wish-box";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, listBoard } from "@/lib/data/content";
 import { listPastEvents, listUpcomingEvents } from "@/lib/data/events";
@@ -43,34 +44,39 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
   ]);
   const members = board.filter((b) => b.committee_id === c.id);
   const instagram = safeExternalUrl(c.instagram);
+  const wishes = c.wishes_open && c.kind !== "styrelse";
 
   return (
     <>
       <Editable target={{ type: "committee", id: c.id }} label="Redigera utskottet" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
-      <header className="noise relative overflow-hidden bg-ink text-white">
-        <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_70%_30%,black,transparent_75%)]" aria-hidden />
-        <div aria-hidden className="pointer-events-none absolute right-[-10%] top-[-20%] size-[42rem] rounded-full opacity-50 blur-3xl pointer-coarse:filter-none" style={{ background: `radial-gradient(closest-side, ${c.accent}, transparent)` }} />
-        <div className="container-site relative grid items-center gap-10 pb-16 pt-[calc(var(--header-h)+3rem)] md:grid-cols-12 md:pb-24 md:pt-[calc(var(--header-h)+5rem)]">
+      <header className="relative overflow-hidden border-b border-line">
+        <div className="grid-paper pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_70%_30%,black,transparent_70%)]" aria-hidden />
+        <div className="container-site relative grid items-center gap-10 pb-12 pt-[calc(var(--header-h)+2.5rem)] md:grid-cols-12 md:pb-16 md:pt-[calc(var(--header-h)+4rem)]">
           <div className="md:col-span-7">
-            <Link href="/utskott" className="tryck kicker inline-flex items-center gap-2 text-white/60 hover:text-white">
+            <Link href="/utskott" className="tryck kicker inline-flex items-center gap-2 text-stone transition-colors hover:text-ink">
               <ArrowLeft size={14} /> Alla utskott
             </Link>
-            <h1 className="display mt-8 text-[clamp(3rem,10vw,8rem)] normal-case">{c.short_name}</h1>
-            <p className="mt-3 text-xl text-white/60">{c.name}</p>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-white/80">{c.tagline}</p>
-            <div className="mt-8 flex flex-wrap gap-3">
+            <h1 className="display mt-8 text-[clamp(2.75rem,7.5vw,6rem)] normal-case [animation:fade-up_0.9s_var(--ease-out-expo)_backwards]">{c.short_name}</h1>
+            <p className="mt-3 text-lg font-medium text-stone md:text-xl">{c.name}</p>
+            <p className="mt-6 max-w-xl text-[1.05rem] leading-relaxed text-ink/80 md:text-lg">{c.tagline}</p>
+            <div className="mt-8 flex flex-wrap gap-2.5">
               {c.email && (
-                <a href={`mailto:${c.email}`} className="btn btn-red">
+                <a href={`mailto:${c.email}`} className="btn btn-ink">
                   <Mail size={18} /> {c.email}
                 </a>
               )}
               {(c.slug === "ubu" || c.slug === "amo") && (
-                <FixedBoxLink slug={c.slug} className="btn btn-light">
+                <FixedBoxLink slug={c.slug} className="btn btn-ghost">
                   <MessageCircle size={18} /> Skriv anonymt
                 </FixedBoxLink>
               )}
+              {wishes && (
+                <a href="#onskelada" className="btn btn-ghost">
+                  <Star size={18} /> Önska något
+                </a>
+              )}
               {instagram && (
-                <a href={instagram} target="_blank" rel="noopener noreferrer" className="btn btn-ghost-dark">
+                <a href={instagram} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
                   <Instagram size={18} /> Instagram
                 </a>
               )}
@@ -79,11 +85,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
           {c.logo_url && (
             <div className="flex justify-center md:col-span-5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={c.logo_url}
-                alt={`${c.short_name}-loggan`}
-                className="w-[min(70vw,24rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.6)] pointer-coarse:filter-none"
-              />
+              <img src={c.logo_url} alt={`${c.short_name}-loggan`} fetchPriority="high" className="w-[min(70vw,24rem)] animate-float" />
             </div>
           )}
         </div>
@@ -93,6 +95,11 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
       <section className="container-site grid gap-14 py-16 md:py-24 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <Markdown source={c.description_md} />
+          {wishes && (
+            <div className="mt-12">
+              <WishBox slug={c.slug} name={c.short_name} />
+            </div>
+          )}
         </div>
         {members.length > 0 && (
           <aside className="lg:col-span-4 lg:col-start-9">
@@ -106,7 +113,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
         )}
       </section>
 
-      <section className="border-t border-ink/10 bg-paper-2/50 py-16 md:py-24">
+      <section className="border-t border-line bg-paper-2/40 py-16 md:py-24">
         <div className="container-site">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 className="display-tight text-[clamp(1.8rem,3.5vw,2.8rem)]">
@@ -128,7 +135,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
           {past.length > 0 && (
             <div className="mt-16">
               <h3 className="kicker text-stone">Tidigare</h3>
-              <div className="mt-3 border-t border-ink/10">
+              <div className="mt-3 border-t border-line">
                 {past.map((e) => (
                   <EventRow key={e.id} event={e} />
                 ))}

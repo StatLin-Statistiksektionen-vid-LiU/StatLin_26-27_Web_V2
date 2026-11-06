@@ -1,7 +1,7 @@
 import { Children, isValidElement, type CSSProperties, type ReactNode } from "react";
 import { cn, fitHeading } from "@/lib/utils";
 
-/** Mörk sidhuvudyta med rutnät – gemensam för alla undersidor. */
+/** Undersidornas huvud: brödsmula, rubrik i versaler och ingress, avslutat med en tunn linje. */
 export function PageHero({
   kicker,
   title,
@@ -19,6 +19,7 @@ export function PageHero({
    * långa sammansättningar krymper i stället för att brytas mitt i ordet. Mobil och desktop var för sig.
    */
   fitTitle?: string;
+  /** Färgen på punkten framför brödsmulan, t.ex. ett utskotts färg. */
   accent?: string;
   lead?: ReactNode;
   children?: ReactNode;
@@ -26,29 +27,23 @@ export function PageHero({
   className?: string;
 }) {
   return (
-    <section className={cn("noise relative overflow-hidden bg-ink text-white", className)}>
-      <div
-        className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:radial-gradient(ellipse_at_70%_20%,black,transparent_75%)]"
-        aria-hidden
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-40 -top-40 size-[38rem] rounded-full opacity-60 blur-3xl pointer-coarse:filter-none"
-        style={{ background: `radial-gradient(closest-side, ${accent ?? "#ff0707"}33, transparent)` }}
-      />
-      <div className="container-site relative grid items-end gap-10 pb-14 pt-[calc(var(--header-h)+4rem)] md:grid-cols-12 md:pb-20 md:pt-[calc(var(--header-h)+6rem)]">
+    <section className={cn("relative border-b border-line", className)}>
+      <div className="container-site relative grid items-end gap-10 pb-12 pt-[calc(var(--header-h)+3rem)] md:grid-cols-12 md:pb-14 md:pt-[calc(var(--header-h)+4.5rem)]">
         <div className={cn(aside ? "md:col-span-8" : "md:col-span-10")}>
-          <p className="kicker flex items-center gap-3 text-white/60">
-            <span className="h-px w-8 bg-red" aria-hidden />
+          <p className="kicker flex items-center gap-2.5 text-stone">
+            <span className="size-1.5 rounded-full" style={{ background: accent ?? "var(--color-red)" }} aria-hidden />
             {kicker}
           </p>
-          <div className="@container mt-6">
-            <h1 className="display text-[length:var(--title-sm)] [overflow-wrap:anywhere] md:text-[length:var(--title-md)]" style={titleSizes(fitTitle ?? textOf(title))}>
+          <div className="@container mt-5">
+            <h1
+              className="display text-[length:var(--title-sm)] [overflow-wrap:anywhere] md:text-[length:var(--title-md)]"
+              style={titleSizes(fitTitle ?? textOf(title))}
+            >
               {title}
             </h1>
           </div>
-          {lead && <div className="mt-7 max-w-2xl text-lg leading-relaxed text-white/70 md:text-xl">{lead}</div>}
-          {children && <div className="mt-9">{children}</div>}
+          {lead && <div className="mt-5 max-w-2xl text-[1.05rem] leading-relaxed text-stone md:text-[1.15rem]">{lead}</div>}
+          {children && <div className="mt-8">{children}</div>}
         </div>
         {aside && <div className="md:col-span-4">{aside}</div>}
       </div>
@@ -58,8 +53,9 @@ export function PageHero({
 
 function titleSizes(text: string): CSSProperties {
   return {
-    "--title-sm": fitHeading(text, { maxRem: 6.5, maxVw: 11 }).fontSize,
-    "--title-md": fitHeading(text, { maxRem: 6.5, maxVw: 7.5 }).fontSize,
+    // Versalerna mäts med tabellen i fitHeading. Största storleken är lugnare än i förra versionen, eftersom sidomenyn tar plats.
+    "--title-sm": fitHeading(text, { maxRem: 3.6, maxVw: 11 }).fontSize,
+    "--title-md": fitHeading(text, { maxRem: 4.8, maxVw: 6.2 }).fontSize,
   } as CSSProperties;
 }
 

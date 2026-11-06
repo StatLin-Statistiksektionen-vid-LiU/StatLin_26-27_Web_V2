@@ -6,8 +6,9 @@ import type { SiteSettings } from "@/lib/types";
 import { ArrowUpRight, Facebook, Instagram, Linkedin, Mail, Rss } from "@/components/icons";
 import { Editable } from "@/components/edit-mode/editable";
 import { AccentText } from "@/components/ui/accent-text";
+import { FooterSponsors } from "@/components/layout/sponsors";
 
-/** Normalfördelningens täthetsfunktion som dekor – med medelvärdet markerat i rött. */
+/** Normalfördelningens täthetsfunktion som dekor, med medelvärdet markerat. Tunna linjer i sidans egen färg. */
 function BellCurve() {
   const pts: string[] = [];
   for (let i = 0; i <= 120; i++) {
@@ -17,23 +18,45 @@ function BellCurve() {
     pts.push(`${((i / 120) * 1000).toFixed(1)},${(220 - y * 200).toFixed(1)}`);
   }
   return (
-    <svg viewBox="0 0 1000 230" className="h-auto w-full" aria-hidden preserveAspectRatio="none">
+    <svg viewBox="0 0 1000 230" className="h-20 w-full text-ink md:h-28" aria-hidden preserveAspectRatio="none">
       <defs>
         <linearGradient id="bell-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ff0707" stopOpacity="0.22" />
+          <stop offset="0" stopColor="#ff0707" stopOpacity="0.1" />
           <stop offset="1" stopColor="#ff0707" stopOpacity="0" />
         </linearGradient>
       </defs>
       <polygon points={`0,220 ${pts.join(" ")} 1000,220`} fill="url(#bell-fill)" />
-      <polyline points={pts.join(" ")} fill="none" stroke="#ff0707" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <polyline points={pts.join(" ")} fill="none" stroke="#ff0707" strokeWidth="1.25" vectorEffect="non-scaling-stroke" />
       {[-3, -2, -1, 0, 1, 2, 3].map((s) => (
-        <g key={s}>
-          <line x1={500 + s * 125} x2={500 + s * 125} y1={s === 0 ? 20 : 215} y2="226" stroke="white" strokeOpacity={s === 0 ? 0.5 : 0.25} strokeDasharray={s === 0 ? "4 6" : undefined} vectorEffect="non-scaling-stroke" />
-        </g>
+        <line
+          key={s}
+          x1={500 + s * 125}
+          x2={500 + s * 125}
+          y1={s === 0 ? 20 : 214}
+          y2="226"
+          stroke="currentColor"
+          strokeOpacity={s === 0 ? 0.35 : 0.2}
+          strokeDasharray={s === 0 ? "3 5" : undefined}
+          vectorEffect="non-scaling-stroke"
+        />
       ))}
-      <line x1="0" x2="1000" y1="220" y2="220" stroke="white" strokeOpacity="0.2" vectorEffect="non-scaling-stroke" />
+      <line x1="0" x2="1000" y1="220" y2="220" stroke="currentColor" strokeOpacity="0.16" vectorEffect="non-scaling-stroke" />
     </svg>
   );
+}
+
+/** Sloganen under loggan. *ord* blir röda, och utan text blir det ingen rad. */
+function FooterSlogan({ text }: { text: string }) {
+  if (!text.trim()) return null;
+  return (
+    <p className="display-tight max-w-sm text-[clamp(1.45rem,2.1vw,1.85rem)] leading-[1.04]">
+      <AccentText text={text} accentClassName="mono-accent text-red" />
+    </p>
+  );
+}
+
+async function FooterSloganLoaded() {
+  return <FooterSlogan text={(await getSettings()).footer_slogan} />;
 }
 
 async function FooterContact() {
@@ -47,21 +70,21 @@ function FooterContactView({ s }: { s: SiteSettings }) {
     { href: s.linkedin, label: "LinkedIn", Icon: Linkedin },
   ].filter((x) => x.href);
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {s.tagline && (
-        <p className="max-w-md leading-relaxed text-white/60">
-          <AccentText text={s.tagline} accentClassName="text-red" />
+        <p className="max-w-sm text-[0.92rem] leading-relaxed text-stone">
+          <AccentText text={s.tagline} accentClassName="text-ink" />
         </p>
       )}
-      <a href={`mailto:${s.contact_email}`} className="group flex items-center gap-3 text-lg font-semibold text-white">
-        <Mail size={18} className="text-red" />
+      <a href={`mailto:${s.contact_email}`} className="group inline-flex items-center gap-2.5 font-medium text-ink">
+        <Mail size={16} className="text-red" />
         <span className="link-underline">{s.contact_email}</span>
       </a>
       {/* Postnumret ska inte delas mellan två rader. */}
-      {s.address && <p className="max-w-xs text-sm leading-relaxed text-white/50">{s.address.replace(/(\d{3}) (\d{2})/, "$1\u00a0$2")}</p>}
-      {s.org_number && <p className="kicker text-white/40">Org.nr {s.org_number}</p>}
+      {s.address && <p className="max-w-xs text-[0.84rem] leading-relaxed text-stone">{s.address.replace(/(\d{3}) (\d{2})/, "$1 $2")}</p>}
+      {s.org_number && <p className="font-mono text-[0.72rem] text-stone">Org.nr {s.org_number}</p>}
       {socials.length > 0 && (
-        <ul className="flex gap-2">
+        <ul className="flex gap-1.5">
           {socials.map(({ href, label, Icon }) => (
             <li key={label}>
               <a
@@ -69,9 +92,9 @@ function FooterContactView({ s }: { s: SiteSettings }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
-                className="grid size-11 place-items-center rounded-full border border-white/15 text-white/80 transition-colors hover:border-red hover:bg-red hover:text-white"
+                className="grid size-9 place-items-center rounded-lg border border-line bg-white text-stone transition-colors hover:border-ink/25 hover:text-ink pointer-coarse:size-11"
               >
-                <Icon size={18} />
+                <Icon size={16} />
               </a>
             </li>
           ))}
@@ -81,98 +104,126 @@ function FooterContactView({ s }: { s: SiteSettings }) {
   );
 }
 
-export function SiteFooter() {
-  const links = NAV.flatMap((g) => (g.children ? g.children : [g]));
+const linkClass = "text-[0.88rem] text-stone transition-colors hover:text-ink pointer-coarse:inline-block pointer-coarse:py-1.5";
+
+/** Länkarna står i samma grupper som i menyn, så att allt finns på samma ställe överallt. Det som inte har en egen grupp står under Genvägar. */
+function FooterLinks() {
+  const groups = NAV.filter((g) => g.children?.length);
+  const loose = NAV.filter((g) => !g.children?.length);
+  const iconLink = `inline-flex items-center gap-1.5 ${linkClass}`;
   return (
-    <footer id="sidfot" className="relative overflow-hidden bg-ink text-white">
-      <div className="grid-paper pointer-events-none absolute inset-0 text-white [mask-image:linear-gradient(to_bottom,black,transparent_70%)]" aria-hidden />
-      <div className="container-site relative pt-24">
-        <div className="grid gap-14 md:grid-cols-12">
-          <div className="md:col-span-5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/statlin.svg" alt="" width={64} height={64} loading="lazy" className="logo-kant mb-5 size-16" />
-            <p className="kicker text-red">Statistiksektionen i Linköping</p>
-            <p className="display-tight mt-5 max-w-md text-[clamp(1.8rem,3.4vw,2.8rem)]">
-              Allt blir mer <span className="mono-accent text-red">signifikant</span> tillsammans.
-            </p>
-            <Editable target={{ type: "footer" }} label="Redigera kontakt" className="mt-8">
-              {/* Utan JavaScript ersätts fallbacken aldrig, så där står standardvärdena. De kan skilja sig från det som är sparat i Admin (SB-27). */}
-              <Suspense
-                fallback={
-                  <div className="min-h-24">
-                    <noscript>
-                      <FooterContactView s={DEFAULT_SETTINGS} />
-                    </noscript>
-                  </div>
-                }
-              >
-                <FooterContact />
+    <nav aria-label="Sidfot" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4 lg:col-span-8">
+      <div>
+        <p className="kicker text-stone">Genvägar</p>
+        <ul className="mt-4 space-y-2.5">
+          {loose.map((l) => (
+            <li key={l.href}>
+              <Link href={l.href} className={linkClass}>
+                {l.label}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <a href="/kalender.ics" className={iconLink}>
+              Kalenderflöde <Rss size={13} className="text-red" />
+            </a>
+          </li>
+          <li>
+            <Link href="/en" hrefLang="en" lang="en" className={iconLink}>
+              In English <ArrowUpRight size={13} className="text-red" />
+            </Link>
+          </li>
+        </ul>
+      </div>
+      {groups.map((g) => (
+        <div key={g.label}>
+          <p className="kicker text-stone">{g.label}</p>
+          <ul className="mt-4 space-y-2.5">
+            {g.children?.map((l) => (
+              <li key={l.href + l.label}>
+                <Link href={l.href} className={linkClass}>
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+export function SiteFooter() {
+  return (
+    <footer id="sidfot" className="relative border-t border-line">
+      {/* Sponsorerna först i sidfoten, så att de syns på varje sida. */}
+      <Suspense fallback={null}>
+        <FooterSponsors />
+      </Suspense>
+      <div className="container-site pt-16 md:pt-20">
+        <div className="grid gap-12 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <div className="flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/brand/statlin.svg" alt="" width={32} height={32} loading="lazy" className="size-8" />
+              <span className="font-semibold tracking-[-0.01em]" translate="no">
+                StatLin
+              </span>
+            </div>
+            {/* Pennan gäller sloganen och kontaktuppgifterna. Båda finns också under Inställningar i Admin. */}
+            <Editable target={{ type: "footer" }} label="Redigera sidfoten" className="mt-6">
+              {/* Sloganen står med standardtexten direkt i skalet och byts om den har ändrats. Utan JavaScript står standardtexten kvar. */}
+              <Suspense fallback={<FooterSlogan text={DEFAULT_SETTINGS.footer_slogan} />}>
+                <FooterSloganLoaded />
               </Suspense>
+              <div className="mt-7">
+                {/* Utan JavaScript ersätts fallbacken aldrig, så där står standardvärdena. De kan skilja sig från det som är sparat i Admin (SB-27). */}
+                <Suspense
+                  fallback={
+                    <div className="min-h-24">
+                      <noscript>
+                        <FooterContactView s={DEFAULT_SETTINGS} />
+                      </noscript>
+                    </div>
+                  }
+                >
+                  <FooterContact />
+                </Suspense>
+              </div>
             </Editable>
           </div>
-          <nav aria-label="Sidfot" className="md:col-span-7 lg:col-span-4 lg:col-start-7">
-            <p className="kicker text-white/40">Utforska</p>
-            <ul className="mt-5 grid grid-cols-2 gap-x-6 gap-y-2.5">
-              {links.map((l) => (
-                <li key={l.href + l.label}>
-                  <Link href={l.href} className="link-underline text-[0.95rem] text-white/75 hover:text-white pointer-coarse:py-[9px] pointer-coarse:[background-position:0_calc(100%-9px)]">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div className="md:col-span-7 md:col-start-6 lg:col-span-2 lg:col-start-auto">
-            <p className="kicker text-white/40">För poster</p>
-            <ul className="mt-5 flex flex-col gap-2.5 text-[0.95rem] md:flex-row md:flex-wrap md:gap-x-6 lg:flex-col">
-              <li>
-                <Link href="/admin" className="group inline-flex pointer-coarse:-my-[5px] pointer-coarse:py-[5px] items-center gap-1.5 text-white/75 hover:text-white">
-                  Logga in <ArrowUpRight size={14} className="text-red" />
-                </Link>
-              </li>
-              <li>
-                <a href="/kalender.ics" className="group inline-flex pointer-coarse:-my-[5px] pointer-coarse:py-[5px] items-center gap-1.5 text-white/75 hover:text-white">
-                  Kalenderflöde <Rss size={14} className="text-red" />
-                </a>
-              </li>
-              <li>
-                <Link href="/en" hrefLang="en" lang="en" className="group inline-flex pointer-coarse:-my-[5px] pointer-coarse:py-[5px] items-center gap-1.5 text-white/75 hover:text-white">
-                  In English <ArrowUpRight size={14} className="text-red" />
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <FooterLinks />
         </div>
 
-        <div className="mt-20">
+        <div className="mt-16">
           <BellCurve />
-          <div className="mt-2 flex justify-between font-mono text-[0.65rem] text-white/35">
+          <div className="mt-2 flex justify-between font-mono text-[0.65rem] text-stone-light">
             <span>−3σ</span>
             <span>−2σ</span>
             <span>−σ</span>
-            <span className="text-red">μ</span>
+            <span className="text-red-deep">μ</span>
             <span>σ</span>
             <span>2σ</span>
             <span>3σ</span>
           </div>
         </div>
 
-        <div
-          aria-hidden
-          translate="no"
-          className="display pointer-events-none mt-10 select-none whitespace-nowrap text-center text-[17.5vw] leading-[0.78] text-transparent [-webkit-text-stroke:1px_rgb(255_255_255/0.14)] md:text-[16.5vw]"
-        >
-          StatLin
-        </div>
-
-        <div className="flex flex-col gap-3 border-t border-white/10 py-8 text-sm text-white/45 md:flex-row md:items-center md:justify-between">
+        <div className="mt-8 flex flex-col gap-3 border-t border-line py-6 text-[0.8rem] text-stone md:flex-row md:items-center md:justify-between">
           <p>
             © StatLin, Statistiksektionen i Linköping ·{" "}
-            <Link href="/integritet" className="tryck link-underline text-white/70 hover:text-white">
+            <Link href="/integritet" className="tryck link-underline text-ink">
               Integritet
             </Link>
           </p>
-          <p className="font-mono text-xs">p &lt; 0,05 sedan länge</p>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <Link href="/admin" className="tryck group inline-flex items-center gap-1.5 text-ink">
+              <span>
+                <span className="text-stone">För poster:</span> <span className="link-underline">Logga in</span>
+              </span>
+              <ArrowUpRight size={13} className="text-red" />
+            </Link>
+            <p className="font-mono text-[0.72rem]">p &lt; 0,05 sedan länge</p>
+          </div>
         </div>
       </div>
     </footer>

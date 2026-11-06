@@ -116,7 +116,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.equal(await p.locator('a[href="/star"]:visible').count(), 0, "Startsidan, menyn och sidfoten ska inte länka till den dolda sidan");
 
     await p.goto(`${BASE}/foretag`);
-    await p.getByRole("link", { name: "Till önskelistan" }).waitFor();
+    await p.getByRole("link", { name: "Se vad studenterna önskar" }).waitFor();
     assert.equal(await p.getByRole("link", { name: "Till STAR-sidan" }).count(), 0, "/foretag ska inte länka till den dolda sidan");
 
     await p.goto(`${BASE}/evenemang/star`);
@@ -209,8 +209,8 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.equal(await card.locator(".chip").count(), 1);
     await card.getByText("Trainee").waitFor();
     assert.equal(await p.getByText("Företagen presenteras snart").count(), 0, "det tomma läget ska vara borta");
-    // Huvudsponsorn står under Sponsorer.
-    await p.getByRole("heading", { name: "Sponsorer" }).waitFor();
+    // Huvudsponsorn står under Sponsorer. Exakt namn, eftersom sidfoten har rubriken Sektionens sponsorer när sektionen har sponsorer.
+    await p.getByRole("heading", { name: "Sponsorer", exact: true }).waitFor();
     // Filtret är ren CSS: ett val döljer de företag som inte söker det.
     await p.locator('label:has(input[value="trainee"])').click();
     await otherCard.waitFor({ state: "hidden" });
@@ -494,7 +494,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.ok(await p.locator('a[href="/star"]').count(), "startsidan");
     await p.goto(`${BASE}/foretag`);
     await p.getByRole("link", { name: "Till STAR-sidan" }).waitFor();
-    await p.getByRole("link", { name: "Till önskelistan" }).waitFor();
+    await p.getByRole("link", { name: "Se vad studenterna önskar" }).waitFor();
     await p.goto(`${BASE}/evenemang/star`);
     await p.getByText("Se vilka företag som kommer").waitFor();
     await p.goto(`${BASE}/evenemang/lunchforelasning-data-science`);

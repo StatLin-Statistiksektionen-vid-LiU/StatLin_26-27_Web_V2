@@ -14,7 +14,7 @@ type Props = {
   folded?: boolean;
 };
 
-const CARD = "flex flex-col rounded-md bg-white p-5 shadow-[0_10px_26px_-22px_rgb(10_10_10/0.6),0_0_0_1px_rgb(10_10_10/0.07)]";
+const CARD = "flex flex-col rounded-xl border border-line bg-white p-5";
 
 /**
  * De tre sätten att få ut en kod. Sajten skickar inga mejl själv, så knapparna öppnar avsändarens eget mejlprogram med
@@ -36,7 +36,7 @@ export function ShareCode({ boxId, title, code, link, base, sender, folded = fal
             <a href={mailtoDraft(texts.mail)} className="btn btn-ink btn-sm">
               Skriv mejlet
             </a>
-            <CopyButton value={texts.mail.body} label="Kopiera texten" className="btn btn-ghost btn-sm bg-white font-sans" />
+            <CopyButton value={texts.mail.body} label="Kopiera texten" className="btn btn-ghost btn-sm font-sans" />
           </div>
         </li>
         <li className={CARD}>
@@ -48,7 +48,7 @@ export function ShareCode({ boxId, title, code, link, base, sender, folded = fal
             <a href={mailtoDraft(texts.teacher)} className="btn btn-ink btn-sm">
               Mejla läraren
             </a>
-            <CopyButton value={texts.short} label="Kopiera kort text" className="btn btn-ghost btn-sm bg-white font-sans" />
+            <CopyButton value={texts.short} label="Kopiera kort text" className="btn btn-ghost btn-sm font-sans" />
           </div>
         </li>
         <li className={CARD}>
@@ -57,7 +57,7 @@ export function ShareCode({ boxId, title, code, link, base, sender, folded = fal
           </h3>
           <p className="mt-2 flex-1 text-[0.95rem] text-stone">Visa {what} stort på en skärm i salen, så kan alla skriva av den direkt.</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Link href={`/admin/fragelada/${boxId}/skarm`} className="btn btn-ghost btn-sm bg-white">
+            <Link href={`/admin/fragelada/${boxId}/skarm`} className="btn btn-ghost btn-sm">
               Visa på skärm
             </Link>
           </div>
@@ -67,7 +67,7 @@ export function ShareCode({ boxId, title, code, link, base, sender, folded = fal
   );
   if (folded) {
     return (
-      <details className="mt-12 rounded-2xl border border-ink/10 bg-white p-5">
+      <details className="mt-12 rounded-xl border border-line bg-white p-5">
         <summary className="tryck cursor-pointer font-bold">Så får de {what}</summary>
         <div className="mt-3">{body}</div>
       </details>

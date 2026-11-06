@@ -97,10 +97,18 @@ export async function countUnclaimedTasks(user: SessionUser): Promise<number> {
   return (db.prepare(`SELECT COUNT(*) AS n FROM tasks WHERE to_user_id IS NULL AND status != 'klar' ${visible}`).get({ id: user.id }) as { n: number }).n;
 }
 
-/** Uppdrag användaren har gett någon annan, där mottagaren har bett om hjälp. */
+/**
+ * Uppdrag där mottagaren har bett om hjälp: det användaren själv har skickat först, sedan det som delats med alla poster.
+ * Den som bett om hjälp ser uppdraget bland sina egna i stället.
+ */
 export async function listTasksAskingForHelp(userId: number, limit = 3): Promise<Task[]> {
   const db = await readDb();
-  const rows = db.prepare(`${TASK_SELECT} WHERE t.from_user_id = ? AND t.status = 'hjalp' AND t.to_user_id IS NOT NULL AND t.to_user_id != ? ORDER BY t.updated_at DESC LIMIT ?`).all(userId, userId, limit) as Row[];
+  const rows = db
+    .prepare(
+      `${TASK_SELECT} WHERE t.status = 'hjalp' AND t.to_user_id IS NOT NULL AND t.to_user_id != @id AND (t.from_user_id = @id OR t.shared = 1)
+       ORDER BY (t.from_user_id = @id) DESC, t.updated_at DESC LIMIT @limit`,
+    )
+    .all({ id: userId, limit }) as Row[];
   return rows.map(toTask);
 }
 

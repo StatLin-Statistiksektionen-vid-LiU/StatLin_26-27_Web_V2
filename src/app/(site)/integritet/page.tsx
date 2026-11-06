@@ -36,6 +36,23 @@ async function QuestionBoxPrivacy() {
   );
 }
 
+/** Syns när något utskott har önskelådan på. Texten ska stämma med src/app/(site)/utskott/actions.ts och migreringssteg 17. */
+async function WishBoxPrivacy() {
+  const db = await readDb();
+  if (!db.prepare("SELECT 1 FROM committees WHERE wishes_open = 1 AND visible = 1 AND kind != 'styrelse'").get()) return null;
+  return (
+    <>
+      <h2>Utskottens önskelådor</h2>
+      <p>
+        Ett önskemål sparas med texten, vilket utskott det gäller och månaden, och med inget annat. Sajten sparar inget namn, ingen IP-adress och
+        inget klockslag, och den sätter ingen kaka. Utskottets konto och styrelsens redaktörer kan läsa önskemålen. De raderas automatiskt när
+        deras månad är mer än tolv månader gammal, eller tidigare av utskottet. IP-adressen används bara i serverns minne, omgjord till en
+        nyckel som inte går att läsa baklänges, för spärren mot spam. Den försvinner senast när servern startar om.
+      </p>
+    </>
+  );
+}
+
 export default function PrivacyPage() {
   return (
     <>
@@ -52,14 +69,25 @@ export default function PrivacyPage() {
             webbplatser, och den sätter inga kakor på besökare. Den enda kakan är inloggningskakan för sektionens poster.
           </p>
           <p>
-            Några val sparas bara i din webbläsare och skickas aldrig till servern: vilka länkar du har fäst på länksidan, att du
-            har stängt meddelandet högst upp på sidan och, för inloggade poster, om redigeringsläget är på.
+            Några val sparas bara i din webbläsare och skickas aldrig till servern: om du har valt mörkt läge, vilka länkar du har fäst på länksidan, att du
+            har stängt meddelandet högst upp på sidan, vilka lunchönskemål du har gett en stjärna och, för inloggade poster, om redigeringsläget är på.
           </p>
           <p>
             Tentastatistiken hämtar servern själv från en öppen källa (liutentor.lukasabbe.com, samma som liustats.se) med
             kurskoden. Din webbläsare kontaktar inte källan, och inga uppgifter om dig skickas dit.
           </p>
 
+          {/* Texten ska stämma med src/app/(site)/lunchforelasningar/actions.ts och src/lib/wish-limits.ts. */}
+          <h2>Önskelistan för lunch&shy;föreläsningar</h2>
+          <p>
+            Ett önskemål sparas med ämnet, kommentaren om du skriver en och dagen, och med inget annat. Sajten sparar inget namn och ingen
+            IP-adress, och den sätter ingen kaka. SASU och styrelsens redaktörer läser önskemålen först och väljer vilka som visas på listan,
+            och de finns kvar tills SASU tar bort dem. En stjärna räknar bara upp antalet stjärnor på önskemålet, och vem som gav den sparas inte.
+          </p>
+          <p>
+            IP-adressen används bara i serverns minne, omgjord till en nyckel som inte går att läsa baklänges, för spärren mot spam. Den
+            försvinner senast när servern startar om.
+          </p>
           <h2>Företag som anmäler intresse</h2>
           <p>
             Företag som vi bjuder in till STAR kan anmäla intresse via en privat länk. Då sparas företagets namn, kontaktpersonens
@@ -90,6 +118,9 @@ export default function PrivacyPage() {
 
           <Suspense fallback={null}>
             <QuestionBoxPrivacy />
+          </Suspense>
+          <Suspense fallback={null}>
+            <WishBoxPrivacy />
           </Suspense>
 
           <h2>Revisionsloggen</h2>

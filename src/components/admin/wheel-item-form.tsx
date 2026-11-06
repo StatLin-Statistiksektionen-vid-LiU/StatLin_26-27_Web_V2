@@ -11,12 +11,15 @@ export function WheelItemForm({
   responsibleOptions,
   defaultMonth,
   defaultResponsible,
+  onlyOurs,
 }: {
   item?: WheelItem | null;
   responsibleOptions: string[];
   defaultMonth?: number | null;
   /** Den egna posten på en ny punkt: ett utskott skriver mest in sådant det själv sköter. */
   defaultResponsible?: string;
+  /** Kom man från hjulet med bara de egna punkterna, så kommer man tillbaka dit efter att ha lagt till punkten. */
+  onlyOurs?: boolean;
 }) {
   return (
     <ActionForm
@@ -26,6 +29,7 @@ export function WheelItemForm({
       className="max-w-2xl"
     >
       {item && <input type="hidden" name="id" value={item.id} />}
+      {onlyOurs && <input type="hidden" name="vara" value="1" />}
       <Field label="Rubrik" name="title" required>
         <TextInput name="title" defaultValue={item?.title} maxLength={140} />
       </Field>

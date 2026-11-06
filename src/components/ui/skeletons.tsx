@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 function Bone({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse rounded-2xl bg-ink/[0.07]", className)} />;
+  return <div className={cn("animate-pulse rounded-xl bg-ink/[0.06]", className)} />;
 }
 
 /** Utan JavaScript kommer innehållet aldrig i skelettets ställe. Då döljs benen (globals.css) och sidan säger varför (SB-27). */
@@ -49,12 +49,12 @@ export function PageSkeleton({ note = true }: { note?: boolean }) {
 
 export function HeroSkeleton({ english }: { english?: boolean }) {
   return (
-    <section className="bg-ink pb-20 pt-[calc(var(--header-h)+6rem)]">
+    <section className="border-b border-line pb-12 pt-[calc(var(--header-h)+3rem)] md:pb-14 md:pt-[calc(var(--header-h)+4.5rem)]">
       <div className="container-site space-y-6">
-        <NoScriptNote className="text-white/70" english={english} />
-        <div className="h-3 w-40 animate-pulse rounded bg-white/10" />
-        <div className="h-20 w-2/3 animate-pulse rounded-2xl bg-white/10" />
-        <div className="h-5 w-1/2 animate-pulse rounded bg-white/10" />
+        <NoScriptNote className="text-stone" english={english} />
+        <div className="h-3 w-40 animate-pulse rounded bg-ink/[0.06]" />
+        <div className="h-20 w-2/3 animate-pulse rounded-xl bg-ink/[0.06]" />
+        <div className="h-5 w-1/2 animate-pulse rounded bg-ink/[0.06]" />
       </div>
     </section>
   );

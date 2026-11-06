@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { NextMeetingNotice } from "@/components/admin/meeting-cards";
 import { TodoNow } from "@/components/admin/todo-now";
 import { WheelCards } from "@/components/admin/wheel-cards";
 import { AdminHeader, Card, Notice, StatusBadge } from "@/components/admin/ui";
@@ -36,6 +37,8 @@ const ENTITY_LABELS: Record<string, string> = {
   project_plan: "projektplanen",
   media: "oanvända filer",
   question_box: "frågelådan",
+  meeting: "styrelsemötet",
+  meeting_item: "en punkt på dagordningen",
 };
 const ACTION_LABELS: Record<string, string> = {
   create: "skapade",
@@ -99,7 +102,8 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
   return (
     <>
       {!committee && <Notice tone="warning">Ditt konto är inte kopplat till något utskott. Be en administratör koppla det under Konton.</Notice>}
-      <header className="noise relative overflow-hidden rounded-[1.5rem] bg-ink p-4 text-white md:px-6 md:py-5">
+      {/* Kortet är ritat för vit text på utskottets färg, så det behåller ljusa lägets färger även i mörkt läge. Kanten skiljer det från den mörka sidan. */}
+      <header className="noise tema-fast relative overflow-hidden rounded-[1.5rem] bg-ink p-4 text-white ring-1 ring-white/10 md:px-6 md:py-5">
         <div
           aria-hidden
           className="pointer-events-none absolute -right-24 -top-40 size-[30rem] rounded-full opacity-60 blur-3xl"
@@ -136,6 +140,8 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
           </Link>
         )}
       </div>
+
+      <NextMeetingNotice />
 
       <TodoNow user={user} />
 
@@ -206,6 +212,8 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
           </>
         }
       />
+
+      <NextMeetingNotice />
 
       <TodoNow user={user} />
 

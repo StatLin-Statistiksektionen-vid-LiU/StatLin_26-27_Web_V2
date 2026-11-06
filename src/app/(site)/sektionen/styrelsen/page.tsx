@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BoardCard } from "@/components/content/board-card";
-import { PageHero } from "@/components/ui/page-hero";
+import { TextHero } from "@/components/ui/text-hero";
 import { Reveal } from "@/components/ui/reveal";
 import { PageSkeleton } from "@/components/ui/skeletons";
 import { listBoard } from "@/lib/data/content";
@@ -14,15 +14,7 @@ export const metadata: Metadata = {
 export default function BoardPage() {
   return (
     <>
-      <PageHero
-        kicker="Sektionen / Styrelsen"
-        title={
-          <>
-            Styrel<span className="text-red">sen</span>
-          </>
-        }
-        lead="Styrelsen väljs på sektionsmötet och leder sektionen under ett verksamhetsår. Hör av dig direkt till rätt post."
-      />
+      <TextHero group="styrelsen" />
       <Suspense fallback={<PageSkeleton />}>
         <Board />
       </Suspense>

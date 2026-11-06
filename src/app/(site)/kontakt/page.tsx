@@ -41,12 +41,14 @@ async function Contact() {
           fitTitle={stripAccent(title)}
           lead={page?.lead}
         >
-          <a href={`mailto:${settings.contact_email}`} className="group inline-flex items-center gap-4 text-[clamp(1.3rem,3vw,2.2rem)] font-semibold">
-            <span className="grid size-12 place-items-center rounded-full bg-red text-white transition-transform group-hover:rotate-[-12deg]">
-              <Mail size={22} />
-            </span>
-            <span className="link-underline">{settings.contact_email}</span>
-          </a>
+          <Editable target={{ type: "contact" }} label="Redigera kontaktuppgifterna" className="w-fit">
+            <a href={`mailto:${settings.contact_email}`} className="group inline-flex items-center gap-4 text-[clamp(1.3rem,3vw,2.2rem)] font-semibold">
+              <span className="grid size-12 place-items-center rounded-full bg-red text-white transition-transform group-hover:rotate-[-12deg]">
+                <Mail size={22} />
+              </span>
+              <span className="link-underline">{settings.contact_email}</span>
+            </a>
+          </Editable>
         </PageHero>
       </Editable>
 
@@ -58,11 +60,11 @@ async function Contact() {
             </Editable>
           )}
           <h2 className="kicker text-stone">Styrelsen</h2>
-          <ul className="mt-4 border-t border-ink/10">
+          <ul className="mt-4 border-t border-line">
             {board.map((m) => (
-              <li key={m.id} className="grid gap-1 border-b border-ink/10 py-5 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-6">
+              <li key={m.id} className="grid gap-1 border-b border-line py-4 sm:grid-cols-[1fr_auto] sm:items-center sm:gap-6">
                 <div>
-                  <p className="font-bold">{m.post}</p>
+                  <p className="font-semibold">{m.post}</p>
                   <p className="text-sm text-stone">{m.name || "Vakant"}</p>
                 </div>
                 {m.email && (
@@ -81,13 +83,13 @@ async function Contact() {
               .filter((c) => c.kind !== "styrelse" && c.email)
               .map((c) => (
                 <li key={c.id}>
-                  <a href={`mailto:${c.email}`} className="group flex items-center gap-4 rounded-2xl border border-ink/10 bg-white p-4 transition-colors hover:border-ink/30">
+                  <a href={`mailto:${c.email}`} className="group flex items-center gap-4 rounded-xl border border-line bg-white p-4 transition-colors hover:border-ink/20">
                     {c.logo_url && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.logo_url} alt="" className="size-11 object-contain" loading="lazy" />
+                      <img src={c.logo_url} alt="" className="size-11 rounded-lg object-contain p-0.5 [[data-tema=mork]_&]:bg-ink" loading="lazy" />
                     )}
                     <span className="min-w-0">
-                      <span className="block font-bold">{c.short_name}</span>
+                      <span className="block font-semibold">{c.short_name}</span>
                       <span className="block truncate font-mono text-xs text-stone group-hover:text-red-deep">{c.email}</span>
                     </span>
                   </a>
@@ -97,33 +99,35 @@ async function Contact() {
         </div>
 
         <aside className="space-y-4 lg:col-span-4 lg:col-start-9">
-          <div className="rounded-[1.75rem] bg-ink p-7 text-white">
-            <MapPin size={22} className="text-red" />
-            <p className="kicker mt-5 text-white/50">Adress</p>
-            <p className="mt-2 text-lg leading-relaxed">{settings.address}</p>
-            {settings.sektionsrum && (
-              <>
-                <p className="kicker mt-6 text-white/50">Sektionsrum</p>
-                <p className="mt-2">{settings.sektionsrum}</p>
-              </>
-            )}
-            {settings.org_number && <p className="kicker mt-6 text-white/40">Org.nr {settings.org_number}</p>}
-          </div>
-          {socials.length > 0 && (
-            <div className="rounded-[1.75rem] border border-ink/10 bg-white p-7">
-              <p className="kicker text-stone">Följ oss</p>
-              <ul className="mt-4 space-y-2">
-                {socials.map(({ href, label, Icon }) => (
-                  <li key={label}>
-                    <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 font-semibold hover:text-red-deep">
-                      <Icon size={18} /> {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+          <Editable target={{ type: "contact" }} label="Redigera kontaktuppgifterna" className="space-y-4">
+            <div className="rounded-xl border border-line bg-white p-6">
+              <MapPin size={22} className="text-red" />
+              <p className="kicker mt-5 text-stone">Adress</p>
+              <p className="mt-2 text-lg leading-relaxed">{settings.address}</p>
+              {settings.sektionsrum && (
+                <>
+                  <p className="kicker mt-6 text-stone">Sektionsrum</p>
+                  <p className="mt-2">{settings.sektionsrum}</p>
+                </>
+              )}
+              {settings.org_number && <p className="kicker mt-6 text-stone">Org.nr {settings.org_number}</p>}
             </div>
-          )}
-          <Link href="/foretag" className="block rounded-[1.75rem] border border-ink/10 bg-white p-7 transition-colors hover:border-ink/30">
+            {socials.length > 0 && (
+              <div className="rounded-xl border border-line bg-white p-6">
+                <p className="kicker text-stone">Följ oss</p>
+                <ul className="mt-4 space-y-2">
+                  {socials.map(({ href, label, Icon }) => (
+                    <li key={label}>
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 font-semibold hover:text-red-deep">
+                        <Icon size={18} /> {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Editable>
+          <Link href="/foretag" className="block rounded-xl border border-line bg-white p-6 transition-colors hover:border-ink/20">
             <p className="kicker text-stone">Företag?</p>
             <p className="mt-2 font-semibold">Läs om samarbeten och STAR →</p>
           </Link>

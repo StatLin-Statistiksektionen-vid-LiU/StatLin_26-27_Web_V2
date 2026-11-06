@@ -10,23 +10,16 @@ import { cn } from "@/lib/utils";
 
 const BASE_PX = 220;
 const PX_PER_DAY = 8;
-/** Längre uppehåll än så här växer inte mer, och strecken blir ett per vecka i stället för att flyta ihop. */
+/** Längre uppehåll än så här gör inte avståndet större. */
 const MAX_DAYS = 45;
 
-/** Avståndet till nästa händelse på linjen, med ett streck per dag däremellan. Strecken ritas av CSS, så att det inte blir hundratals element. */
+/** Avståndet till nästa händelse på linjen växer med antalet dagar däremellan. */
 function gap(days: number, base = BASE_PX): CSSProperties {
-  return {
-    "--bredd": `${base + PX_PER_DAY * Math.min(days, MAX_DAYS)}px`,
-    ...(days > 1 && { "--streck": days > MAX_DAYS ? Math.ceil(days / 7) : days }),
-  } as CSSProperties;
+  return { "--bredd": `${base + PX_PER_DAY * Math.min(days, MAX_DAYS)}px` } as CSSProperties;
 }
 
-function Star({ index, large }: { index: number; large?: boolean }) {
-  return (
-    <span aria-hidden className={cn("tidsaxel-stjarna", large && "tidsaxel-stjarna-stor")} style={{ "--i": index } as CSSProperties}>
-      ✦
-    </span>
-  );
+function Dot({ index, large }: { index: number; large?: boolean }) {
+  return <span aria-hidden className={cn("tidsaxel-punkt", large && "tidsaxel-punkt-stor")} style={{ "--i": index } as CSSProperties} />;
 }
 
 function EventStop({ event, index, days, isStar, starLive }: { event: EventItem; index: number; days: number; isStar: boolean; starLive: boolean }) {
@@ -44,14 +37,13 @@ function EventStop({ event, index, days, isStar, starLive }: { event: EventItem;
           </span>
         </span>
         <span className="tidsaxel-text">
-          <span className={cn("tidsaxel-rubrik [overflow-wrap:anywhere] group-hover:underline", isStar ? "tidsaxel-star-titel" : "display-tight", first ? "line-clamp-3 text-[1.2rem] leading-[1.05] md:text-[1.45rem]" : "line-clamp-3 text-[0.98rem] leading-[1.1]")}>
+          <span className={cn("tidsaxel-rubrik [overflow-wrap:anywhere] group-hover:underline", isStar ? "tidsaxel-star-titel" : "font-semibold tracking-tight [font-stretch:104%]", first ? "line-clamp-3 text-[1.08rem] leading-snug md:text-[1.2rem]" : "line-clamp-3 text-[0.95rem] leading-snug")}>
             {event.title}
           </span>
           <span className="kicker mt-2 block text-xs">{event.committee?.short_name ?? "StatLin"}</span>
         </span>
       </Link>
-      <span aria-hidden className="tidsaxel-mast" />
-      <Star index={index} large={first || isStar} />
+      <Dot index={index} large={first || isStar} />
     </li>
   );
 }
@@ -73,7 +65,6 @@ export async function UpcomingTimeline() {
             <span className="tidsaxel-text kicker block text-xs">
               {t.day} {t.monthShort}
             </span>
-            <span aria-hidden className="tidsaxel-mast" />
             <span aria-hidden className="tidsaxel-nu" />
           </li>
           {events.length === 0 && (
@@ -94,16 +85,5 @@ export async function UpcomingTimeline() {
         </ol>
       </TimelineTrack>
     </section>
-  );
-}
-
-/** Samma höjd som tidslinjen, så att inget hoppar när händelserna kommer. Utan JavaScript är det här som syns, så länken till kalendern finns med. */
-export function TimelineFallback() {
-  return (
-    <div className="tidsaxel tidsaxel-reserv">
-      <Link href="/evenemang" className="tidsaxel-kalender">
-        Hela kalendern <span aria-hidden>→</span>
-      </Link>
-    </div>
   );
 }

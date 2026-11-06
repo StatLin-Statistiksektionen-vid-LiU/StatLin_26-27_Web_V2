@@ -101,7 +101,7 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
           <p className="kicker text-red-deep print:text-ink">
             Projektplan · {planTemplate(plan.template)?.name ?? plan.template}
           </p>
-          <h1 className="mt-1 text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold leading-tight tracking-tight [font-stretch:110%] print:text-2xl">{plan.title}</h1>
+          <h1 className="mt-1 break-words text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold leading-tight tracking-tight hyphens-auto [font-stretch:110%] print:text-2xl">{plan.title}</h1>
           <dl className="mt-4 grid grid-cols-2 gap-4 border-y border-ink/10 py-4 sm:grid-cols-3 print:py-2">
             <Fact label="Datum">{formatDate(plan.plan_date, true)}</Fact>
             <Fact label="Ansvarig">{plan.responsible || "Inte bestämt"}</Fact>

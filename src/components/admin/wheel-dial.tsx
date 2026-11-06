@@ -21,10 +21,10 @@ const wedge = (outer: number, inner: number, from: number, to: number) => {
 };
 
 /** Skalan: ett streck per dag, längre vid varje månadsskifte. En enda path, så att hjulet inte blir hundratals element. */
-function scalePath(year: number) {
+function scalePath(year: number, springYear: number) {
   let d = "";
   for (let m = 0; m < 12; m++) {
-    const days = new Date(Date.UTC(year, m + 1, 0)).getUTCDate();
+    const days = new Date(Date.UTC(m < 6 ? springYear : year, m + 1, 0)).getUTCDate();
     for (let day = 0; day < days; day++) {
       const deg = (m + day / days) * 30;
       const a = point(day === 0 ? 268 : 276, deg);
@@ -104,6 +104,7 @@ export function WheelDial({
   items,
   stateOf,
   year,
+  vtYear,
   today,
   selected,
   href,
@@ -111,20 +112,23 @@ export function WheelDial({
   items: WheelItem[];
   stateOf: (itemId: number, year: number) => WheelState | undefined;
   year: number;
+  /** Året för vårens halva. På hösten är det nästa år, eftersom hjulet då visar våren efter nyår. */
+  vtYear?: number;
   today: string;
   selected: number | null;
   href: (month: number | null) => string;
 }) {
+  const springYear = vtYear ?? year;
   const thisYear = Number(today.slice(0, 4)) === year;
   const currentMonth = thisYear ? Number(today.slice(5, 7)) : null;
   const currentTerm: Term | null = currentMonth ? termOfMonth(currentMonth) : null;
   const hand = thisYear ? wheelAngle(today) : null;
-  const statusOf = (item: WheelItem) => effectiveStatus(stateOf(item.id, year));
+  const statusOf = (item: WheelItem) => effectiveStatus(stateOf(item.id, itemTerm(item) === "vt" ? springYear : year));
   const termOnly = (term: Term) => items.filter((i) => i.month === null && itemTerm(i) === term);
   const inSelected = selected !== null ? items.filter((i) => i.month === selected).length : 0;
 
   return (
-    <svg viewBox="0 0 640 640" role="group" aria-label={`Årshjulet ${year}. Välj en månad för att visa dess punkter i listan.`} className="block w-full select-none">
+    <svg viewBox="0 0 640 640" role="group" aria-label={`Årshjulet ${springYear === year ? year : `hösten ${year} och våren ${springYear}`}. Välj en månad för att visa dess punkter i listan.`} className="block w-full select-none">
       <defs>
         <path id="hjul-vt" d={arc(295, 4, 176)} />
         <path id="hjul-ht" d={arc(295, 184, 356)} />
@@ -137,12 +141,12 @@ export function WheelDial({
             <path d={wedge(312, 284, term === "vt" ? 1 : 181, term === "vt" ? 179 : 359)} className={currentTerm === term ? "fill-white/[0.16]" : "fill-white/[0.06]"} />
             <text className="fill-paper font-mono text-[15px] font-medium tracking-[0.24em]">
               <textPath href={`#hjul-${term}`} startOffset="50%" textAnchor="middle">
-                {term === "vt" ? `VT ${year} · JAN–JUN` : `HT ${year} · JUL–DEC`}
+                {term === "vt" ? `VT ${springYear} · JAN–JUN` : `HT ${year} · JUL–DEC`}
               </textPath>
             </text>
           </g>
         ))}
-        <path d={scalePath(year)} className="fill-none stroke-paper/35 stroke-[1]" />
+        <path d={scalePath(year, springYear)} className="fill-none stroke-paper/35 stroke-[1]" />
       </g>
 
       {/* Månaderna */}

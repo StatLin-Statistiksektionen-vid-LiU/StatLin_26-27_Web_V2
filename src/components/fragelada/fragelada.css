@@ -122,7 +122,7 @@
 }
 
 .fl-opened .fl-cell {
-  background: #fff;
+  background: var(--color-white);
   box-shadow: none;
 }
 
@@ -135,7 +135,7 @@
 .fl-sheet {
   position: relative;
   border-radius: 0.4rem;
-  background: #fff;
+  background: var(--color-white);
   /* Det vikta hörnet */
   clip-path: polygon(0 0, calc(100% - 1.6rem) 0, 100% 1.6rem, 100% 100%, 0 100%);
 }
@@ -171,7 +171,7 @@
   resize: vertical;
   padding: 0.65rem 1.25rem;
   background-color: transparent;
-  background-image: repeating-linear-gradient(to bottom, transparent 0 calc(1.95rem - 1px), rgb(10 10 10 / 0.08) calc(1.95rem - 1px) 1.95rem);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 calc(1.95rem - 1px), color-mix(in oklab, var(--color-ink) 8%, transparent) calc(1.95rem - 1px) 1.95rem);
   background-attachment: local;
   background-position: 0 0.65rem;
   color: var(--color-ink);
@@ -206,8 +206,8 @@
   width: 10rem;
   height: 3.2rem;
   margin-left: -5rem;
-  background: #fff repeating-linear-gradient(to bottom, transparent 0 0.7rem, rgb(10 10 10 / 0.09) 0.7rem calc(0.7rem + 1px));
-  box-shadow: 0 0 0 1px rgb(10 10 10 / 0.07);
+  background: var(--color-white) repeating-linear-gradient(to bottom, transparent 0 0.7rem, color-mix(in oklab, var(--color-ink) 9%, transparent) 0.7rem calc(0.7rem + 1px));
+  box-shadow: 0 0 0 1px var(--color-line);
   transform-style: preserve-3d;
   animation:
     fl-settle 0.5s var(--ease-out-expo) both,
@@ -220,8 +220,8 @@
   bottom: 100%;
   left: 0;
   height: 3.2rem;
-  background: #fff repeating-linear-gradient(to bottom, transparent 0 0.7rem, rgb(10 10 10 / 0.09) 0.7rem calc(0.7rem + 1px));
-  box-shadow: 0 0 0 1px rgb(10 10 10 / 0.07);
+  background: var(--color-white) repeating-linear-gradient(to bottom, transparent 0 0.7rem, color-mix(in oklab, var(--color-ink) 9%, transparent) 0.7rem calc(0.7rem + 1px));
+  box-shadow: 0 0 0 1px var(--color-line);
   transform-origin: bottom;
   animation: fl-fold 0.55s var(--ease-in-out-quart) 0.35s forwards;
 }

@@ -20,10 +20,12 @@ import {
 import { audit, canUseImage, forbidden, nowIso, revalidateSite } from "@/lib/admin/helpers";
 import { TEXT_LIMITS } from "@/lib/admin/limits";
 import { canEditCommittee, canEditImages, canManageDocument, canManageDocuments, canManageSettings, isEditor } from "@/lib/auth/permissions";
+import { canManageNaringsliv } from "@/lib/data/naringsliv";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { markSeeded } from "@/lib/db/bootstrap";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
+import { SITE_TEXT_KEYS, textDef, type SiteTextKey } from "@/lib/site-texts";
 import { deleteMediaIfUnused, isSameUpload, MediaError, replaceFile, storeFile } from "@/lib/media-store";
 import { renderMarkdown } from "@/lib/markdown";
 import { toImageRef } from "@/lib/media-url";
@@ -333,24 +335,25 @@ const partnerSchema = z.object({
   active: zCheckbox,
 });
 
+/** Sponsorerna sköts av admin, redaktörerna och SASU, som har kontakten med företagen. */
 export async function savePartner(_prev: FormState, fd: FormData): Promise<FormState> {
   const user = await actionUser();
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden();
+  if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id")) || null;
   const parsed = partnerSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const db = getDb();
   if (id) {
     const old = db.prepare("SELECT logo_media_id, sort_order FROM partners WHERE id = ?").get(id) as { logo_media_id: number | null; sort_order: number } | undefined;
-    if (!old) return { error: "Partnern finns inte längre." };
+    if (!old) return { error: "Sponsorn finns inte längre." };
     db.prepare(
       "UPDATE partners SET name=@name, url=@url, description=@description, logo_media_id=@logo_media_id, tier=@tier, sort_order=@sort_order, active=@active WHERE id=@id",
     ).run({ ...parsed.data, sort_order: parsed.data.sort_order ?? old.sort_order, id });
     if (old.logo_media_id !== parsed.data.logo_media_id) await deleteMediaIfUnused(old.logo_media_id);
     audit(user.id, "update", "partner", id, parsed.data.name);
     revalidateSite();
-    return { ok: true, message: "Partnern är sparad." };
+    return { ok: true, message: "Sponsorn är sparad." };
   }
   db.prepare(
     "INSERT INTO partners (name, url, description, logo_media_id, tier, sort_order, active) VALUES (@name, @url, @description, @logo_media_id, @tier, @sort_order, @active)",
@@ -363,7 +366,7 @@ export async function savePartner(_prev: FormState, fd: FormData): Promise<FormS
 export async function deletePartner(fd: FormData): Promise<FormState> {
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
-  if (!isEditor(user)) return forbidden();
+  if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
   const row = db.prepare("SELECT name, logo_media_id FROM partners WHERE id = ?").get(id) as { name: string; logo_media_id: number | null } | undefined;
@@ -377,7 +380,31 @@ export async function deletePartner(fd: FormData): Promise<FormState> {
   redirect("/admin/partners?raderad=1");
 }
 
+/**
+ * Pilarna under Sponsorer: sponsorn byter plats med grannen på samma ställe på sajten, vid sidan eller i sidfoten.
+ * Hela gruppen numreras om, så att lika tal i Plats i listan inte står i vägen.
+ */
+export async function movePartner(id: number, direction: -1 | 1): Promise<{ error: string } | undefined> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  if (!canManageNaringsliv(user)) return { error: "Du har inte behörighet att ändra sponsorerna." };
+  const db = getDb();
+  const row = db.prepare("SELECT tier FROM partners WHERE id = ?").get(id) as { tier: string } | undefined;
+  if (!row) return { error: "Sponsorn finns inte längre. Ladda om sidan." };
+  const rows = db.prepare("SELECT id FROM partners WHERE tier = ? ORDER BY sort_order, name").all(row.tier) as { id: number }[];
+  const idx = rows.findIndex((r) => r.id === id);
+  const swap = idx + direction;
+  if (idx < 0 || swap < 0 || swap >= rows.length) return;
+  [rows[idx], rows[swap]] = [rows[swap], rows[idx]];
+  const stmt = db.prepare("UPDATE partners SET sort_order = ? WHERE id = ?");
+  db.transaction(() => rows.forEach((r, i) => stmt.run((i + 1) * 10, r.id)))();
+  revalidateSite();
+}
+
 /* ---------- Inställningar ---------- */
+
+/** Sajtens fasta texter, se site-texts.ts. Ett tomt fält ger standardtexten på sajten. */
+const siteTextSchema = Object.fromEntries(SITE_TEXT_KEYS.map((k) => [k, zText(textDef(k).max, textDef(k).label)])) as Record<SiteTextKey, ReturnType<typeof zText>>;
 
 const settingsSchema = z.object({
   contact_email: z.string().trim().toLowerCase().email("Ange en giltig e-postadress."),
@@ -388,15 +415,18 @@ const settingsSchema = z.object({
   sektionsrum: zText(200),
   org_number: zText(40),
   tagline: zText(200),
+  footer_slogan: zText(120, "Sloganen"),
   hero_kicker: zText(80, "Kickern"),
   hero_title: zRequired(140, "Rubriken"),
   hero_text: zText(300, "Underrubriken"),
   hero_ring_color: z.enum(["red", "white"], "Välj röd eller vit."),
+  hero_formulas: z.enum(["pa", "av"], "Välj på eller av."),
   band_color: z.enum(["vit", "rod", "natt"], "Välj en av färgerna."),
   home_intro: zRequired(400, "Texten"),
   announcement: zText(200),
   announcement_url: zUrl,
   education_committee_id: z.string().regex(/^\d*$/, "Välj ett utskott i listan."),
+  ...siteTextSchema,
 });
 
 /** Sparar bara fälten som finns i formuläret, så att delformulär (t.ex. bara startsidan) inte tömmer resten. */
@@ -416,7 +446,7 @@ export async function saveSettings(_prev: FormState, fd: FormData): Promise<Form
   db.transaction(() => {
     for (const [k, v] of Object.entries(parsed.data)) if (k in DEFAULT_SETTINGS) stmt.run(k, v);
   })();
-  audit(user.id, "update", "settings", null, present.some((k) => k.startsWith("hero_") || k === "home_intro") ? "Startsidan" : "Webbplatsinställningar");
+  audit(user.id, "update", "settings", null, present.some((k) => k.startsWith("hero_") || k === "home_intro") ? "Startsidan" : present.some((k) => k.startsWith("text_")) ? "Texter på sajten" : "Webbplatsinställningar");
   revalidateSite();
   return { ok: true, message: "Inställningarna är sparade." };
 }

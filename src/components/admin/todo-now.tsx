@@ -8,6 +8,7 @@ import { ArrowRight, Board, Calendar, Check, Eye, Handshake, Image as ImageIcon,
 import { canReviewEvents, hasDesign } from "@/lib/auth/permissions";
 import { listEventsForAdmin, listEventsToReview, listPastEventsWithoutImages } from "@/lib/data/events";
 import { countUnseenQuestions } from "@/lib/data/fragelada";
+import { countNewCommitteeWishes } from "@/lib/data/onskelada";
 import { canManageNaringsliv, countNewInterest, countNewWishes } from "@/lib/data/naringsliv";
 import { listNewsForAdmin } from "@/lib/data/news";
 import { countUnclaimedTasks, listOpenTasksTo, listTasksAskingForHelp } from "@/lib/data/tasks";
@@ -110,25 +111,31 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
     forAll ? listPastEventsWithoutImages(null, 50) : ownOrNothing((id) => listPastEventsWithoutImages(id, 50)),
   ]);
 
+  const ownWishes = !editor && user.committee_kind !== "styrelse" ? await countNewCommitteeWishes(own) : 0;
   const todos: Todo[] = tasks.slice(0, TASKS_SHOWN).map((t) => taskTodo(t, today, soon, user.id));
 
   for (const t of askingForHelp) {
+    // Det man själv har skickat är mest bråttom. Resten är en fråga till alla som kan hoppa in.
+    const mine = t.from_user_id === user.id;
     todos.push({
       key: `hjalp-${t.id}`,
-      rank: 1,
+      rank: mine ? 1 : 2,
       Icon: MessageCircle,
       title: `Behöver hjälp: ${t.title}`,
       detail: t.to ? <PersonChip person={t.to} short className="font-medium text-ink" /> : undefined,
       href: `/admin/uppdrag/${t.id}`,
-      late: true,
+      late: mine,
     });
   }
 
   if (questions > 0) {
     todos.push({ key: "fragor", rank: 2, Icon: MessageCircle, title: questions === 1 ? "1 ny fråga i frågelådan" : `${questions} nya frågor i frågelådan`, href: "/admin/fragelada" });
   }
+  if (ownWishes > 0) {
+    todos.push({ key: "onskelada", rank: 2, Icon: MessageCircle, title: ownWishes === 1 ? "1 nytt önskemål i önskelådan" : `${ownWishes} nya önskemål i önskelådan`, detail: "Skickat anonymt via er sida.", href: `/admin/utskott/${own}` });
+  }
   if (interest > 0) {
-    todos.push({ key: "intresse", rank: 1, Icon: Handshake, title: interest === 1 ? "1 ny intresseanmälan till STAR" : `${interest} nya intresseanmälningar till STAR`, detail: "Ett företag väntar på svar.", href: "/admin/intresseanmalningar" });
+    todos.push({ key: "intresse", rank: 1, Icon: Handshake, title: interest === 1 ? "1 ny intresseanmälan till STAR" : `${interest} nya intresseanmälningar till STAR`, detail: interest === 1 ? "Ett företag väntar på svar." : "Företagen väntar på svar.", href: "/admin/intresseanmalningar" });
   }
   if (wishes > 0) {
     todos.push({ key: "onskemal", rank: 2, Icon: Mail, title: wishes === 1 ? "1 nytt lunchönskemål" : `${wishes} nya lunchönskemål`, detail: "Syns på sajten först efter godkännande.", href: "/admin/lunchonskemal" });

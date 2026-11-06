@@ -5,7 +5,18 @@ import { formatDate, formatDateShort, todayLocal } from "@/lib/dates";
 import { TASK_STATUSES, type Task, type TaskPerson, type TaskStatus } from "@/lib/types";
 import { cn, simplify } from "@/lib/utils";
 
+/** Alla statusar, i den ordning de står i listor och menyer. */
 export const STATUS_ORDER: TaskStatus[] = ["planerad", "pagar", "hjalp", "klar"];
+
+/**
+ * Tavlans tre steg. Behöver hjälp är inget eget steg: uppdraget pågår fortfarande, och kortet får en röd markering i Pågår
+ * så att alla som ser tavlan kan hoppa in.
+ */
+export const BOARD_COLUMNS: TaskStatus[] = ["planerad", "pagar", "klar"];
+export const columnOf = (status: TaskStatus): TaskStatus => (status === "hjalp" ? "pagar" : status);
+
+/** Valen i statusmenyn. Hjälp står som en variant av Pågår, eftersom det är där kortet ligger. */
+export const STATUS_CHOICES: Record<TaskStatus, string> = { ...TASK_STATUSES, hjalp: "Pågår, behöver hjälp" };
 
 export const STATUS_STYLES: Record<TaskStatus, { dot: string; chip: string }> = {
   planerad: { dot: "bg-ink/40", chip: "bg-ink/[0.07] text-ink/70" },
@@ -23,24 +34,52 @@ export function TaskStatusBadge({ status, className }: { status: TaskStatus; cla
   );
 }
 
-/** Ett konto som posten det tillhör, med utskottets färg som prick. Den korta formen, utan utskottets namn, är till för trånga rader. */
-export function PersonChip({ person, fallback = "Borttaget konto", short = false, className }: { person: TaskPerson | null; fallback?: string; short?: boolean; className?: string }) {
+/**
+ * Ett konto som posten det tillhör, med utskottets färg som prick. Den korta formen, utan utskottets namn, är till för trånga rader.
+ * Med wrap bryts namnet i stället för att kortas av, för rader där hela namnet ska synas.
+ */
+export function PersonChip({
+  person,
+  fallback = "Borttaget konto",
+  short = false,
+  wrap = false,
+  className,
+}: {
+  person: TaskPerson | null;
+  fallback?: string;
+  short?: boolean;
+  wrap?: boolean;
+  className?: string;
+}) {
+  const dot = { background: person?.accent ?? "#d4d4d4" };
+  const committee = !short && person?.committee && simplify(person.committee) !== simplify(person.label) ? person.committee : null;
+  if (wrap) {
+    return (
+      <span className={cn("break-words font-semibold", className)}>
+        <span className="mr-1.5 inline-block size-2 rounded-full align-middle ring-1 ring-ink/10" style={dot} aria-hidden />
+        {person ? person.label : fallback}
+        {committee && <span className="font-normal text-stone"> · {committee}</span>}
+      </span>
+    );
+  }
   return (
-    <span className={cn("inline-flex min-w-0 items-center gap-1.5 font-semibold", className)}>
-      <span className="size-2 shrink-0 rounded-full ring-1 ring-ink/10" style={{ background: person?.accent ?? "#d4d4d4" }} aria-hidden />
+    <span className={cn("inline-flex min-w-0 max-w-full items-center gap-1.5 font-semibold", className)}>
+      <span className="size-2 shrink-0 rounded-full ring-1 ring-ink/10" style={dot} aria-hidden />
       <span className="truncate">{person ? person.label : fallback}</span>
-      {!short && person?.committee && simplify(person.committee) !== simplify(person.label) && <span className="shrink-0 font-normal text-stone">· {person.committee}</span>}
+      {committee && <span className="shrink-0 font-normal text-stone">· {committee}</span>}
     </span>
   );
 }
 
 export function DueLabel({ date, done }: { date: string; done?: boolean }) {
-  const overdue = !done && date < todayLocal();
+  const today = todayLocal();
+  const overdue = !done && date < today;
   return (
     <span className={cn("inline-flex items-center gap-1", overdue ? "font-semibold text-red-deep" : "text-stone")}>
       <Calendar size={13} />
       {overdue ? "Försenat · " : ""}
-      {formatDate(date)}
+      {/* Årtalet bara när det är ett annat år, som en vårpunkt från årshjulet på hösten. */}
+      {formatDate(date, date.slice(0, 4) !== today.slice(0, 4))}
     </span>
   );
 }
@@ -60,8 +99,14 @@ function PrivateMark() {
   );
 }
 
-/** Mottagaren. Ett öppet uppdrag sticker ut, eftersom vem som helst kan ta det. */
+/** Markeringen på ett kort där mottagaren har bett om hjälp. */
+function HelpChip() {
+  return <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-red px-2 text-[0.7rem] font-semibold text-white">Behöver hjälp</span>;
+}
+
+/** Mottagaren. Ett öppet uppdrag sticker ut, eftersom vem som helst kan ta det. Är det redan klart finns inget att ta. */
 function TaskRecipient({ task }: { task: Task }) {
+  if (task.to_user_id === null && task.status === "klar") return <span className="shrink-0 text-stone">Ingen mottagare</span>;
   if (task.to_user_id === null) return <span className="inline-flex h-5 shrink-0 items-center rounded-full bg-red/10 px-2 font-semibold text-red-deep">Öppet</span>;
   return <PersonChip person={task.to} short className="max-w-full text-ink/80" />;
 }
@@ -122,7 +167,12 @@ const STRETCHED_LINK = "line-clamp-2 min-w-0 font-semibold leading-snug [overflo
 export function TaskCard({ task, today, controls, roomForMenu = false }: { task: Task; today: string; controls?: ReactNode; roomForMenu?: boolean }) {
   const done = task.status === "klar";
   return (
-    <div className="relative rounded-xl border border-ink/10 bg-white px-3 py-2 shadow-[0_1px_0_rgb(0_0_0/0.03)] transition-colors hover:border-ink/30">
+    <div className={cn("relative rounded-xl border bg-white px-3 py-2 shadow-[0_1px_0_rgb(0_0_0/0.03)] transition-colors", task.status === "hjalp" ? "border-red/45 hover:border-red" : "border-ink/10 hover:border-ink/30")}>
+      {task.status === "hjalp" && (
+        <div className="mb-1.5">
+          <HelpChip />
+        </div>
+      )}
       <div className="flex items-start justify-between gap-2">
         {/* draggable={false}: det är kortet som dras, inte länkens adress. */}
         <Link href={`/admin/uppdrag/${task.id}`} title={hoverText(task)} draggable={false} className={cn(STRETCHED_LINK, "text-[0.9rem]", done && "text-ink/60")}>

@@ -1,37 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { useDeferredValue, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ArrowRight, ArrowUpRight, Close, Search } from "@/components/icons";
-import { highlight, KIND_LABELS, makeSnippet, MAX_HITS, MAX_QUERY_LENGTH, queryTerms, search, type PreparedIndex, type SearchHit, type SearchResult } from "@/lib/search";
-import { loadCourseCodes, loadSearchIndex } from "@/lib/search-client";
+import { KIND_LABELS, makeSnippet, MAX_QUERY_LENGTH, type SearchHit } from "@/lib/search";
 import { FOCUS_SEARCH_EVENT } from "@/lib/search-prefetch";
 import { cn } from "@/lib/utils";
+import { courseCodeOf, isPageHref, Marked, SUGGESTIONS } from "./search-parts";
+import { searchStatus, useSearch } from "./use-search";
 
-/** Visas innan man skrivit något. Ett tryck fyller i sökrutan. */
-const SUGGESTIONS = ["Tentastatistik", "Sittning", "Styrelsen", "Mottagning", "Hjälpmedel", "Kontakt"];
 const FIRST_PAGE = 20;
-const NO_RESULT: SearchResult = { hits: [], terms: [], corrected: [] };
 
 const subscribeNothing = () => () => {};
 const readUrlQuery = () => (new URLSearchParams(window.location.search).get("q") ?? "").slice(0, MAX_QUERY_LENGTH);
 
-/** Sidor och poster öppnas i appen. Filer, API och andra webbplatser är vanliga länkar. */
-const isPageHref = (href: string) => href.startsWith("/") && !href.startsWith("/api/") && !/\.[a-z0-9]{2,5}(?:$|[?#])/i.test(href);
-
 /**
- * Sökfliken: träffar medan man skriver, i hela sajten, med rättning av stavfel. Indexet hämtas en gång och söks i webbläsaren
- * (src/lib/search.ts), så varje tangenttryck svarar direkt även på en långsam telefon. Frågan står i adressen (?q=), så en sökning
- * går att dela och ladda om.
+ * Söksidan: träffar medan man skriver, i hela sajten, med rättning av stavfel. Sökrutan ovanpå sidan (search-dialog.tsx) gör samma
+ * sökning; den här sidan är reserven utan JavaScript och platsen för alla träffar med utdrag. Frågan står i adressen (?q=), så en
+ * sökning går att dela och ladda om.
  */
 export function SiteSearch() {
   // Frågan i adressen tills man skriver själv. Servern känner inte till den, så sidan kan vara statisk och rutan byts aldrig ut.
   const urlQuery = useSyncExternalStore(subscribeNothing, readUrlQuery, () => "");
   const [typed, setTyped] = useState<string | null>(null);
   const query = typed ?? urlQuery;
-  const [index, setIndex] = useState<PreparedIndex | null>(null);
-  const [failed, setFailed] = useState(false);
-  const [codes, setCodes] = useState<string[]>([]);
   const [showAll, setShowAll] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLOListElement>(null);
@@ -42,12 +34,7 @@ export function SiteSearch() {
     setShowAll(false);
   };
 
-  // Indexet hämtas direkt: den som kommer hit ska söka.
-  useEffect(() => {
-    loadSearchIndex().then((loaded) => (loaded ? setIndex(loaded) : setFailed(true)));
-  }, []);
-
-  // Sökknappen i sidhuvudet och snabbtangenten / lägger markören i rutan.
+  // Sökknappen i menyn, snabbtangenten / och Ctrl eller Cmd + K lägger markören i rutan.
   useEffect(() => {
     const focus = () => {
       inputRef.current?.focus();
@@ -77,30 +64,9 @@ export function SiteSearch() {
     return () => clearTimeout(t);
   }, [query]);
 
-  // Kurskoderna behövs först när frågan innehåller en siffra.
-  const wantsCodes = /\d/.test(query);
-  useEffect(() => {
-    if (wantsCodes && codes.length === 0) loadCourseCodes().then(setCodes);
-  }, [wantsCodes, codes.length]);
-
-  const deferred = useDeferredValue(query);
-  const result = useMemo(() => (index ? search(index, deferred, codes) : NO_RESULT), [index, deferred, codes]);
-  const { hits, terms, corrected, suggestion } = result;
-  const searching = queryTerms(query).length > 0;
-  const loading = searching && !index && !failed;
+  const { hits, terms, corrected, suggestion, failed, searching, loading } = useSearch(query);
   const shown = showAll ? hits : hits.slice(0, FIRST_PAGE);
-
-  const status = !searching
-    ? ""
-    : loading
-      ? "Söker…"
-      : failed
-        ? "Sökningen svarar inte just nu."
-        : hits.length === 0
-          ? "Inga träffar"
-          : hits.length === 1
-            ? "1 träff"
-            : `${hits.length >= MAX_HITS ? `Minst ${MAX_HITS}` : hits.length} träffar`;
+  const status = searchStatus({ searching, loading, failed, count: hits.length });
 
   const focusResult = (i: number) => {
     const links = listRef.current?.querySelectorAll<HTMLAnchorElement>("a[data-traff]");
@@ -110,7 +76,7 @@ export function SiteSearch() {
 
   return (
     <>
-      <section className="bg-ink pb-7 pt-[calc(var(--header-h)+1.5rem)] text-white md:pb-9 md:pt-[calc(var(--header-h)+2.75rem)]">
+      <section className="border-b border-line pb-6 pt-[calc(var(--header-h)+2rem)] md:pb-8 md:pt-[calc(var(--header-h)+3.5rem)]">
         <div className="container-site">
           <form
             action="/sok"
@@ -124,8 +90,12 @@ export function SiteSearch() {
             }}
             className="mx-auto max-w-2xl"
           >
-            <div className="flex items-center gap-3 border-b-2 border-white/20 transition-colors focus-within:border-red">
-              <Search size={22} className="shrink-0 text-white/45" />
+            <p className="kicker flex items-center gap-2.5 text-stone">
+              <span className="size-1.5 rounded-full bg-red" aria-hidden />
+              Sök
+            </p>
+            <div className="mt-4 flex items-center gap-3 rounded-xl border border-line bg-white px-4 transition-colors focus-within:border-ink/30">
+              <Search size={20} className="shrink-0 text-stone" />
               <input
                 ref={inputRef}
                 name="q"
@@ -151,7 +121,7 @@ export function SiteSearch() {
                 enterKeyHint="search"
                 maxLength={MAX_QUERY_LENGTH}
                 autoFocus
-                className="h-16 min-w-0 flex-1 bg-transparent text-[1.6rem] font-medium tracking-tight text-white outline-none placeholder:text-white/35 focus-visible:outline-none md:h-20 md:text-[2.1rem] [&::-webkit-search-cancel-button]:hidden"
+                className="h-14 min-w-0 flex-1 bg-transparent text-[1.15rem] text-ink outline-none placeholder:text-stone focus-visible:outline-none md:h-16 md:text-[1.3rem] [&::-webkit-search-cancel-button]:hidden"
               />
               {query && (
                 <button
@@ -160,10 +130,10 @@ export function SiteSearch() {
                     setQuery("");
                     inputRef.current?.focus();
                   }}
-                  className="grid size-11 shrink-0 place-items-center rounded-full text-white/55 transition-colors hover:bg-white/10 hover:text-white"
+                  className="grid size-9 shrink-0 place-items-center rounded-lg text-stone transition-colors hover:bg-ink/[0.05] hover:text-ink"
                   aria-label="Töm sökrutan"
                 >
-                  <Close size={20} />
+                  <Close size={18} />
                 </button>
               )}
             </div>
@@ -209,7 +179,7 @@ export function SiteSearch() {
             <>
               <ol
                 ref={listRef}
-                className="mt-2 divide-y divide-ink/[0.08]"
+                className="mt-2 divide-y divide-line"
                 onKeyDown={(e) => {
                   const links = [...(listRef.current?.querySelectorAll<HTMLAnchorElement>("a[data-traff]") ?? [])];
                   const at = links.indexOf(document.activeElement as HTMLAnchorElement);
@@ -247,22 +217,6 @@ export function SiteSearch() {
   );
 }
 
-function Marked({ text, terms, corrected }: { text: string; terms: string[]; corrected: string[] }) {
-  return (
-    <>
-      {highlight(text, terms, corrected).map((part, i) =>
-        part.hit ? (
-          <mark key={i} className="rounded-[0.2em] bg-red/[0.12] px-[0.08em] text-inherit">
-            {part.text}
-          </mark>
-        ) : (
-          part.text
-        ),
-      )}
-    </>
-  );
-}
-
 function HitRow({ hit, terms, corrected }: { hit: SearchHit; terms: string[]; corrected: string[] }) {
   const { entry } = hit;
   // Utdraget räknas bara för raderna som visas, inte för alla träffar.
@@ -273,7 +227,7 @@ function HitRow({ hit, terms, corrected }: { hit: SearchHit; terms: string[]; co
   const body = (
     <>
       <span className="block text-[0.8rem] text-stone">
-        <span className="font-semibold uppercase tracking-[0.12em] text-[0.7rem]">{KIND_LABELS[entry.kind]}</span>
+        <span className="kicker text-[0.66rem]">{KIND_LABELS[entry.kind]}</span>
         {entry.meta && (
           <>
             <span aria-hidden> · </span>
@@ -283,7 +237,7 @@ function HitRow({ hit, terms, corrected }: { hit: SearchHit; terms: string[]; co
       </span>
       <span
         className={cn(
-          "mt-1 flex items-start gap-2 text-[1.12rem] font-semibold leading-snug text-ink transition-colors group-hover:text-red",
+          "mt-1 flex items-start gap-2 text-[1.05rem] font-semibold leading-snug text-ink transition-colors group-hover:text-red",
           entry.kind === "kurs" && "font-mono",
         )}
       >
@@ -293,13 +247,13 @@ function HitRow({ hit, terms, corrected }: { hit: SearchHit; terms: string[]; co
         {entry.external && <ArrowUpRight size={15} className="mt-1 shrink-0 text-stone" />}
       </span>
       {snippet && (
-        <span className="mt-1.5 line-clamp-2 block text-[0.95rem] leading-relaxed text-stone">
+        <span className="mt-1.5 line-clamp-2 block text-[0.92rem] leading-relaxed text-stone">
           <Marked text={snippet} terms={terms} corrected={corrected} />
         </span>
       )}
     </>
   );
-  const className = "group -mx-3 block rounded-xl px-3 py-4 outline-none transition-colors hover:bg-ink/[0.025] focus-visible:bg-ink/[0.04] focus-visible:ring-2 focus-visible:ring-red/40";
+  const className = "group -mx-3 block rounded-lg px-3 py-4 outline-none transition-colors hover:bg-ink/[0.03] focus-visible:bg-ink/[0.05] focus-visible:ring-2 focus-visible:ring-red/40";
   return (
     <li>
       {isPageHref(entry.href) ? (
@@ -319,14 +273,14 @@ function HitRow({ hit, terms, corrected }: { hit: SearchHit; terms: string[]; co
 function Suggestions({ onPick }: { onPick: (q: string) => void }) {
   return (
     <div className="mt-2">
-      <p className="text-sm text-stone">Förslag</p>
-      <ul className="mt-3 flex flex-wrap gap-2">
+      <p className="kicker text-stone">Förslag</p>
+      <ul className="mt-3 flex flex-wrap gap-1.5">
         {SUGGESTIONS.map((q) => (
           <li key={q}>
             <button
               type="button"
               onClick={() => onPick(q)}
-              className="inline-flex h-10 items-center rounded-full border border-ink/10 px-4 text-[0.95rem] transition-colors hover:border-ink/40"
+              className="inline-flex h-9 items-center rounded-lg border border-line bg-white px-3 text-[0.9rem] text-ink transition-colors hover:border-ink/25"
             >
               {q}
             </button>
@@ -334,25 +288,23 @@ function Suggestions({ onPick }: { onPick: (q: string) => void }) {
         ))}
       </ul>
       <p className="mt-10 hidden text-sm text-stone md:block">
-        Tryck <kbd className="rounded border border-ink/15 px-1.5 py-0.5 font-mono text-[0.8rem] text-ink">/</kbd> var som helst på
-        sajten för att söka.
+        Tryck <kbd className="kbd">/</kbd> eller <kbd className="kbd">Ctrl K</kbd> var som helst på sajten för att söka.
       </p>
     </div>
   );
 }
 
 function NoHits({ query, failed }: { query: string; failed: boolean }) {
-  const code = query.replace(/[\s-]+/g, "").toUpperCase();
-  const looksLikeCode = /^[A-Z0-9]{6}$/.test(code) && /\d/.test(code);
+  const code = courseCodeOf(query);
   return (
     <div className="mt-4">
       <p className="text-lg font-semibold">{failed ? "Sökningen svarar inte just nu." : <>Inga träffar på ”{query.trim()}”</>}</p>
       <p className="mt-1 text-stone">
         {failed ? "Ladda om sidan och försök igen, eller gå direkt till en sida i menyn." : "Prova ett annat ord, färre ord eller början av ett ord."}
       </p>
-      {looksLikeCode && (
-        <Link href={`/tentastatistik/${code}`} className="mt-4 inline-flex h-11 items-center gap-2 font-semibold text-red hover:underline">
-          Tentastatistik för {code} <ArrowRight size={18} />
+      {code && (
+        <Link href={`/tentastatistik/${code}`} className="btn btn-ghost mt-4">
+          Tentastatistik för {code} <ArrowRight size={16} />
         </Link>
       )}
     </div>

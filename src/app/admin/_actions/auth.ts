@@ -8,7 +8,7 @@ import { audit } from "@/lib/admin/helpers";
 import { type FormState, invalid } from "@/lib/admin/form";
 import { hashPassword, passwordProblem, verifyPassword } from "@/lib/auth/password";
 import { LOGIN_ERRORS, loginErrorCode } from "@/lib/auth/login-errors";
-import { clearLoginFailures, clientIp, loginDelayed, loginDelayKey, rateLimitHit, recordLoginFailure } from "@/lib/auth/rate-limit";
+import { clearLoginFailures, clientIp, loginDelayed, loginDelayKey, rateLimitHit, rateLimitReached, recordLoginFailure } from "@/lib/auth/rate-limit";
 import { actionUser, createSession, currentToken, destroyAllSessionsForUser, destroySession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import type { UserRow } from "@/lib/types";
@@ -42,7 +42,10 @@ async function attemptLogin(fd: FormData): Promise<FormState> {
   const { email, password, next } = parsed.data;
 
   const ip = clientIp(await headers());
-  if (rateLimitHit(`login:${ip}`)) {
+  // Spärren per IP räknar bara nekade försök, som i frågelådan: hela sektionen kan dela IP-adress på campus, och de som loggar in
+  // rätt ska inte stänga ute resten. En lyckad inloggning nollställer inte heller räknaren.
+  const ipKey = `login:${ip}`;
+  if (rateLimitReached(ipKey)) {
     return fail({ error: LOGIN_ERRORS.forsok });
   }
 
@@ -51,6 +54,7 @@ async function attemptLogin(fd: FormData): Promise<FormState> {
   // Samma svar för okänd adress, fel lösenord, fördröjt och avstängt konto, så att svaret inte avslöjar vilka konton
   // som finns. Varje misslyckat försök sparas i revisionsloggen med adressen, men utan IP.
   const denied = (reason: string, error: string = LOGIN_ERRORS.uppgifter) => {
+    rateLimitHit(ipKey);
     audit(null, "login_failed", "user", user?.id ?? null, `Misslyckad inloggning (${reason}): ${email}`);
     return fail({ error });
   };

@@ -7,10 +7,16 @@ import { FARDIGHETER, FORSTA_NIVA, GULDKORN, LAGE_TEXT, NIVAER, PROGRAM, type Ko
 import { cn } from "@/lib/utils";
 
 /** Det som ingår lyser vitt, resten är genomskinliga bubblor. */
-const CHIP: Record<KompetensLage, string> = {
+const CHIP_NATT: Record<KompetensLage, string> = {
   j: "border-white bg-white text-ink",
   v: "border-white/50 bg-white/10 text-white",
   n: "border-white/15 text-white/70",
+};
+/** Dagens sida: det som ingår är fyllt med textfärgen, resten är ljusa och tomma bubblor. */
+const CHIP_DAG: Record<KompetensLage, string> = {
+  j: "border-ink bg-ink text-paper",
+  v: "border-ink/40 bg-paper-2 text-ink",
+  n: "border-line bg-white text-stone",
 };
 
 const ALLA = FARDIGHETER.flatMap((g) => g.rader);
@@ -114,28 +120,28 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
   const nya = ALLA.filter((r) => arNy(r.lagen, niva)).length;
 
   return (
-    <section id="kompetens" className={cn("overflow-x-clip text-white", natt ? "star-avsnitt relative py-16 md:py-24" : "bg-ink pb-20 pt-4 md:pb-28 md:pt-6")}>
+    <section id="kompetens" className={cn("overflow-x-clip", natt ? "star-avsnitt relative py-16 text-white md:py-24" : "border-b border-line pb-20 pt-14 text-ink md:pb-28 md:pt-20")}>
       <div className="container-site">
         <Reveal>
-          <p className="kicker text-white/70">Två program vid Linköpings universitet</p>
+          <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>Två program vid Linköpings universitet</p>
           <h2 className={cn("mt-3", h2)}>
             <span className="block">De bygger modellen.</span> <span className="block">Och de vet när den har fel.</span>
           </h2>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85">
+          <p className={cn("mt-5 max-w-2xl text-lg leading-relaxed", natt ? "text-white/85" : "text-stone")}>
             Det är skillnaden mellan någon som kör kod och någon ni kan lämna en fråga till. Studenterna läser statistik på djupet, programmerar i R, Python och SQL och tränar på att förklara resultatet för den som ska fatta beslutet.
           </p>
         </Reveal>
 
         <ul className="mt-8 grid gap-3 md:mt-12 md:grid-cols-2">
           {PROGRAM.map((p, i) => (
-            <Reveal key={p.namn} as="li" delay={i * 80} className="flex min-w-0 flex-col rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6 md:p-8">
-              <p className="kicker text-white/70">{p.typ}</p>
+            <Reveal key={p.namn} as="li" delay={i * 80} className={cn("flex min-w-0 flex-col rounded-2xl border p-6 md:p-8", natt ? "border-white/15 bg-white/[0.04]" : "border-line bg-white")}>
+              <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>{p.typ}</p>
               <h3 className={cn("mt-3", natt ? "star-type text-2xl font-light md:text-3xl" : "display-tight text-2xl normal-case md:text-3xl")}>{p.namn}</h3>
               <p className="mt-5 text-lg font-semibold leading-snug md:text-xl">{p.roll}</p>
-              <p className="mt-3 leading-relaxed text-white/85">{p.text}</p>
+              <p className={cn("mt-3 leading-relaxed", natt ? "text-white/85" : "text-stone")}>{p.text}</p>
               <ul className="mb-6 mt-5 flex flex-1 flex-wrap content-start gap-1.5">
                 {p.nyckelord.map((ord) => (
-                  <li key={ord} className="rounded-full border border-white/20 bg-white/[0.05] px-3 py-1 text-sm font-medium">
+                  <li key={ord} className={cn("rounded-full border px-3 py-1 text-sm font-medium", natt ? "border-white/20 bg-white/[0.05]" : "border-line bg-white")}>
                     {ord}
                   </li>
                 ))}
@@ -149,7 +155,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
 
         <div ref={ankare} className="mt-14 md:mt-20">
           <h2 className={natt ? "star-type text-3xl font-light md:text-4xl" : "display-tight text-2xl md:text-4xl"}>Vad våra studenter kan</h2>
-          <p className="mt-3 max-w-2xl text-lg leading-relaxed text-white/85">Kurserna ändras över åren, men färdigheterna består. Bläddra genom utbildningen och se vad studenten kan efter varje steg.</p>
+          <p className={cn("mt-3 max-w-2xl text-lg leading-relaxed", natt ? "text-white/85" : "text-stone")}>Kurserna ändras över åren, men färdigheterna består. Bläddra genom utbildningen och se vad studenten kan efter varje steg.</p>
         </div>
 
         {/* Väljaren och innehållet ligger i samma behållare, annars har väljaren inget att följa med i. */}
@@ -162,26 +168,26 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
               aria-hidden
               className={cn(
                 "pointer-events-none absolute -bottom-5 -top-2 left-1/2 w-screen -translate-x-1/2 opacity-0 transition-opacity duration-200 data-[fast]:opacity-100 motion-reduce:transition-none [@media(max-height:520px)]:hidden",
-                natt ? "bg-[linear-gradient(to_bottom,var(--color-star-navy)_calc(100%-1.25rem),transparent)]" : "bg-[linear-gradient(to_bottom,var(--color-ink)_calc(100%-1.25rem),transparent)]",
+                natt ? "bg-[linear-gradient(to_bottom,var(--color-star-navy)_calc(100%-1.25rem),transparent)]" : "bg-[linear-gradient(to_bottom,var(--color-paper)_calc(100%-1.25rem),transparent)]",
               )}
             />
             <fieldset className="relative">
               <legend className="sr-only">Bläddra genom utbildningen: visa vad en student kan på varje nivå</legend>
-              <div className={cn("relative grid grid-cols-4 rounded-full border border-white/20 p-1 shadow-[0_10px_30px_rgb(0_0_0_/_0.35)]", natt ? "bg-star-navy" : "bg-ink")}>
+              <div className={cn("relative grid grid-cols-4 rounded-full border p-1", natt ? "border-white/20 bg-star-navy shadow-[0_10px_30px_rgb(0_0_0_/_0.35)]" : "border-line bg-white")}>
                 <span
                   aria-hidden
-                  className="absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/4)] rounded-full bg-white transition-transform duration-300 ease-[var(--ease-out-expo)] motion-reduce:transition-none"
+                  className={cn("absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/4)] rounded-full transition-transform duration-300 ease-[var(--ease-out-expo)] motion-reduce:transition-none", natt ? "bg-white" : "bg-ink")}
                   style={{ transform: `translateX(${niva * 100}%)` }}
                 />
                 {NIVAER.map((n, i) => (
                   <label
                     key={n.id}
-                    className="group relative flex min-h-11 cursor-pointer select-none flex-col items-center justify-center rounded-full px-1 py-1.5 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-white md:min-h-14"
+                    className={cn("group relative flex min-h-11 cursor-pointer select-none flex-col items-center justify-center rounded-full px-1 py-1.5 text-center has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 md:min-h-14", natt ? "has-[:focus-visible]:outline-white" : "has-[:focus-visible]:outline-ink")}
                   >
                     {/* onClick också: ett klick på steget som redan visas ger ingen change, men ska ändå stoppa genomgången. */}
                     <input type="radio" name={namn} value={n.id} checked={i === niva} onChange={() => valj(i)} onClick={() => valj(i)} className="sr-only" />
-                    <span className={cn("text-sm font-semibold transition-colors duration-200 motion-reduce:transition-none md:text-base", i === niva ? "text-ink" : "text-white/85 group-hover:text-white")}>{n.etikett}</span>
-                    <span className={cn("hidden text-xs transition-colors duration-200 motion-reduce:transition-none md:block", i === niva ? "text-ink/70" : "text-white/70")}>{n.undertitel}</span>
+                    <span className={cn("text-sm font-semibold transition-colors duration-200 motion-reduce:transition-none md:text-base", i === niva ? (natt ? "text-ink" : "text-paper") : natt ? "text-white/85 group-hover:text-white" : "text-stone group-hover:text-ink")}>{n.etikett}</span>
+                    <span className={cn("hidden text-xs transition-colors duration-200 motion-reduce:transition-none md:block", i === niva ? (natt ? "text-ink/70" : "text-paper/70") : natt ? "text-white/70" : "text-stone")}>{n.undertitel}</span>
                   </label>
                 ))}
               </div>
@@ -219,11 +225,11 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                     className={cn("min-w-0 [grid-area:1/1] transition-[opacity,visibility] duration-300 motion-reduce:transition-none", i === niva ? "visible opacity-100" : "invisible opacity-0")}
                   >
                     <h3 className={natt ? "star-type text-3xl font-light" : "display-tight text-2xl md:text-3xl"}>{n.rubrik}</h3>
-                    <p className="mt-4 leading-relaxed text-white/90">{n.text}</p>
-                    <p className="kicker mt-6 text-white/70">Ett uppdrag de klarar</p>
+                    <p className={cn("mt-4 leading-relaxed", natt ? "text-white/90" : "text-ink")}>{n.text}</p>
+                    <p className={cn("kicker mt-6", natt ? "text-white/70" : "text-stone")}>Ett uppdrag de klarar</p>
                     <p className="mt-2 text-lg font-semibold leading-snug">{n.uppdrag}</p>
-                    <p className="kicker mt-6 text-white/70">Passar för</p>
-                    <p className="mt-2 leading-snug text-white/90">{n.passar}</p>
+                    <p className={cn("kicker mt-6", natt ? "text-white/70" : "text-stone")}>Passar för</p>
+                    <p className={cn("mt-2 leading-snug", natt ? "text-white/90" : "text-ink")}>{n.passar}</p>
                   </div>
                 ))}
               </div>
@@ -253,7 +259,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                   <span className={cn("tabular text-4xl leading-none md:text-5xl", natt ? "star-type font-light" : "display-tight")}>{kan}</span>
                   <span className="font-semibold">av {ALLA.length} färdigheter</span>
                   {/* Finns kvar osynlig på första steget, så att raden tar lika stor plats och inget hoppar på smala skärmar. */}
-                  <span className={cn("w-full text-white/75 sm:w-auto", nya === 0 && "invisible")} aria-hidden={nya === 0 || undefined}>
+                  <span className={cn("w-full sm:w-auto", natt ? "text-white/75" : "text-stone", nya === 0 && "invisible")} aria-hidden={nya === 0 || undefined}>
                     {nya === 1 ? "1 ny" : `${nya} nya`} sedan {NIVAER[Math.max(0, niva - 1)].etikett}
                   </span>
                 </p>
@@ -262,7 +268,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                     <span
                       key={rad.namn}
                       style={{ transitionDelay: `${i * 14}ms` }}
-                      className={cn("h-1.5 min-w-0 flex-1 rounded-full transition-colors duration-300 motion-reduce:transition-none pointer-coarse:transition-none", i < ingarForAlla ? "bg-red" : i < kan ? "bg-red/50" : "bg-white/15")}
+                      className={cn("h-1.5 min-w-0 flex-1 rounded-full transition-colors duration-300 motion-reduce:transition-none pointer-coarse:transition-none", i < ingarForAlla ? "bg-red" : i < kan ? "bg-red/50" : natt ? "bg-white/15" : "bg-ink/10")}
                     />
                   ))}
                 </div>
@@ -271,7 +277,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
               <div className="space-y-6">
                 {FARDIGHETER.map((grupp) => (
                   <div key={grupp.grupp}>
-                    <p className="kicker text-white/70">{grupp.grupp}</p>
+                    <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>{grupp.grupp}</p>
                     <ul className="mt-3 flex flex-wrap gap-2">
                       {grupp.rader.map((rad) => {
                         const lage = rad.lagen[niva] as KompetensLage;
@@ -285,7 +291,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                             className={cn(
                               // Färger kan inte tonas av grafikkortet. På telefonen byter bubblorna läge direkt, så att huvudtråden inte räknar om dem i varje bildruta.
                               "inline-flex min-h-9 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-[background-color,border-color,color,box-shadow] duration-300 motion-reduce:transition-none pointer-coarse:transition-none",
-                              CHIP[lage],
+                              (natt ? CHIP_NATT : CHIP_DAG)[lage],
                               ny && "shadow-[0_0_0_2px_var(--color-red)]",
                             )}
                           >
@@ -303,7 +309,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                 ))}
               </div>
 
-              <ul className="mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/15 pt-5 text-sm text-white/75">
+              <ul className={cn("mt-8 flex flex-wrap gap-x-5 gap-y-2 border-t pt-5 text-sm", natt ? "border-white/15 text-white/75" : "border-line text-stone")}>
                 {(["j", "v", "n"] as const).map((lage) => (
                   <li key={lage} className="inline-flex items-center gap-2">
                     <Markering lage={lage} />
@@ -315,7 +321,7 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
                   Nytt i det här steget
                 </li>
               </ul>
-              <p className="mt-3 text-sm leading-relaxed text-white/75">
+              <p className={cn("mt-3 text-sm leading-relaxed", natt ? "text-white/75" : "text-stone")}>
                 Sammanställt ur kursplanerna för LiU:s kandidatprogram i statistik och dataanalys och masterprogram i statistik och maskininlärning. Masterprogrammet går på engelska, och studenterna kommer från statistik, matematik, datavetenskap eller teknik.
               </p>
             </div>
@@ -325,15 +331,15 @@ export function StudenternasKompetens({ natt = false }: { natt?: boolean }) {
         {/* Ligger utanför väljarens behållare, så att väljaren inte följer med hit. */}
         <div className="mt-16 md:mt-24">
           <Reveal>
-            <p className="kicker text-white/70">Ur utbildnings- och kursplanerna</p>
+            <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>Ur utbildnings- och kursplanerna</p>
             <h2 className={cn("mt-3", natt ? "star-type text-3xl font-light md:text-4xl" : "display-tight text-2xl md:text-4xl")}>Det som sällan står i ett CV</h2>
           </Reveal>
           <ul className="mt-6 grid gap-3 sm:grid-cols-2 md:mt-8 lg:grid-cols-3">
             {GULDKORN.map((g, i) => (
-              <Reveal key={g.rubrik} as="li" delay={(i % 3) * 60} className="flex min-w-0 flex-col rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6">
-                <p className="kicker text-white/70">{g.kalla}</p>
+              <Reveal key={g.rubrik} as="li" delay={(i % 3) * 60} className={cn("flex min-w-0 flex-col rounded-2xl border p-6", natt ? "border-white/15 bg-white/[0.04]" : "border-line bg-white")}>
+                <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>{g.kalla}</p>
                 <h3 className="mt-3 text-lg font-semibold leading-snug md:text-xl">{g.rubrik}</h3>
-                <p className="mt-2 leading-relaxed text-white/85">{g.text}</p>
+                <p className={cn("mt-2 leading-relaxed", natt ? "text-white/85" : "text-stone")}>{g.text}</p>
               </Reveal>
             ))}
           </ul>

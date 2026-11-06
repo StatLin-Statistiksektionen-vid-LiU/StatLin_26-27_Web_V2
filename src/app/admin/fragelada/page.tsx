@@ -114,7 +114,8 @@ function Switch({ open }: { open: boolean }) {
           aria-label="Frågelådan öppen för besökare"
           className={cn("relative h-10 w-[4.5rem] rounded-full transition-colors", open ? "bg-ink" : "bg-paper-3")}
         >
-          <span aria-hidden className={cn("absolute top-1 size-8 rounded-full bg-white shadow transition-[left]", open ? "left-[2.25rem]" : "left-1")} />
+          {/* Av är knoppen alltid vit, annars blir den mörk på det mörka spåret i mörkt läge. På följer den temat och blir mörk på det ljusa spåret. */}
+          <span aria-hidden className={cn("absolute top-1 size-8 rounded-full shadow transition-[left]", open ? "left-[2.25rem] bg-white" : "left-1 bg-[#fff]")} />
         </button>
       </form>
     </Card>

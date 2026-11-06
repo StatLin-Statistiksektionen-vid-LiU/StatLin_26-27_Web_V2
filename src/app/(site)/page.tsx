@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
 import { HomeSections, HomeShortcuts } from "@/components/home/home-sections";
-import { TimelineFallback, UpcomingTimeline } from "@/components/home/upcoming-timeline";
 import { HomeSkeleton } from "@/components/ui/skeletons";
 import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
@@ -14,12 +13,9 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      {/* Genvägarna ligger över bandet och kommer tillsammans med det, så att inget hoppar mellan dem. */}
-      <Suspense fallback={<TimelineFallback />}>
-        <HomeShortcuts />
-        <UpcomingTimeline />
-      </Suspense>
+      {/* Under heron kommer genvägarna och sedan sektionen. Tidslinjen med evenemang ligger i evenemangsdelen längre ner, så att sidan inte börjar med kalendern. */}
       <Suspense fallback={<HomeSkeleton />}>
+        <HomeShortcuts />
         <HomeSections />
       </Suspense>
     </>

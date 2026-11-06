@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { NewsCard } from "@/components/content/news-card";
-import { PageHero } from "@/components/ui/page-hero";
+import { TextHero } from "@/components/ui/text-hero";
 import { Reveal } from "@/components/ui/reveal";
 import { PageSkeleton } from "@/components/ui/skeletons";
 import { countNews, listNews } from "@/lib/data/news";
@@ -18,7 +18,7 @@ const PER_PAGE = 9;
 export default function NewsPage(props: PageProps<"/nyheter">) {
   return (
     <>
-      <PageHero kicker="Från sektionen" title={<>Senaste <span className="mono-accent text-red max-md:block">nytt</span></>} lead="Information från styrelsen och utskotten, från sittningsanmälningar till beslut på sektionsmötet." />
+      <TextHero group="nyheter" accentClassName="mono-accent text-red max-md:block" />
       <Suspense fallback={<PageSkeleton />}>
         <NewsList searchParams={props.searchParams} />
       </Suspense>
@@ -35,7 +35,17 @@ async function NewsList({ searchParams }: { searchParams: PageProps<"/nyheter">[
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
 
   if (items.length === 0) {
-    return <p className="container-site py-24 text-center text-stone">Inget nytt ännu.</p>;
+    // En sida bortom den sista, till exempel en gammal länk från när det fanns fler inlägg, ska inte påstå att det inte finns något nytt.
+    return total > 0 ? (
+      <p className="container-site py-24 text-center text-stone">
+        Den sidan finns inte, nyheterna ryms på {pages === 1 ? "en sida" : `${pages} sidor`}.{" "}
+        <Link href="/nyheter" className="link-underline font-medium text-ink">
+          Till senaste nytt
+        </Link>
+      </p>
+    ) : (
+      <p className="container-site py-24 text-center text-stone">Inget nytt ännu.</p>
+    );
   }
   const [first, ...rest] = items;
   return (
@@ -46,7 +56,7 @@ async function NewsList({ searchParams }: { searchParams: PageProps<"/nyheter">[
           <NewsCard item={first} featured />
         </Reveal>
       ) : null}
-      <div className={cn("grid gap-x-8 gap-y-14 md:grid-cols-2 lg:grid-cols-3", page === 1 && "mt-16 border-t border-ink/10 pt-14")}>
+      <div className={cn("grid gap-x-6 gap-y-12 md:grid-cols-2 lg:grid-cols-3", page === 1 && "mt-14 border-t border-line pt-12")}>
         {(page === 1 ? rest : items).map((n, i) => (
           <Reveal key={n.id} delay={(i % 3) * 80}>
             <NewsCard item={n} />
@@ -60,7 +70,7 @@ async function NewsList({ searchParams }: { searchParams: PageProps<"/nyheter">[
               key={p}
               href={p === 1 ? "/nyheter" : `/nyheter?sida=${p}`}
               aria-current={p === page ? "page" : undefined}
-              className={cn("grid size-11 place-items-center rounded-full border font-mono text-sm", p === page ? "border-ink bg-ink text-white" : "border-ink/15 bg-white hover:border-ink")}
+              className={cn("grid size-9 place-items-center rounded-lg border font-mono text-[0.82rem] tabular", p === page ? "border-ink bg-ink text-paper" : "border-line bg-white text-stone hover:border-ink/25 hover:text-ink")}
             >
               {p}
             </Link>

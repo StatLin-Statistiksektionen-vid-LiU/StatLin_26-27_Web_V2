@@ -47,25 +47,24 @@ export function CoverArt({
   });
 
   return (
-    <div className={cn("relative overflow-hidden bg-ink", className)} aria-hidden={!label} role={label ? "img" : undefined} aria-label={label}>
+    <div className={cn("relative overflow-hidden bg-paper-2 text-ink", className)} aria-hidden={!label} role={label ? "img" : undefined} aria-label={label}>
       <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         <defs>
           <radialGradient id={`g-${seed}`} cx="80%" cy="10%" r="90%">
-            <stop offset="0" stopColor={accent} stopOpacity="0.45" />
-            <stop offset="0.6" stopColor={accent} stopOpacity="0.05" />
-            <stop offset="1" stopColor="#0a0a0a" stopOpacity="0" />
+            <stop offset="0" stopColor={accent} stopOpacity="0.32" />
+            <stop offset="0.6" stopColor={accent} stopOpacity="0.04" />
+            <stop offset="1" stopColor={accent} stopOpacity="0" />
           </radialGradient>
         </defs>
-        <rect width="400" height="250" fill="#0d0d0d" />
-        <rect width="400" height="250" fill={`url(#g-${seed})`} />
-        <path d={GRID} fill="none" stroke="#fff" strokeOpacity="0.06" />
+                <rect width="400" height="250" fill={`url(#g-${seed})`} />
+        <path d={GRID} fill="none" stroke="currentColor" strokeOpacity="0.07" />
         {variant === 0 &&
           points.map((p, i) => (
-            <circle key={i} cx={r1(p.x)} cy={r1(p.y)} r={r1(p.r)} fill={p.red ? "#ff0707" : "#fff"} fillOpacity={p.red ? 0.9 : 0.35} />
+            <circle key={i} cx={r1(p.x)} cy={r1(p.y)} r={r1(p.r)} fill={p.red ? "#ff0707" : "currentColor"} fillOpacity={p.red ? 0.9 : 0.22} />
           ))}
         {variant === 1 &&
           bars.map((b, i) => (
-            <rect key={i} x={b.x} y={r1(235 - b.h)} width="20" height={b.h} fill={i === 5 || i === 6 ? "#ff0707" : "#fff"} fillOpacity={i === 5 || i === 6 ? 0.85 : 0.18} />
+            <rect key={i} x={b.x} y={r1(235 - b.h)} width="20" height={b.h} fill={i === 5 || i === 6 ? "#ff0707" : "currentColor"} fillOpacity={i === 5 || i === 6 ? 0.85 : 0.12} />
           ))}
         {variant !== 1 && <path d={line} fill="none" stroke="#ff0707" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />}
         {variant === 2 && (
@@ -73,12 +72,11 @@ export function CoverArt({
         )}
       </svg>
       {logo && (
-        // eslint-disable-next-line @next/next/no-img-element
+        // eslint-disable-next-line @next/next/no-img-element -- Inte lazy: på /nyheter är loggan i första kortet ofta det största som syns.
         <img
           src={logo}
           alt=""
-          className="absolute -bottom-[18%] -right-[8%] w-[58%] max-w-none rotate-[-8deg] opacity-[0.9] drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)]"
-          loading="lazy"
+          className="absolute -bottom-[18%] -right-[8%] w-[58%] max-w-none rotate-[-8deg] opacity-[0.9]"
         />
       )}
     </div>

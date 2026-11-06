@@ -51,7 +51,8 @@ async function InterestList({ searchParams }: { searchParams: PageProps<"/admin/
       {sp.mejl === "misslyckades" && <Notice tone="warning">Mejlet gick inte att skicka. Anmälan finns kvar här, så försök igen senare eller svara direkt.</Notice>}
       {sp.mejl === "ej_installt" && <Notice tone="warning">Mejl är inte inställt än, så inget mejl skickades.</Notice>}
       <AdminHeader
-        title="Intresseanmälningar"
+        // Mjukt bindestreck: på en smal telefon delas ordet som Intresse-anmälningar i stället för mitt i.
+        title={"Intresse­anmälningar"}
         description="Företag som har anmält intresse för STAR via inbjudningslänken. Länken hittar du under STAR."
         actions={
           <Link href="/admin/star#inbjudan" className="btn btn-ghost btn-sm">

@@ -29,6 +29,8 @@ export const NAV: NavGroup[] = [
       { href: "/studenter/lankar", label: "Länkar", description: "Schema, tentor och genvägar" },
       { href: "/studenter/hjalpmedel", label: "Hjälpmedel", description: "Fusklappar, GitHub-länkar och guider per program" },
       { href: "/tentastatistik", label: "Tentastatistik", description: "Betyg per tentatillfälle, för alla kurser" },
+      // Önskelistan är studenternas, så den står här. Företagen anmäler intresse på /foretag.
+      { href: "/lunchforelasningar", label: "Lunchföreläsningar", description: "Önska föreläsare och se nästa föreläsning" },
     ],
   },
   {
@@ -38,7 +40,7 @@ export const NAV: NavGroup[] = [
       { href: "/foretag", label: "För företag", description: "Samarbeta med StatLin" },
       { href: "/foretag#kompetens", label: "Vad studenterna kan", description: "Färdigheter och branscher" },
       { href: "/star", label: "STAR", description: "Arbetsmarknadsdagen: vilka kommer och när" },
-      { href: "/lunchforelasningar", label: "Lunchföreläsningar", description: "Nästa föreläsning och önskelistan" },
+      { href: "/foretag#lunchforelasning", label: "Håll en lunchföreläsning", description: "Anmäl intresse och se hur det går till" },
     ],
   },
   { label: "Kontakt", href: "/kontakt" },

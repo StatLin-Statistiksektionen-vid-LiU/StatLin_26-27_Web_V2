@@ -115,6 +115,18 @@ test("SB-07: etiketterna utan pågående evenemang är oförändrade", () => {
   assert.equal(from("2026-10-01T10:00", "2026-10-01T12:00"), "Har varit");
 });
 
+test("Nästa vecka är kalenderveckan efter den här, inte bara 7 till 13 dagar bort", () => {
+  // Fredag 6 november: nästa vecka är 9 till 15 november.
+  const from = (start) => at("2026-11-06T12:00", () => relativeDay(start, null, false));
+  assert.equal(from("2026-11-13T18:00"), "Nästa vecka");
+  assert.equal(from("2026-11-15T18:00"), "Nästa vecka");
+  assert.equal(from("2026-11-16T18:00"), "Om 10 dagar");
+  assert.equal(from("2026-11-18T18:00"), "Om 12 dagar");
+  assert.equal(from("2026-11-20T18:00"), "Om 2 veckor");
+  // En måndag är alla sju dagarna 7 till 13 bort nästa vecka.
+  assert.equal(at("2026-11-09T12:00", () => relativeDay("2026-11-22T18:00", null, false)), "Nästa vecka");
+});
+
 test("SB-10: en februari som börjar på en måndag får fyra rader, utan tomma veckor", () => {
   const days = monthGrid(2027, 2);
   assert.equal(days.length, 28);

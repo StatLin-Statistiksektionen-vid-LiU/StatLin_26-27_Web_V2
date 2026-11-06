@@ -30,7 +30,7 @@ async function NewStudent() {
       slug="ny-student"
       kicker="Studenter / Nya studenter"
       heroAside={
-        <div className="hidden grid-cols-2 gap-4 md:grid">
+        <div className="hidden grid-cols-2 gap-4 rounded-2xl p-3 md:grid [[data-tema=mork]_&]:bg-ink">
           <div className="-rotate-3 transition-transform duration-700 hover:rotate-0">
             <Overall side="fram" />
           </div>
@@ -41,7 +41,7 @@ async function NewStudent() {
       }
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
-          <div className="rounded-[1.75rem] border border-ink/10 bg-white p-6">
+          <div className="rounded-xl border border-line bg-white p-6">
             <p className="kicker text-stone">Nästa på schemat</p>
             <div className="mt-2">
               {events.length > 0 ? (
@@ -55,7 +55,7 @@ async function NewStudent() {
             </Link>
           </div>
           <QuickLinksCard links={shortcuts} />
-          <div className="grid grid-cols-2 gap-3 rounded-[1.75rem] bg-ink p-6 md:hidden">
+          <div className="grid grid-cols-2 gap-3 rounded-2xl border border-line bg-white p-6 md:hidden [[data-tema=mork]_&]:bg-ink">
             <Overall side="fram" />
             <Overall side="bak" />
           </div>

@@ -36,7 +36,7 @@ export function EventForm({
     <ActionForm action={saveEvent} {...publishButtons(event)} onSuccess={onSaved} version={event?.updated_at}>
       {event && <input type="hidden" name="id" value={event.id} />}
       <EndFollowsStart />
-      <div className="grid gap-6 @2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Evenemanget">
             <TitleSlugFields defaultTitle={source?.title} defaultSlug={event?.slug} basePath="/evenemang" titleMaxLength={140} />

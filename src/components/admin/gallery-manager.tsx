@@ -311,7 +311,7 @@ export function GalleryManager({
                 <div className="relative aspect-[4/3] cursor-grab active:cursor-grabbing">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={item.image.thumb} alt="" className="h-full w-full object-cover" style={{ backgroundColor: item.image.color }} draggable={false} />
-                  <span className="absolute left-2 top-2 grid size-7 place-items-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="absolute left-2 top-2 grid size-7 place-items-center tema-fast rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100">
                     <Grip size={14} />
                   </span>
                   <div className="absolute right-2 top-2 flex gap-1.5">

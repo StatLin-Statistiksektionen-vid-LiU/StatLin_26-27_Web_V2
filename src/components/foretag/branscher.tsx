@@ -134,11 +134,11 @@ export function Branscher({ natt = false, cta }: { natt?: boolean; cta: { href: 
           </p>
         </Reveal>
 
-        <ul className={cn("mt-10", natt ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-px overflow-hidden rounded-[1.75rem] border border-ink/10 bg-ink/10 sm:grid-cols-2 lg:grid-cols-3")}>
+        <ul className={cn("mt-10", natt ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3")}>
           {BRANSCHER.map((b) => {
             const Figur = FIGURER[b.figur];
             return (
-              <li key={b.namn} className={cn("min-w-0", natt ? "rounded-[1.5rem] border border-white/15 bg-white/[0.04] p-6 md:p-7" : "bg-paper p-7 md:p-8")}>
+              <li key={b.namn} className={cn("min-w-0", natt ? "rounded-2xl border border-white/15 bg-white/[0.04] p-6 md:p-7" : "bg-white p-6 md:p-7")}>
                 <svg
                   aria-hidden
                   viewBox="0 0 120 56"

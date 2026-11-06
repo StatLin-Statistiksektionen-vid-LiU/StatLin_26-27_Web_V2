@@ -4,6 +4,7 @@ import { TaskActionForm } from "@/components/admin/task-action-form";
 import { PendingButton } from "@/components/admin/wheel-buttons";
 import { ArrowUpRight, Board, Check, ClipboardList, Edit } from "@/components/icons";
 import { placementLabel, TERM_LABELS, termOfMonth, type WheelItem, type WheelState, type WheelStatus } from "@/lib/arshjul";
+import { TASK_STATUSES, type TaskStatus } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const STATUS_CHIP: Partial<Record<WheelStatus, { label: string; className: string }>> = {
@@ -16,7 +17,7 @@ const smallBtn = "btn btn-sm btn-ghost bg-white !px-3";
 const quietBtn = "rounded-full px-3 py-1.5 text-sm font-semibold text-stone hover:bg-ink/[0.05] hover:text-ink pointer-coarse:py-3";
 
 /** Knapparna på en punkt. Lägga på tavlan och skapa en plan får alla poster, medan läget ändras av ägaren, ansvarig post och admin. */
-function WheelActions({ item, year, state, status, canChange, compact }: { item: WheelItem; year: number; state: WheelState | undefined; status: WheelStatus; canChange: boolean; compact?: boolean }) {
+function WheelActions({ item, year, when, state, status, canChange, compact }: { item: WheelItem; year: number; when: string; state: WheelState | undefined; status: WheelStatus; canChange: boolean; compact?: boolean }) {
   const statusForm = (value: string, label: string, className = quietBtn) => (
     <TaskActionForm action={setWheelStatus} id={item.id} className="contents">
       <input type="hidden" name="year" value={year} />
@@ -26,11 +27,15 @@ function WheelActions({ item, year, state, status, canChange, compact }: { item:
   );
   const row = cn("flex flex-wrap items-center gap-1.5", compact ? "mt-2" : "mt-3");
   if (status === "klar" || status === "hoppad") return canChange ? <div className={row}>{statusForm("oppen", "Ångra")}</div> : null;
+  // Uppdragets läge på tavlan, så att hjulet visar om någon har börjat eller behöver hjälp.
+  const task = state?.task_status && Object.hasOwn(TASK_STATUSES, state.task_status) ? (state.task_status as TaskStatus) : null;
   return (
     <div className={row}>
       {state?.task_id ? (
         <Link href={`/admin/uppdrag/${state.task_id}`} className={smallBtn}>
-          <Board size={15} /> På tavlan <ArrowUpRight size={13} className="text-stone" />
+          <Board size={15} /> På tavlan{" "}
+          {task && <span className={cn("font-normal", task === "hjalp" ? "text-red-deep" : "text-stone")}>· {TASK_STATUSES[task]}</span>}
+          <ArrowUpRight size={13} className="text-stone" />
         </Link>
       ) : state?.project_plan_id ? null : (
         <TaskActionForm action={addWheelItemToBoard} id={item.id} className="contents">
@@ -51,8 +56,8 @@ function WheelActions({ item, year, state, status, canChange, compact }: { item:
       )}
       {canChange && (
         <span className="flex flex-wrap items-center gap-0.5">
-          {statusForm("klar", "Klar i år")}
-          {statusForm("hoppad", compact ? "Hoppa över" : "Hoppa över i år")}
+          {statusForm("klar", `Klar ${when}`)}
+          {statusForm("hoppad", compact ? "Hoppa över" : `Hoppa över ${when}`)}
         </span>
       )}
     </div>
@@ -68,9 +73,12 @@ export function WheelItemRow({
   late,
   showPlacement,
   compact,
+  thisYear,
 }: {
   item: WheelItem;
   year: number;
+  /** Kalenderåret just nu. Gäller punkten ett annat år står året på knapparna i stället för "i år". */
+  thisYear?: number;
   state: WheelState | undefined;
   status: WheelStatus;
   canChange: boolean;
@@ -81,6 +89,7 @@ export function WheelItemRow({
 }) {
   const chip = STATUS_CHIP[status];
   const closed = status === "klar" || status === "hoppad";
+  const when = thisYear === undefined || thisYear === year ? "i år" : String(year);
   return (
     <article className={cn("@container rounded-2xl border border-ink/10 bg-white", compact ? "p-3" : "p-4", closed && "bg-white/60")}>
       {/* Är kortet smalt får etiketten en egen rad, annars krockar den med rubriken. */}
@@ -89,7 +98,7 @@ export function WheelItemRow({
         {chip && (
           <span className={cn("chip order-last @md:order-none", chip.className)}>
             {status === "klar" && <Check size={12} strokeWidth={2.5} />}
-            {chip.label}
+            {status === "klar" ? `Klar ${when}` : status === "hoppad" ? `Hoppas över ${when}` : chip.label}
           </span>
         )}
         {canChange && (
@@ -115,7 +124,7 @@ export function WheelItemRow({
         )}
         {late && <span className="font-semibold text-red-deep">Månaden har passerat</span>}
       </p>
-      <WheelActions item={item} year={year} state={state} status={status} canChange={canChange} compact={compact} />
+      <WheelActions item={item} year={year} when={when} state={state} status={status} canChange={canChange} compact={compact} />
     </article>
   );
 }

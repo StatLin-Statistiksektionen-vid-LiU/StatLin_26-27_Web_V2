@@ -32,7 +32,7 @@ function CodeField({ initial, changing }: { initial: string; changing: boolean }
           spellCheck={false}
           className="!w-44 font-mono text-lg font-bold tracking-[0.18em]"
         />
-        <button type="button" onClick={() => setCode(generateCode())} className="btn btn-ghost btn-sm bg-white font-sans">
+        <button type="button" onClick={() => setCode(generateCode())} className="btn btn-ghost btn-sm font-sans">
           Slumpa ny
         </button>
       </div>

@@ -3,14 +3,13 @@ import { ActionForm } from "./action-form";
 import { Field, FormSection, Select, TextInput, Toggle } from "./fields";
 import { ImageField } from "./image-field";
 import type { Partner } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
-/** En ny partner hamnar sist och syns direkt. Plats i listan och om den syns väljs först när den finns, om det alls behövs. */
+/** En ny sponsor hamnar sist på sitt ställe och syns direkt. Ordningen ändras med pilarna i listan, eller med talet när sponsorn finns. */
 export function PartnerForm({ partner, nextOrder = 0 }: { partner?: Partner | null; nextOrder?: number }) {
   return (
-    <ActionForm action={savePartner} submitLabel={partner ? "Spara" : "Lägg till partner"} stickyFooter={false}>
+    <ActionForm action={savePartner} submitLabel={partner ? "Spara" : "Lägg till sponsor"} stickyFooter={false}>
       {partner && <input type="hidden" name="id" value={partner.id} />}
-      <FormSection title={partner ? "Partner" : "Ny partner"}>
+      <FormSection title={partner ? "Sponsor" : "Ny sponsor"}>
         <Field label="Företag" name="name" required>
           <TextInput name="name" defaultValue={partner?.name} maxLength={120} />
         </Field>
@@ -20,19 +19,17 @@ export function PartnerForm({ partner, nextOrder = 0 }: { partner?: Partner | nu
         <Field label="Beskrivning" name="description">
           <TextInput name="description" defaultValue={partner?.description} maxLength={300} />
         </Field>
-        <div className={cn("grid gap-5", partner && "@sm:grid-cols-2")}>
-          <Field label="Nivå" name="tier">
-            <Select name="tier" defaultValue={partner?.tier ?? "partner"}>
-              <option value="partner">Partner</option>
-              <option value="huvudpartner">Huvudpartner</option>
-            </Select>
+        <Field label="Var syns sponsorn?" name="tier" hint="Vid sidan står den som huvudsponsor: i sidomenyn på datorn, i menyn och sidfoten på telefonen. Fyra får plats där.">
+          <Select name="tier" defaultValue={partner?.tier ?? "partner"}>
+            <option value="partner">I sidfoten</option>
+            <option value="huvudpartner">Vid sidan av skärmen</option>
+          </Select>
+        </Field>
+        {partner && (
+          <Field label="Plats i listan" name="sort_order" hint="Lägre tal visas först. Pilarna i listan gör samma sak.">
+            <TextInput name="sort_order" type="number" min={0} defaultValue={partner.sort_order} className="max-w-40" />
           </Field>
-          {partner && (
-            <Field label="Plats i listan" name="sort_order" hint="Lägre tal visas först.">
-              <TextInput name="sort_order" type="number" min={0} defaultValue={partner.sort_order} />
-            </Field>
-          )}
-        </div>
+        )}
         <ImageField name="logo_media_id" label="Logga" defaultImage={partner?.logo ?? null} aspect="aspect-[3/1]" fit="contain" />
         {partner ? (
           <Toggle name="active" label="Visas på sajten" defaultChecked={!!partner.active} />

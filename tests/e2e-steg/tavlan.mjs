@@ -122,7 +122,7 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
     await title.fill(quick);
     await title.press("Enter");
     await page.getByText("Uppdraget ligger öppet på tavlan.").waitFor();
-    await inColumn("Planerat").waitFor();
+    await inColumn("Att göra").waitFor();
     assert.equal(page.url(), url);
     assert.equal(await title.inputValue(), "");
     assert.equal(await title.evaluate((el) => el === document.activeElement), true, "fokus ska stå kvar i rutan");
@@ -162,13 +162,15 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
     await inColumn("Klart").waitFor();
   });
 
-  await step("Uppdragstavlan: statuslistan på kortet flyttar det", async () => {
+  await step("Uppdragstavlan: statuslistan på kortet flyttar det, och hjälp blir en röd markering i Pågår", async () => {
     const menu = taskItem(quick).locator("select");
     await waitForHydration(page, menu);
     await Promise.all([saving(), menu.selectOption("hjalp")]);
-    await inColumn("Behöver hjälp").waitFor();
+    await inColumn("Pågår").waitFor();
+    await taskItem(quick).getByText("Behöver hjälp", { exact: true }).waitFor();
     await page.reload();
-    await inColumn("Behöver hjälp").waitFor();
+    await inColumn("Pågår").waitFor();
+    await taskItem(quick).getByText("Behöver hjälp", { exact: true }).waitFor();
   });
 
   await step("Uppdragstavlan: går det inte att spara står kortet kvar, och det står varför", async () => {
@@ -181,7 +183,7 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
     } finally {
       await page.context().setOffline(false);
     }
-    await inColumn("Behöver hjälp").waitFor();
+    await inColumn("Pågår").waitFor();
   });
 
   await step("Uppdragstavlan: statusen ändras direkt på raden i listan", async () => {

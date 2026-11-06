@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ArrowUpRight, Download, FileText } from "@/components/icons";
-import { PageHero } from "@/components/ui/page-hero";
+import { TextHero } from "@/components/ui/text-hero";
 import { listDocuments } from "@/lib/data/content";
 import { formatDate } from "@/lib/dates";
 import { DOCUMENT_CATEGORIES, type DocumentCategory } from "@/lib/types";
@@ -17,15 +17,7 @@ export const instant = false;
 export default function DocumentsPage() {
   return (
     <>
-      <PageHero
-        kicker="Sektionen / Dokument"
-        title={
-          <>
-            Doku<span className="text-red">ment</span>
-          </>
-        }
-        lead="Stadgar, reglemente, mötesprotokoll och styrdokument. Allt som styr sektionen, samlat på ett ställe."
-      />
+      <TextHero group="dokument" />
       <Documents />
     </>
   );
@@ -53,9 +45,9 @@ async function Documents() {
                       href={href ?? "#"}
                       target={href ? "_blank" : undefined}
                       rel="noopener noreferrer"
-                      className="group flex items-center gap-5 py-5 transition-colors hover:bg-white/70"
+                      className="group flex items-center gap-5 py-5 transition-colors hover:bg-paper-2/60"
                     >
-                      <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ink text-white transition-colors group-hover:bg-red">
+                      <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-line bg-paper-2/60 text-ink transition-colors group-hover:border-red/40 group-hover:text-red">
                         <FileText size={20} />
                       </span>
                       <span className="min-w-0 flex-1">

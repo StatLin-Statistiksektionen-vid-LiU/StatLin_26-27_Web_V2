@@ -20,6 +20,7 @@ function WheelCard({
   kicker,
   rows,
   user,
+  thisYear,
   more,
   empty,
   showPlacement,
@@ -29,6 +30,7 @@ function WheelCard({
   kicker: string;
   rows: WheelCardItem[];
   user: SessionUser;
+  thisYear: number;
   more: string;
   empty: ReactNode;
   showPlacement?: boolean;
@@ -54,7 +56,7 @@ function WheelCard({
         <ul className="mt-3 space-y-2.5">
           {rows.slice(0, CARD_LIMIT).map((r) => (
             <li key={r.item.id}>
-              <WheelItemRow compact item={r.item} year={r.year} state={r.state} status={r.status} canChange={canChangeWheelItem(user, r.item)} late={r.late} showPlacement={showPlacement && r.item.month !== null} />
+              <WheelItemRow compact item={r.item} year={r.year} thisYear={thisYear} state={r.state} status={r.status} canChange={canChangeWheelItem(user, r.item)} late={r.late} showPlacement={showPlacement && r.item.month !== null} />
             </li>
           ))}
         </ul>
@@ -108,10 +110,12 @@ export async function WheelCards({ user }: { user: SessionUser }) {
       {(!hideEmpty || nextMonth.length > 0) && <WheelCard
         id="kort-nasta-manad"
         kicker={next.year === thisYear ? nextName : `${nextName} ${next.year}`}
-        title="Uppkommande nästa månad"
+        title="Kommer nästa månad"
         rows={nextMonth}
         user={user}
-        more={`/admin/arshjul?manad=${next.month}${next.year === thisYear ? "" : `&ar=${next.year}`}`}
+        thisYear={thisYear}
+        // Hjulet utan valt år visar på hösten också våren efter nyår, så januari i december hamnar rätt utan årtal.
+        more={`/admin/arshjul?manad=${next.month}`}
         empty={
           <>
             Inget väntar i {nextName.toLowerCase()}.{" "}
@@ -128,6 +132,7 @@ export async function WheelCards({ user }: { user: SessionUser }) {
         title="Att planera in denna termin"
         rows={toPlan}
         user={user}
+        thisYear={thisYear}
         more="/admin/arshjul"
         showPlacement
         empty={

@@ -150,11 +150,12 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
       });
       await p.goto(`${BASE}/`);
       await waitForHydration(p, p.locator("footer a").first());
+      // Menyernas grupper är details: Företag fälls ut i telefonens meny och i datorns sidomeny.
       if (options.isMobile) {
         await p.getByRole("button", { name: "Öppna meny" }).click();
-        await p.getByRole("button", { name: /Företag/ }).first().click();
+        await p.locator("#mobilmeny summary", { hasText: "Företag" }).click();
       } else {
-        await p.locator("header nav").getByRole("button", { name: /Företag/ }).hover();
+        await p.locator("aside nav summary", { hasText: "Företag" }).click();
       }
       const menuLink = p.locator('a[href="/foretag#kompetens"]:visible').first();
       await menuLink.waitFor();

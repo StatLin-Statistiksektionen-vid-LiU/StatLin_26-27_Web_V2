@@ -1,133 +1,64 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import "./hero.css";
-import { DataField } from "@/components/brand/data-field";
 import { FloatingLogo } from "@/components/brand/floating-logo";
 import { FormulaRing } from "@/components/brand/formula-ring";
 import { ArrowRight } from "@/components/icons";
-import { AccentText, stripAccent } from "@/components/ui/accent-text";
+import { AccentText } from "@/components/ui/accent-text";
 import { IntroOnce } from "@/components/ui/intro-once";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
 import { cn } from "@/lib/utils";
 import { Editable } from "@/components/edit-mode/editable";
+import { HeroGrid } from "./hero-grid";
 
-/** Texterna och ringens glöd kommer från Inställningar → Startsidan. Loggan och knapparna hör till det statiska skalet. */
-async function HeroRing() {
-  const s = await getSettings();
-  return <FormulaRing glow={s.hero_ring_color} />;
-}
-
+/** Texterna kommer från Inställningar → Startsidan. Loggan, formelringen och knapparna hör till det statiska skalet. */
 async function HeroKicker() {
   const s = await getSettings();
-  return <AccentText text={s.hero_kicker} accentClassName="text-red" />;
+  return <AccentText text={s.hero_kicker} accentClassName="text-ink" />;
 }
 
-/** Längre rubriker får mindre text och bredare kolumn, så att de inte trycker in i loggan. */
-function titleSize(title: string) {
-  const n = stripAccent(title).length;
-  if (n <= 48) return { text: "text-[clamp(1.4rem,2.5vw,2.15rem)]", col: "md:col-span-7" };
-  if (n <= 80) return { text: "text-[clamp(1.15rem,1.9vw,1.7rem)]", col: "md:col-span-7 lg:col-span-8" };
-  return { text: "text-[clamp(1.05rem,1.6vw,1.45rem)]", col: "md:col-span-7 lg:col-span-8" };
-}
-
-// Introts animationer fyller bara bakåt: slutbilden är elementens vanliga utseende. Med both ligger varje element kvar som ett eget lager på grafikkortet när introt är slut.
-
-// Meningen bryts olika med reservtypsnittet och Archivo. Tre rader håller platsen på telefon, så att loggan står still när typsnittet laddas.
-const SENTENCE = "mt-3 max-w-md text-[0.875rem] leading-relaxed pointer-coarse:min-h-[3lh]";
-
-function HeroBottom({ title, text }: { title: string | null; text: string | null }) {
-  const size = titleSize(title ?? DEFAULT_SETTINGS.hero_title);
+/** Rubriken och meningen. Utan text håller en osynlig kopia av standardtexten platsen tills inställningarna har kommit.
+ *  På en smal telefon krymper rubriken med fönstret, så att maskininlärning ryms på en rad även vid 320 pixlar eller 400 procents zoom. */
+function HeroText({ title, text, placeholder }: { title: string; text: string; placeholder?: boolean }) {
   return (
-    <div className="hero-bunn grid items-end gap-6 pb-8 md:grid-cols-12 md:pb-10">
-      <Editable
-        target={{ type: "home" }}
-        label="Redigera texten"
-        className={cn(size.col, "[animation:fade-up_1.2s_1.6s_var(--ease-out-expo)_backwards] pointer-coarse:[animation-delay:.3s] pointer-coarse:[animation-duration:.8s]")}
-      >
-        {title === null ? (
-          // På telefon håller en osynlig kopia av standardtexten platsen, så att höjden stämmer vid varje skärmbredd.
-          <div className="min-h-[7rem] pointer-coarse:min-h-0" aria-hidden>
-            <div className="invisible hidden pointer-coarse:block">
-              <p className={cn("display-tight leading-[1.02]", size.text)}>
-                <AccentText text={DEFAULT_SETTINGS.hero_title} />
-              </p>
-              <p className={SENTENCE}>{DEFAULT_SETTINGS.hero_text}</p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <h1 className={cn("display-tight leading-[1.02]", size.text)}>
-              <AccentText text={title} />
-            </h1>
-            {text && (
-              <p className={cn(SENTENCE, "text-white/60")}>
-                <AccentText text={text} accentClassName="text-red" />
-              </p>
-            )}
-          </>
-        )}
-      </Editable>
-      {/* Knapparna finns både i skalet och i det som kommer senare. På telefon, där det dröjer längre, syns de direkt så att intoningen inte börjar om. */}
-      <div
-        className={cn(
-          "flex flex-wrap items-center gap-3 md:col-span-5 md:justify-end [animation:fade-up_1.2s_1.85s_var(--ease-out-expo)_backwards] pointer-coarse:animate-none",
-          size.col.includes("lg:col-span-8") && "lg:col-span-4",
-        )}
-      >
-        <Link href="/evenemang" className="btn btn-red group">
-          Kommande evenemang
-          <ArrowRight size={18} className="transition-transform duration-500 group-hover:translate-x-1" />
-        </Link>
-        <Link href="/studenter/ny-student" className="btn btn-ghost-dark">
-          Ny student?
-        </Link>
-        <a
-          href="#utforska"
-          aria-label="Scrolla vidare"
-          className="hidden h-12 w-8 items-center justify-center text-white/50 transition-colors hover:text-white lg:flex"
-        >
-          <span className="relative block h-12 w-px overflow-hidden bg-white/15">
-            <span className="absolute inset-x-0 top-0 h-1/2 bg-red [animation:scroll-cue_2s_ease-in-out_infinite]" />
-          </span>
-        </a>
-      </div>
+    <div className={cn(placeholder && "invisible")} aria-hidden={placeholder || undefined}>
+      {placeholder ? (
+        <p className="display-tight break-words text-[length:max(min(7vw,1.9rem),min(3.3vw,2.9rem))] leading-[1.02] [text-wrap:balance]">
+          <AccentText text={title} />
+        </p>
+      ) : (
+        <h1 className="display-tight break-words text-[length:max(min(7vw,1.9rem),min(3.3vw,2.9rem))] leading-[1.02] [text-wrap:balance]">
+          <AccentText text={title} accentClassName="mono-accent text-red" />
+        </h1>
+      )}
+      {text && (
+        <p className="mt-6 max-w-xl text-[1.05rem] leading-relaxed text-stone md:text-[1.15rem]">
+          <AccentText text={text} accentClassName="text-ink" />
+        </p>
+      )}
     </div>
   );
 }
 
-async function HeroText() {
+/** Formelringen kan stängas av under Inställningar, Startsidan. Den kommer efter skalet, så loggan syns direkt i båda fallen. */
+async function HeroRing() {
   const s = await getSettings();
-  return <HeroBottom title={s.hero_title.trim() || DEFAULT_SETTINGS.hero_title} text={s.hero_text.trim()} />;
+  return s.hero_formulas === "av" ? null : <FormulaRing />;
 }
 
+async function HeroTextLoaded() {
+  const s = await getSettings();
+  return <HeroText title={s.hero_title.trim() || DEFAULT_SETTINGS.hero_title} text={s.hero_text.trim()} />;
+}
+
+/** Startsidans huvud: text till vänster, loggan med formelringen på ett rutnät till höger. */
 export function Hero() {
   return (
-    <section data-startsida className="hero noise relative isolate flex min-h-[100svh] flex-col overflow-hidden bg-ink text-white">
+    <section data-startsida className="hero relative isolate border-b border-line">
       <IntroOnce />
-      {/* Bakgrund: rutnät + levande data */}
-      <div
-        aria-hidden
-        className="grid-paper pointer-events-none absolute inset-0 -z-10 text-white [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]"
-      />
-      <DataField className="pointer-events-none absolute inset-0 -z-10 h-full w-full" />
-      {/* data-hero-botten: meddelandet från Inställningar väntar tills det här har lämnat skärmens nederkant, se AnnouncementPill. */}
-      <div
-        aria-hidden
-        data-hero-botten
-        className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-48 bg-gradient-to-t from-ink to-transparent"
-      />
-
-      {/* Jättetypografi bakom loggan */}
-      <div
-        aria-hidden
-        className="display pointer-events-none absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 select-none whitespace-nowrap text-center text-[26vw] leading-none text-transparent [-webkit-text-stroke:1.5px_rgb(255_255_255/0.09)] [animation:fade-up_1.6s_0.2s_var(--ease-out-expo)_backwards] md:text-[22vw]"
-      >
-        StatLin
-      </div>
-
-      <div className="hero-inre container-site relative flex flex-1 flex-col pt-[calc(var(--header-h)+1.5rem)]">
-        <div className="hero-topp flex items-start justify-between gap-6">
-          <p className="kicker flex items-center gap-3 text-white/60 [animation:fade-up_1s_0.1s_var(--ease-out-expo)_backwards]">
+      <HeroGrid />
+      <div className="container-site grid items-center gap-12 pb-14 pt-[calc(var(--header-h)+2.5rem)] md:pt-[calc(var(--header-h)+4rem)] lg:grid-cols-12 lg:pb-16">
+        <div className="min-w-0 lg:col-span-7">
+          <p className="kicker flex items-center gap-2.5 text-stone [animation:fade-up_0.8s_var(--ease-out-expo)_backwards]">
             <span className="relative flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red opacity-60" />
               <span className="relative inline-flex size-2 rounded-full bg-red" />
@@ -136,29 +67,54 @@ export function Hero() {
               <HeroKicker />
             </Suspense>
           </p>
-          <p className="kicker hidden text-right text-white/35 md:block">
+          <Editable target={{ type: "home" }} label="Redigera texten" className="mt-6 [animation:fade-up_0.9s_0.08s_var(--ease-out-expo)_backwards]">
+            <Suspense fallback={<HeroText title={DEFAULT_SETTINGS.hero_title} text={DEFAULT_SETTINGS.hero_text} placeholder />}>
+              <HeroTextLoaded />
+            </Suspense>
+          </Editable>
+          {/* Knapparna leder de tre som oftast kommer hit vidare: den som vill engagera sig, den som är ny och företagen. Evenemangen har en egen del längre ner. */}
+          <div className="mt-9 flex flex-wrap items-center gap-2.5 [animation:fade-up_0.9s_0.16s_var(--ease-out-expo)_backwards]">
+            <Link href="/utskott" className="btn btn-ink group">
+              Engagera dig
+              <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+            </Link>
+            <Link href="/studenter/ny-student" className="btn btn-ghost">
+              Ny student?
+            </Link>
+            <Link href="/foretag" className="btn btn-ghost">
+              För företag
+            </Link>
+          </div>
+        </div>
+
+        {/* Loggan står direkt på sidan, på heroens millimeterpapper (HeroGrid). */}
+        <figure className="relative mx-auto aspect-square w-full max-w-[22rem] sm:max-w-[26rem] lg:col-span-5 lg:max-w-[30rem]">
+          <div aria-hidden className="kicker absolute left-0 top-0 text-stone-light">
+            Fig. 1
+          </div>
+          <div aria-hidden className="kicker absolute right-0 top-0 text-right text-stone-light">
             58.3978° N
             <br />
             15.5760° E
-          </p>
-        </div>
-
-        {/* Loggan */}
-        <div className="hero-logga flex flex-1 items-center justify-center py-6 md:py-3">
-          <FloatingLogo
-            className="w-[min(82vw,56svh,640px)]"
-            ring={
-              <Suspense fallback={null}>
-                <HeroRing />
-              </Suspense>
-            }
-          />
-        </div>
-
-        <Suspense fallback={<HeroBottom title={null} text={null} />}>
-          <HeroText />
-        </Suspense>
+          </div>
+          <div className="absolute inset-0 grid place-items-center p-[9%]">
+            <FloatingLogo
+              className="w-full"
+              ring={
+                <Suspense fallback={null}>
+                  <HeroRing />
+                </Suspense>
+              }
+            />
+          </div>
+          <figcaption className="kicker absolute inset-x-0 bottom-0 flex justify-between text-stone-light">
+            <span translate="no">StatLin</span>
+            <span>n = alla</span>
+          </figcaption>
+        </figure>
       </div>
+      {/* data-hero-botten: meddelandet från Inställningar väntar tills heron har lämnat skärmens nederkant, se AnnouncementPill. */}
+      <div aria-hidden data-hero-botten className="pointer-events-none absolute inset-x-0 bottom-0 h-px" />
     </section>
   );
 }

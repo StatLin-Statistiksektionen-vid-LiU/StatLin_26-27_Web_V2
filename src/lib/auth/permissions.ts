@@ -67,3 +67,10 @@ export const canDeleteBox = (u: Pick<SessionUser, "id" | "role" | "committee_id"
 export const canManageFragelada = isAdmin;
 export const canReviewEvents = isAdmin;
 export const canManageSettings = isEditor;
+
+/*
+ * Styrelsemötena: ordföranden lägger in mötena, sköter mallen och bestämmer vad som kommer med på dagordningen. Ordföranden känns
+ * igen på posten Ordförande (inte Ordförande SCB och liknande), och administratörerna kan alltid. Alla konton i portalen ser
+ * mötena och kan föreslå punkter.
+ */
+export const canManageMeetings = (u: Pick<SessionUser, "role" | "post">) => u.role === "admin" || /^ordförande$/i.test(u.post.trim());

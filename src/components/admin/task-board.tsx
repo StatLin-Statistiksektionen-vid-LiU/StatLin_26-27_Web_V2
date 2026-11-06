@@ -3,7 +3,7 @@
 import { unstable_rethrow } from "next/navigation";
 import { startTransition, useCallback, useLayoutEffect, useOptimistic, useState, useSyncExternalStore, type DragEvent } from "react";
 import { claimTask, setTaskStatus } from "@/app/admin/_actions/tasks";
-import { sortTasksForList, STATUS_ORDER, STATUS_STYLES, TaskCard, TaskList, TaskRow } from "@/components/admin/task-ui";
+import { BOARD_COLUMNS, columnOf, sortTasksForList, STATUS_CHOICES, STATUS_STYLES, TaskCard, TaskList, TaskRow } from "@/components/admin/task-ui";
 import { Check, ChevronDown, Users } from "@/components/icons";
 import type { FormState } from "@/lib/admin/form";
 import { TASK_STATUSES, type Task, type TaskPerson, type TaskStatus } from "@/lib/types";
@@ -15,9 +15,9 @@ type Change = { id: number; patch: Partial<Task> };
 
 /** Nästa steg som vanligen följer, för en knapp med fingret. Med musen drar man kortet, och menyn har alla val. */
 const NEXT_STEP: Partial<Record<TaskStatus, { to: TaskStatus; label: string }>> = {
-  planerad: { to: "pagar", label: "Påbörja" },
+  planerad: { to: "pagar", label: "Börja" },
   pagar: { to: "klar", label: "Klart" },
-  hjalp: { to: "pagar", label: "Pågår" },
+  hjalp: { to: "klar", label: "Klart" },
 };
 
 const DRAG_TYPE = "application/x-statlin-uppdrag";
@@ -108,7 +108,8 @@ export function TaskBoardView({ tasks, view, today, me }: { tasks: BoardTask[]; 
             e.preventDefault();
             const task = shown.find((t) => t.id === id);
             endDrag();
-            if (task) move(task, status);
+            // Ett kort som behöver hjälp ligger redan i Pågår. Att släppa det där ska inte ta bort frågan.
+            if (task && columnOf(task.status) !== status) move(task, status);
           },
         }
       : {};
@@ -131,7 +132,7 @@ export function TaskBoardView({ tasks, view, today, me }: { tasks: BoardTask[]; 
                 task={t}
                 today={today}
                 status={t.can_move ? <StatusMenu task={t} onMove={move} className="relative" /> : undefined}
-                recipient={t.to_user_id === null ? <ClaimButton task={t} onClaim={claim} /> : undefined}
+                recipient={claimable(t) ? <ClaimButton task={t} onClaim={claim} /> : undefined}
               />
             ),
           }))}
@@ -143,9 +144,10 @@ export function TaskBoardView({ tasks, view, today, me }: { tasks: BoardTask[]; 
   return (
     <>
       {errorLine}
-      <div className="grid gap-3 @xl:grid-cols-2 @4xl:grid-cols-4">
-        {STATUS_ORDER.map((status) => {
-          const column = shown.filter((t) => t.status === status);
+      <div className="grid gap-3 @2xl:grid-cols-3">
+        {BOARD_COLUMNS.map((status) => {
+          // De som behöver hjälp står först i Pågår, så att de syns.
+          const column = shown.filter((t) => columnOf(t.status) === status).sort((a, b) => Number(b.status === "hjalp") - Number(a.status === "hjalp"));
           return (
             <section
               key={status}
@@ -154,7 +156,7 @@ export function TaskBoardView({ tasks, view, today, me }: { tasks: BoardTask[]; 
               className={cn(
                 "min-w-0 rounded-2xl bg-ink/[0.035] p-2 transition-colors",
                 // Staplade kolumner utan innehåll är bara i vägen, utom när ett kort ska släppas i dem.
-                column.length === 0 && dragged === null && "@max-xl:hidden",
+                column.length === 0 && dragged === null && "@max-2xl:hidden",
                 over === status && "bg-red/[0.07] ring-2 ring-red/40",
               )}
             >
@@ -204,10 +206,10 @@ export function TaskBoardView({ tasks, view, today, me }: { tasks: BoardTask[]; 
 function CardControls({ task, onMove, onClaim }: { task: BoardTask; onMove: (t: Task, s: TaskStatus) => void; onClaim: (t: Task) => void }) {
   const open = task.to_user_id === null;
   const next = NEXT_STEP[task.status];
-  if (!task.can_move && !open) return null;
+  if (!task.can_move && !claimable(task)) return null;
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {open && <ClaimButton task={task} onClaim={onClaim} className="mt-2" />}
+      {claimable(task) && <ClaimButton task={task} onClaim={onClaim} className="mt-2" />}
       {task.can_move && !open && next && (
         <button type="button" onClick={() => onMove(task, next.to)} className="btn btn-sm btn-ghost relative mt-2 hidden gap-1.5 bg-white pointer-coarse:inline-flex">
           {next.to === "klar" && <Check size={15} />}
@@ -219,6 +221,11 @@ function CardControls({ task, onMove, onClaim }: { task: BoardTask; onMove: (t: 
       )}
     </div>
   );
+}
+
+/** Ett öppet uppdrag går att ta så länge det inte är klart. Ett klart kort med Jag tar den säger emot sig självt. */
+function claimable(task: Task) {
+  return task.to_user_id === null && task.status !== "klar";
 }
 
 function ClaimButton({ task, onClaim, className }: { task: Task; onClaim: (t: Task) => void; className?: string }) {
@@ -245,7 +252,7 @@ function StatusMenu({ task, onMove, compact = false, className }: { task: BoardT
   const styles = STATUS_STYLES[task.status];
   return (
     <span
-      title={`Flytta. Nu: ${TASK_STATUSES[task.status]}`}
+      title={`Flytta. Nu: ${STATUS_CHOICES[task.status]}`}
       className={cn(
         "inline-flex shrink-0 items-center gap-1 rounded-full transition-colors focus-within:ring-2 focus-within:ring-ink/50",
         compact
@@ -270,11 +277,17 @@ function StatusMenu({ task, onMove, compact = false, className }: { task: BoardT
         // 16 px: iOS zoomar annars in sidan när listan får fokus.
         className="absolute inset-0 size-full cursor-pointer appearance-none rounded-full text-[16px] opacity-0"
       >
-        {STATUS_ORDER.map((s) => (
-          <option key={s} value={s}>
-            {TASK_STATUSES[s]}
-          </option>
-        ))}
+        {/* Tre steg och hjälpen för sig, som på uppdragets sida. Hjälp lägger kortet i Pågår med en röd markering. */}
+        <optgroup label="Steg">
+          {BOARD_COLUMNS.map((s) => (
+            <option key={s} value={s}>
+              {s === "pagar" && task.status === "hjalp" ? "Pågår, hjälpen behövs inte längre" : TASK_STATUSES[s]}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="Hjälp">
+          <option value="hjalp">{task.status === "hjalp" ? "Behöver hjälp" : "Be om hjälp"}</option>
+        </optgroup>
       </select>
     </span>
   );

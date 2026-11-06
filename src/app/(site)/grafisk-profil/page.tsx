@@ -14,11 +14,11 @@ export const metadata: Metadata = {
 };
 
 const LOGO_VARIANTS = [
-  { file: "statlin", name: "Sektionsloggan", note: "Standard", bg: "bg-white" },
-  { file: "statlin-inverterad", name: "StatLin Inverterad", note: "På svart bakgrund", bg: "bg-ink" },
-  { file: "statlin-svart", name: "StatLin Svart", note: "Enfärg, gråskala", bg: "bg-white" },
-  { file: "statlin-vit", name: "StatLin Vit", note: "Enfärg på mörkt", bg: "bg-ink" },
-  { file: "statlin-rod", name: "StatLin Röd", note: "Enfärg", bg: "bg-white" },
+  { file: "statlin", name: "Sektionsloggan", note: "Standard", bg: "bg-white [[data-tema=mork]_&]:bg-ink" },
+  { file: "statlin-inverterad", name: "StatLin Inverterad", note: "På svart bakgrund", bg: "bg-ink [[data-tema=mork]_&]:bg-paper" },
+  { file: "statlin-svart", name: "StatLin Svart", note: "Enfärg, gråskala", bg: "bg-white [[data-tema=mork]_&]:bg-ink" },
+  { file: "statlin-vit", name: "StatLin Vit", note: "Enfärg på mörkt", bg: "bg-ink [[data-tema=mork]_&]:bg-paper" },
+  { file: "statlin-rod", name: "StatLin Röd", note: "Enfärg", bg: "bg-white [[data-tema=mork]_&]:bg-ink" },
 ];
 
 const COMMITTEE_LOGOS = [
@@ -113,7 +113,7 @@ export default function BrandPage() {
         </a>
       </PageHero>
 
-      <nav aria-label="Innehåll" className="sticky top-[var(--header-h)] z-30 border-b border-ink/10 bg-paper/90 backdrop-blur-lg pointer-coarse:bg-paper pointer-coarse:backdrop-filter-none">
+      <nav aria-label="Innehåll" className="sticky top-[var(--header-h)] z-30 border-b border-ink/10 bg-paper/90 backdrop-blur-lg pointer-coarse:bg-paper pointer-coarse:backdrop-filter-none opak:bg-paper">
         <ul className="container-site flex gap-1 overflow-x-auto py-3 text-sm font-semibold">
           {[
             ["#logotyp", "Logotyp"],
@@ -138,7 +138,7 @@ export default function BrandPage() {
         <BrandHeading index="3" title="Logotyp" />
         <div className="mt-10 grid gap-10 lg:grid-cols-12">
           <Reveal className="lg:col-span-5">
-            <div className="grid-paper-fine flex aspect-square items-center justify-center rounded-[2rem] border border-ink/10 bg-white p-10 text-ink">
+            <div className="grid-paper-fine flex aspect-square items-center justify-center rounded-2xl border border-line bg-white p-10 text-ink">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/brand/statlin.svg" alt="StatLins sektionslogga" className="w-full" />
             </div>
@@ -164,7 +164,7 @@ export default function BrandPage() {
           {LOGO_VARIANTS.map((v, i) => (
             <Reveal key={v.file} delay={i * 60}>
               <figure className="group">
-                <div className={cn("flex aspect-square items-center justify-center rounded-[1.5rem] border border-ink/10 p-6", v.bg)}>
+                <div className={cn("flex aspect-square items-center justify-center rounded-xl border border-line p-6", v.bg)}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={`/brand/${v.file}.svg`} alt={v.name} className="w-full transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                 </div>
@@ -187,20 +187,20 @@ export default function BrandPage() {
       </section>
 
       {/* Utskottsloggor */}
-      <section id="utskott" className="noise relative bg-ink py-20 text-white md:py-28">
+      <section id="utskott" className="relative border-y border-line py-20 md:py-28">
         <div className="container-site relative">
-          <BrandHeading index="3.2–3.4" title="Utskottsloggor" dark />
-          <p className="mt-5 max-w-2xl text-white/65">
+          <BrandHeading index="3.2–3.4" title="Utskottsloggor" />
+          <p className="mt-5 max-w-2xl text-stone">
             Utskottsloggorna bygger på baslogotypen: förkortningen i vit Arial i bandets övre halva och en egen bakgrundsgrafik. SCB och XCB följer
             en egen standard, och STAR har sitt eget varumärke.
           </p>
-          <ul className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-[1.75rem] border border-white/10 sm:grid-cols-3 lg:grid-cols-4">
+          <ul className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-4">
             {COMMITTEE_LOGOS.map((l) => (
-              <li key={l.file} className="group bg-ink p-6 text-center shadow-[0_0_0_1px_rgb(255_255_255/0.1)]">
+              <li key={l.file} className="group bg-white p-6 text-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={`/brand/utskott/${l.file}.webp`} alt={`${l.name}-loggan`} className="mx-auto h-28 w-auto object-contain transition-transform duration-700 group-hover:-translate-y-1 group-hover:rotate-[-6deg] md:h-32" loading="lazy" />
+                <img src={`/brand/utskott/${l.file}.webp`} alt={`${l.name}-loggan`} className="mx-auto h-28 w-auto rounded-xl object-contain p-1.5 [[data-tema=mork]_&]:bg-ink transition-transform duration-700 group-hover:-translate-y-1 group-hover:rotate-[-6deg] md:h-32" loading="lazy" />
                 <p className="mt-5 font-bold">{l.name}</p>
-                <p className="text-xs text-white/50">{l.note}</p>
+                <p className="text-xs text-stone">{l.note}</p>
                 <a href={`/brand/download/${l.file}.png`} download className="tryck mt-3 inline-flex pointer-coarse:mt-0 items-center gap-1.5 font-mono text-xs text-red hover:underline">
                   <Download size={13} /> PNG
                 </a>
@@ -217,15 +217,15 @@ export default function BrandPage() {
         <div className="mt-12 space-y-14">
           {PALETTES.map((p) => (
             <div key={p.title}>
-              <div className="flex items-baseline justify-between border-b border-ink/10 pb-3">
+              <div className="flex items-baseline justify-between border-b border-line pb-3">
                 <h3 className="display-tight text-xl">{p.title}</h3>
                 <p className="hidden text-sm text-stone sm:block">{p.note}</p>
               </div>
               <ul className={cn("mt-6 grid gap-4", p.colors.length > 3 ? "grid-cols-2 md:grid-cols-5" : "grid-cols-1 sm:grid-cols-3")}>
                 {p.colors.map((c) => (
-                  <li key={c.name + c.hex} className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
+                  <li key={c.name + c.hex} className="overflow-hidden rounded-xl border border-line bg-white">
                     <div className={cn("relative", p.colors.length > 3 ? "h-28" : "h-40")} style={{ background: c.hex }}>
-                      <span className={cn("absolute left-4 top-4 text-sm font-bold", ["#FFFFFF", "#EEE242", "#FBB03B", "#F15A24", "#29ABE2"].includes(c.hex) ? "text-ink" : "text-white")}>{c.name}</span>
+                      <span className="absolute left-4 top-4 text-sm font-bold" style={{ color: ["#FFFFFF", "#EEE242", "#FBB03B", "#F15A24", "#29ABE2"].includes(c.hex) ? "#141413" : "#ffffff" }}>{c.name}</span>
                     </div>
                     <dl className="grid gap-1.5 p-4 text-xs">
                       <ColorRow label="HEX" value={c.hex} />
@@ -242,7 +242,7 @@ export default function BrandPage() {
       </section>
 
       {/* Typsnitt */}
-      <section id="typsnitt" className="border-y border-ink/10 bg-paper-2/50 py-20 md:py-28">
+      <section id="typsnitt" className="border-y border-line bg-paper-2/50 py-20 md:py-28">
         <div className="container-site">
           <BrandHeading index="5" title="Typsnitt" />
           <p className="mt-5 max-w-2xl text-ink/70">
@@ -285,30 +285,30 @@ export default function BrandPage() {
       </section>
 
       {/* Kläder */}
-      <section id="klader" className="noise relative overflow-hidden bg-ink py-20 text-white md:py-28">
+      <section id="klader" className="relative overflow-hidden border-y border-line py-20 md:py-28">
         <div className="container-site relative grid items-center gap-14 lg:grid-cols-12">
           <div className="lg:col-span-6">
-            <BrandHeading index="6" title="Overallen" dark />
-            <p className="mt-6 text-lg leading-relaxed text-white/75">
+            <BrandHeading index="6" title="Overallen" />
+            <p className="mt-6 text-lg leading-relaxed text-stone">
               Svart overall med röda revärer från halsen längs ärmarna till ärmuppslaget, och från armhålan ned längs benens utsida. Namnet eller
               smeknamnet sys på med utklippta bokstäver i rött teddytyg, och sektionsloggan sitter på ryggen.
             </p>
-            <ul className="mt-8 grid gap-3 text-[0.95rem] text-white/70 sm:grid-cols-2">
-              <li className="rounded-2xl border border-white/10 p-4">
-                <span className="block font-bold text-white">Styrelsehoodie</span>Vit ziphood, sektionsloggan på ryggen.
+            <ul className="mt-8 grid gap-3 text-[0.95rem] text-stone sm:grid-cols-2">
+              <li className="rounded-xl border border-line bg-white p-4">
+                <span className="block font-semibold text-ink">Styrelsehoodie</span>Vit ziphood, sektionsloggan på ryggen.
               </li>
-              <li className="rounded-2xl border border-white/10 p-4">
-                <span className="block font-bold text-white">SCB-hoodie</span>Svart ziphood, SCB-loggan på ryggen.
+              <li className="rounded-xl border border-line bg-white p-4">
+                <span className="block font-semibold text-ink">SCB-hoodie</span>Svart ziphood, SCB-loggan på ryggen.
               </li>
-              <li className="rounded-2xl border border-white/10 p-4">
-                <span className="block font-bold text-white">StatLin-t-shirt</span>Helsvart, inverterad logga på vänster bröst.
+              <li className="rounded-xl border border-line bg-white p-4">
+                <span className="block font-semibold text-ink">StatLin-t-shirt</span>Helsvart, inverterad logga på vänster bröst.
               </li>
-              <li className="rounded-2xl border border-white/10 p-4">
-                <span className="block font-bold text-white">Mästeristass</span>Hängselbyxor, röd fluga och randiga strumpor.
+              <li className="rounded-xl border border-line bg-white p-4">
+                <span className="block font-semibold text-ink">Mästeristass</span>Hängselbyxor, röd fluga och randiga strumpor.
               </li>
             </ul>
           </div>
-          <div className="grid grid-cols-2 gap-6 lg:col-span-5 lg:col-start-8">
+          <div className={cn("grid grid-cols-2 gap-6 rounded-2xl p-4 lg:col-span-5 lg:col-start-8", "[[data-tema=mork]_&]:bg-ink")}>
             <Overall side="fram" />
             <Overall side="bak" />
           </div>
@@ -362,13 +362,13 @@ async function Material() {
               href={d.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex h-full items-start gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-5 transition-colors duration-300 hover:border-ink/40"
+              className="group flex h-full items-start gap-4 rounded-xl border border-line bg-white p-5 transition-colors duration-300 hover:border-ink/20"
             >
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ink text-white transition-colors group-hover:bg-red">
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-line bg-paper-2/60 text-ink transition-colors group-hover:border-red/40 group-hover:text-red">
                 <FileText size={20} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block font-bold tracking-tight">{d.title}</span>
+                <span className="block font-semibold tracking-tight">{d.title}</span>
                 {d.description && <span className="mt-0.5 block text-sm leading-snug text-stone">{d.description}</span>}
                 <span className="kicker mt-2 block text-stone">{d.file ? `${d.file.ext.toUpperCase()} · ${formatBytes(d.file.size)}` : "Länk"}</span>
               </span>
@@ -387,11 +387,11 @@ async function Material() {
 }
 
 /** Under 435 px ryms inte de längsta rubrikerna i 2rem, så där följer storleken skärmbredden. */
-function BrandHeading({ index, title, dark }: { index: string; title: string; dark?: boolean }) {
+function BrandHeading({ index, title }: { index: string; title: string }) {
   return (
     <div>
-      <p className={cn("kicker", dark ? "text-white/50" : "text-stone")}>
-        <span className={dark ? "text-red" : "text-red-deep"}>§ {index}</span> · Grafiskt styrdokument
+      <p className="kicker text-stone">
+        <span className="text-red-deep">§ {index}</span> · Grafiskt styrdokument
       </p>
       <h2 className="display mt-4 text-[clamp(2rem,4.6vw,3.8rem)] max-[27.1875rem]:text-[7vw]">{title}</h2>
     </div>

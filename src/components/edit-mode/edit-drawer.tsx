@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { setNewsCover } from "@/app/admin/_actions/news";
 import { FormWatchCtx } from "@/components/admin/action-form";
-import { BoardMemberForm, CommitteeForm, FooterSettingsForm, HomeTextsForm, PageForm } from "@/components/admin/content-forms";
+import { BoardMemberForm, CommitteeForm, ContactSettingsForm, FooterSettingsForm, HomeTextsForm, PageForm, SiteTextsForm } from "@/components/admin/content-forms";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { CoverSlot } from "@/components/admin/cover-slot";
 import { EventForm } from "@/components/admin/event-form";
@@ -14,6 +14,7 @@ import { NewsForm } from "@/components/admin/news-form";
 import { StarPageForm } from "@/components/admin/star-page-form";
 import { ArrowUpRight, Close } from "@/components/icons";
 import type { BoardMember, Committee, EventItem, ImageRef, NewsItem, Page, SessionUser, SiteSettings } from "@/lib/types";
+import { SITE_TEXT_GROUPS } from "@/lib/site-texts";
 import { useFocusLayer } from "@/lib/use-focus-layer";
 import { editStore, targetQuery, UNSAVED, useEditState, type EditTarget } from "./store";
 
@@ -21,6 +22,8 @@ const TITLES: Record<EditTarget["type"], string> = {
   page: "Sidans text",
   home: "Startsidans texter",
   footer: "Sidfot och meddelande",
+  contact: "Kontaktuppgifter",
+  texts: "Texter på sajten",
   committee: "Utskottssidan",
   event: "Evenemanget",
   news: "Nyheten",
@@ -37,7 +40,10 @@ function adminHref(t: EditTarget): string {
       return `/admin/sidor/${t.slug}`;
     case "home":
     case "footer":
+    case "contact":
       return "/admin/installningar";
+    case "texts":
+      return "/admin/installningar#texter";
     case "committee":
       return `/admin/utskott/${t.id}`;
     case "event":
@@ -104,7 +110,7 @@ export function EditDrawer() {
           <div className="min-w-0">
             <p className="kicker text-red-deep">Redigera</p>
             <h2 id="redigera-rubrik" className="truncate text-lg font-bold">
-              {TITLES[open.type]}
+              {open.type === "texts" ? SITE_TEXT_GROUPS[open.group] : TITLES[open.type]}
             </h2>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -193,6 +199,10 @@ function DrawerBody({ target }: { target: EditTarget }) {
       return d.settings ? <HomeTextsForm s={d.settings} onSaved={onSaved} /> : null;
     case "footer":
       return d.settings ? <FooterSettingsForm s={d.settings} onSaved={onSaved} /> : null;
+    case "contact":
+      return d.settings ? <ContactSettingsForm s={d.settings} onSaved={onSaved} /> : null;
+    case "texts":
+      return d.settings ? <SiteTextsForm group={target.group} s={d.settings} onSaved={onSaved} /> : null;
     case "committee":
       return d.committee ? <CommitteeForm committee={d.committee} editor={!!d.editor} onSaved={onSaved} /> : null;
     case "event":

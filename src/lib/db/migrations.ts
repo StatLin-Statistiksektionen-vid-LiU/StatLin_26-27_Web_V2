@@ -482,6 +482,40 @@ Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg s
   UPDATE news SET body_md = replace(body_md, 'Det du skriver läses – och leder till förändring.', 'Det du skriver läses och leder till förändring.');
   UPDATE committees SET tagline = replace(tagline, 'Trädet i loggan – fem grenar som förgrenar sig i många små – står för', 'Trädet i loggan, fem grenar som förgrenar sig i många små, står för'), description_md = replace(description_md, 'Trädet i loggan – fem grenar som förgrenar sig i många små – står för', 'Trädet i loggan, fem grenar som förgrenar sig i många små, står för');
   `,
+  /* 17: varje utskott kan få en önskelåda på sin sida. Den är av tills utskottet slår på den, och id:t slumpas som i frågelådan. */ `
+  ALTER TABLE committees ADD COLUMN wishes_open INTEGER NOT NULL DEFAULT 0;
+  CREATE TABLE committee_wishes (
+    id INTEGER PRIMARY KEY,
+    committee_id INTEGER NOT NULL REFERENCES committees(id) ON DELETE CASCADE,
+    body TEXT NOT NULL,
+    month TEXT NOT NULL,
+    seen INTEGER NOT NULL DEFAULT 0,
+    handled INTEGER NOT NULL DEFAULT 0
+  );
+  CREATE INDEX committee_wishes_committee ON committee_wishes(committee_id, seen);
+  `,
+  /* 18: styrelsemöten och deras dagordning. Punkterna är mallens, ordförandens eller förslag som väntar på beslut (status). */ `
+  CREATE TABLE meetings (
+    id INTEGER PRIMARY KEY,
+    starts_at TEXT NOT NULL,
+    place TEXT NOT NULL DEFAULT '',
+    note TEXT NOT NULL DEFAULT '',
+    created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX meetings_starts_at ON meetings(starts_at);
+  CREATE TABLE meeting_items (
+    id INTEGER PRIMARY KEY,
+    meeting_id INTEGER NOT NULL REFERENCES meetings(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    proposed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    status TEXT NOT NULL DEFAULT 'proposed' CHECK (status IN ('proposed', 'agenda', 'declined')),
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+  );
+  CREATE INDEX meeting_items_meeting ON meeting_items(meeting_id, status, sort_order);
+  `,
 ];
 
 export function migrate(db: Database.Database) {

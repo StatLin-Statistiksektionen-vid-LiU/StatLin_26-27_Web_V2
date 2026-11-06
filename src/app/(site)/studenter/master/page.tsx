@@ -47,15 +47,15 @@ async function Master() {
       }
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
-          <Link href="/en/masters" hrefLang="en" lang="en" className="noise group relative block overflow-hidden rounded-[1.75rem] bg-red p-7 text-white">
+          <Link href="/en/masters" hrefLang="en" lang="en" className="noise group relative block overflow-hidden rounded-2xl bg-red p-7 text-white">
             <div className="grid-paper pointer-events-none absolute inset-0 text-white" aria-hidden />
-            <p className="kicker relative text-white/80">The programme is taught in English</p>
+            <p className="kicker relative text-white">The programme is taught in English</p>
             <p className="display-tight relative mt-3 text-2xl">Read this page in English</p>
             <span className="relative mt-5 inline-flex items-center gap-2 font-semibold">
               For master&apos;s students <ArrowRight size={18} className="transition-transform duration-500 group-hover:translate-x-1" />
             </span>
           </Link>
-          <div className="rounded-[1.75rem] border border-ink/10 bg-white p-6">
+          <div className="rounded-xl border border-line bg-white p-6">
             <p className="kicker text-stone">Nästa på schemat</p>
             <div className="mt-2">
               {events.length > 0 ? events.map((e) => <EventRow key={e.id} event={e} compact />) : <p className="py-6 text-stone">Nya evenemang kommer snart.</p>}

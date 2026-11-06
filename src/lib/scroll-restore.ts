@@ -21,6 +21,8 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
     var store = sessionStorage;
     var key = function () { return "statlin-plats:" + location.pathname + location.search + location.hash; };
     var restoring = false;
+    // ScrollToAnchor frågar här om platsen håller på att läggas tillbaka. history.scrollRestoration duger inte till det: nya poster i historiken ärver "manual".
+    try { Object.defineProperty(window, "__statlinPlats", { get: function () { return restoring; }, configurable: true }); } catch (e) {}
     var save = function () {
       if (restoring) return;
       try { store.setItem(key(), String(Math.round(scrollY))); } catch (e) {}

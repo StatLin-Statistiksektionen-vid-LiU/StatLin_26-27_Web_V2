@@ -24,7 +24,8 @@ async function Committees() {
   return (
     <>
       <AdminHeader title="Utskott" description="Beskrivningar, loggor, kontaktuppgifter och färger för styrelsen och utskotten." />
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* grid-cols-1 också på telefonen: utan den blir kolumnen lika bred som det längsta namnet och sidan går att dra i sidled vid 320 pixlar. */}
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {committees.map((c) => (
           <li key={c.id}>
             <Link href={`/admin/utskott/${c.id}`} className="group flex items-center gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-4 transition-colors hover:border-ink/30">

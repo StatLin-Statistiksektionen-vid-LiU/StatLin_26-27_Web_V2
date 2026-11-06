@@ -1,24 +1,32 @@
 @import "tailwindcss";
 
+/* opak:… gäller när genomskinlighetseffekter är avstängda i systemet (Windows: Hjälpmedel → Visuella effekter). */
+@custom-variant opak (@media (prefers-reduced-transparency: reduce));
+
 /*
- * StatLin – designsystem
- * Färger från grafiskt styrdokument (kap. 4): Röd 255/7/7, Svart, Vit.
- * Text på sektionshemsidan är undantagen från typsnittsregleringen (kap. 5),
- * så webben använder Archivo (rubriker/bröd) och JetBrains Mono (data och accentord i rubriker).
- * Citat sätts i Georgia, styrdokumentets brödtypsnitt, som är ett systemtypsnitt. Formlerna i loggan har ett eget typsnitt,
- * --font-formulas, eftersom Georgia saknar hatten över β.
+ * StatLin – designsystem, version "ny design"
+ * Färger från grafiskt styrdokument (kap. 4): Röd 255/7/7, Svart, Vit. Rött är en accent: loggan, punkter, markeringar och ord i
+ * kursiv. Ytorna är varmt papper med tunna linjer i stället för skuggor.
+ * Text på sektionshemsidan är undantagen från typsnittsregleringen (kap. 5), så webben använder samma typsnitt som förra versionen:
+ * Archivo (rubriker och bröd) och JetBrains Mono (data och accentord i rubriker). Citat sätts i Georgia, styrdokumentets brödtypsnitt.
+ * Formlerna i loggan har ett eget typsnitt, --font-formulas, eftersom Georgia saknar hatten över β.
+ *
+ * Färgerna är roller, så att mörkt läge bara byter värdena (längst ner i filen):
+ *   paper  sidans bakgrund        white  kort och ytor ovanpå sidan
+ *   ink    text och primärknappar  stone  dämpad text      line  hårfina linjer
  */
 
 @theme {
-  --color-ink: #0a0a0a;
-  --color-ink-2: #121212;
-  --color-ink-3: #1b1b1b;
-  --color-ink-4: #262626;
-  --color-paper: #f4f2ee;
-  --color-paper-2: #ebe8e2;
-  --color-paper-3: #dcd8cf;
-  --color-stone: #6a665f;
-  --color-stone-light: #a19d95;
+  --color-ink: #141413;
+  --color-ink-2: #1d1c1a;
+  --color-ink-3: #262522;
+  --color-ink-4: #34332f;
+  --color-paper: #f9f8f5;
+  --color-paper-2: #f1efe9;
+  --color-paper-3: #e6e3db;
+  --color-stone: #69665f;
+  --color-stone-light: #8b877f;
+  --color-line: #e6e3dc;
   --color-red: #ff0707;
   --color-red-deep: #d40000;
   --color-red-dark: #8f0000;
@@ -30,6 +38,16 @@
   --font-serif: Georgia, serif;
   --font-formulas: "Times New Roman", Times, serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Mindre rundning och svagare skuggor överallt: tunna linjer bär formen. */
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.875rem;
+  --shadow-sm: 0 1px 2px 0 rgb(20 20 19 / 0.04);
+  --shadow-md: 0 2px 8px -2px rgb(20 20 19 / 0.07), 0 1px 2px rgb(20 20 19 / 0.04);
+  --shadow-lg: 0 10px 28px -12px rgb(20 20 19 / 0.12), 0 1px 2px rgb(20 20 19 / 0.04);
+  --shadow-xl: 0 18px 44px -18px rgb(20 20 19 / 0.16), 0 1px 3px rgb(20 20 19 / 0.05);
+  --shadow-2xl: 0 28px 64px -28px rgb(20 20 19 / 0.22), 0 1px 3px rgb(20 20 19 / 0.05);
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
@@ -59,9 +77,10 @@
       opacity: 0.7;
     }
   }
+  /* 0,01 i stället för 0: Chrome räknar inte text som målas helt genomskinlig, så en rubrik i fade-up blev sidans största innehåll först när animationen var slut. Skillnaden syns inte. */
   @keyframes fade-up {
     from {
-      opacity: 0;
+      opacity: 0.01;
       transform: translate3d(0, 24px, 0);
     }
     to {
@@ -72,9 +91,18 @@
 }
 
 @layer base {
+  /* --header-h är telefonens list överst, --sidebar-w datorns sidomeny. Sidorna lägger --header-h ovanför sitt innehåll. */
   :root {
     color-scheme: light;
-    --header-h: 4.25rem;
+    --header-h: 3.5rem;
+    --sidebar-w: 0rem;
+    --site-max: 78rem;
+  }
+  @media (min-width: 64rem) {
+    :root {
+      --header-h: 0rem;
+      --sidebar-w: 15.5rem;
+    }
   }
 
   html {
@@ -97,11 +125,9 @@
     touch-action: manipulation;
   }
 
-  /* Den publika sajten börjar och slutar mörkt. Drar man förbi kanten på en iPhone ska det inte synas en ljus rand. */
-  @media screen {
-    html:has(#sidfot) {
-      background: var(--color-ink);
-    }
+  /* Drar man förbi kanten på en iPhone ska det synas papper, inte en annan färg. */
+  html {
+    background: var(--color-paper);
   }
 
   body {
@@ -114,8 +140,7 @@
   }
 
   ::selection {
-    background: var(--color-red);
-    color: #fff;
+    background: color-mix(in oklab, var(--color-red) 24%, transparent);
   }
 
   :focus-visible {
@@ -247,9 +272,9 @@
 
 @utility container-site {
   width: 100%;
-  max-width: 88rem;
+  max-width: var(--site-max);
   margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 3rem);
+  padding-inline: clamp(1.25rem, 3.5vw, 3rem);
 }
 
 @utility container-prose {
@@ -265,6 +290,22 @@
     linear-gradient(to right, color-mix(in oklab, currentColor 9%, transparent) 1px, transparent 1px),
     linear-gradient(to bottom, color-mix(in oklab, currentColor 9%, transparent) 1px, transparent 1px);
   background-size: 64px 64px;
+}
+
+/* Millimeterpapper: fina linjer var 16:e pixel och tydligare var 80:e, i textfärgen så att det följer temat. Styrkan går att ändra med variablerna. */
+@utility grid-millimeter {
+  --rutnat-grov: color-mix(in oklab, currentColor var(--rutnat-styrka, 9%), transparent);
+  --rutnat-fin: color-mix(in oklab, currentColor var(--rutnat-fin-styrka, 4.5%), transparent);
+  background-image:
+    linear-gradient(to right, var(--rutnat-grov) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rutnat-grov) 1px, transparent 1px),
+    linear-gradient(to right, var(--rutnat-fin) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--rutnat-fin) 1px, transparent 1px);
+  background-size:
+    80px 80px,
+    80px 80px,
+    16px 16px,
+    16px 16px;
 }
 
 @utility grid-paper-fine {
@@ -331,73 +372,78 @@
     }
   }
 
+  /* Knappar: rektangulära med liten rundning, som i ett verktyg. Primärknappen är bläck, den röda används en gång per sida. */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.6rem;
-    height: 3rem;
-    padding-inline: 1.4rem;
-    border-radius: 999px;
-    font-weight: 600;
-    font-size: 0.95rem;
-    letter-spacing: 0.005em;
+    gap: 0.5rem;
+    height: 2.5rem;
+    padding-inline: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    font-weight: 560;
+    font-size: 0.9rem;
+    letter-spacing: -0.005em;
     transition:
-      transform 0.35s var(--ease-out-expo),
-      background-color 0.25s,
-      color 0.25s,
-      border-color 0.25s,
-      box-shadow 0.35s;
+      transform 0.25s var(--ease-out-expo),
+      background-color 0.2s,
+      color 0.2s,
+      border-color 0.2s;
     white-space: nowrap;
   }
   .btn:active {
-    transform: scale(0.97);
+    transform: scale(0.98);
   }
   .btn-red {
     background: var(--color-red);
     color: #fff;
-    box-shadow: 0 10px 30px -12px color-mix(in oklab, var(--color-red) 80%, transparent);
   }
   .btn-red:hover {
     background: var(--color-red-deep);
-    box-shadow: 0 16px 40px -14px color-mix(in oklab, var(--color-red) 90%, transparent);
   }
   .btn-light {
-    background: #fff;
+    background: var(--color-white);
+    border-color: var(--color-line);
     color: var(--color-ink);
   }
   .btn-light:hover {
     background: var(--color-paper-2);
   }
+  /* Kantknapp som tar färg från omgivningen: vit på mörka ytor, bläck på ljusa. */
   .btn-ghost-dark {
-    border: 1px solid rgb(255 255 255 / 0.22);
-    color: #fff;
+    border-color: color-mix(in oklab, currentColor 28%, transparent);
+    color: inherit;
   }
   .btn-ghost-dark:hover {
-    border-color: #fff;
-    background: rgb(255 255 255 / 0.06);
+    border-color: color-mix(in oklab, currentColor 60%, transparent);
+    background: color-mix(in oklab, currentColor 6%, transparent);
   }
   .btn-ghost {
-    border: 1px solid color-mix(in oklab, var(--color-ink) 20%, transparent);
+    background: var(--color-white);
+    border-color: var(--color-line);
     color: var(--color-ink);
   }
   .btn-ghost:hover {
-    border-color: var(--color-ink);
+    border-color: color-mix(in oklab, var(--color-ink) 30%, transparent);
+    background: var(--color-paper-2);
   }
   .btn-ink {
     background: var(--color-ink);
-    color: #fff;
+    color: var(--color-paper);
   }
   .btn-ink:hover {
-    background: var(--color-ink-4);
+    background: color-mix(in oklab, var(--color-ink) 84%, var(--color-paper));
   }
   .btn-sm {
-    height: 2.4rem;
-    padding-inline: 1rem;
-    font-size: 0.85rem;
+    height: 2rem;
+    padding-inline: 0.75rem;
+    font-size: 0.82rem;
+    border-radius: 0.4rem;
   }
-  /* Med fingret ska också de små knapparna vara 44 px höga. */
+  /* Med fingret ska knapparna vara 44 px höga. */
   @media (pointer: coarse) {
+    .btn,
     .btn-sm {
       height: 2.75rem;
     }
@@ -406,16 +452,33 @@
   .chip {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    height: 1.7rem;
-    padding-inline: 0.65rem;
-    border-radius: 999px;
+    gap: 0.35rem;
+    height: 1.5rem;
+    padding-inline: 0.5rem;
+    border-radius: 0.375rem;
     font-family: var(--font-mono);
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
     white-space: nowrap;
+  }
+
+  /* Tangent i en snabbtangent, t.ex. / i sökrutan. */
+  .kbd {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding-inline: 0.3rem;
+    border: 1px solid var(--color-line);
+    border-bottom-width: 2px;
+    border-radius: 0.3rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    line-height: 1;
+    color: var(--color-stone);
+    background: var(--color-white);
   }
 
   /* Utan JavaScript kommer innehållet aldrig i skelettets ställe, så då ska det inte heller pulsera. */
@@ -491,31 +554,7 @@
   }
 }
 
-/* Den mörka toppen kan ligga i det som aldrig kommer utan JavaScript, och då syns inte sidhuvudets vita text mot den ljusa sidan.
-   Regeln står utanför lagren, eftersom sidhuvudets bg-transparent annars vinner oavsett specificitet. */
-html:not(.js) header.fixed {
-  background-color: var(--color-ink);
-}
-
-/* Sidhuvudets lilla logga. Där heron har den stora loggan glider namnet in på den lillas plats. Bara transform och opacity, så att inget läggs ut på nytt under scrollen. */
-.sidhuvud-logga,
-.sidhuvud-namn {
-  transition:
-    transform 0.7s var(--ease-out-expo),
-    opacity 0.7s var(--ease-out-expo);
-}
-/* Innan JavaScript har kommit vet sidhuvudet inte vilken sida det står på, men heron finns redan i dokumentet. */
-.sidhuvud-marke[data-storlogga="ja"] .sidhuvud-logga,
-html:has([data-startsida]) .sidhuvud-marke[data-storlogga="okant"] .sidhuvud-logga {
-  opacity: 0;
-  transform: scale(0.5);
-}
-.sidhuvud-marke[data-storlogga="ja"] .sidhuvud-namn,
-html:has([data-startsida]) .sidhuvud-marke[data-storlogga="okant"] .sidhuvud-namn {
-  transform: translateX(-3rem);
-}
-
-/* Sidhuvudet vet inte vilken sida det står på förrän JavaScript har kommit. Till dess står båda språklänkarna i koden. */
+/* Menyn vet inte vilken sida den står på förrän JavaScript har kommit. Till dess står båda språklänkarna i koden. */
 .sprak-sv,
 html:has([data-engelsk-sida]) .sprak-en {
   display: none;
@@ -524,12 +563,18 @@ html:has([data-engelsk-sida]) .sprak-sv {
   display: inline-flex;
 }
 
-/* Menyerna öppnas med JavaScript. Utan det öppnas grupperna i huvudmenyn av muspekaren och fokus, och mobilmenyn blir en länk till sidfoten. */
-html:not(.js) .meny-grupp:is(:hover, :focus-within) > .meny-lista {
-  visibility: visible;
-  opacity: 1;
-  translate: -50% 0;
+/* Sidomenyns grupper är details, så att de går att fälla ut även utan JavaScript. Pilen vänds när gruppen är öppen. */
+.meny-grupp > summary {
+  list-style: none;
 }
+.meny-grupp > summary::-webkit-details-marker {
+  display: none;
+}
+.meny-grupp[open] > summary .meny-pil {
+  transform: rotate(180deg);
+}
+
+/* Telefonens meny öppnas med JavaScript. Utan det blir menyknappen en länk till sidfoten, som har samma länkar. */
 .meny-utan-js {
   display: none;
 }
@@ -656,10 +701,10 @@ html:not(.js) .meny-knapp {
   font-weight: 500;
 }
 .prose-statlin details {
-  border: 1px solid color-mix(in oklab, var(--color-ink) 12%, transparent);
-  border-radius: 1rem;
+  border: 1px solid var(--color-line);
+  border-radius: 0.75rem;
   padding: 1rem 1.25rem;
-  background: #fff;
+  background: var(--color-white);
 }
 .prose-statlin details + details {
   margin-top: 0.75rem;
@@ -753,6 +798,38 @@ html:not(.js) .meny-knapp {
   animation-fill-mode: backwards;
 }
 
+/* Millimeterpapperet bakom startsidans hero (HeroGrid). Tydligast kring loggan, som står till höger på datorn, och tonat mot kanterna. */
+.hero-rutnat-bas {
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 62%, black 15%, transparent 80%);
+  animation: rutnat-in 1.4s 0.15s ease-out backwards;
+}
+@media (min-width: 64rem) {
+  .hero-rutnat-bas {
+    mask-image: radial-gradient(ellipse 60% 95% at 74% 48%, black 20%, transparent 82%);
+  }
+}
+/* Inloggningens panel har loggan i mitten. */
+.hero-rutnat-mitt .hero-rutnat-bas {
+  mask-image: radial-gradient(ellipse 72% 62% at 50% 46%, black 18%, transparent 80%);
+}
+/* Ljuset: samma rutnät i rött och starkare, synligt i en cirkel kring pekaren. Tonas in och ut med genomskinligheten. */
+.hero-rutnat-ljus {
+  --rutnat-styrka: 42%;
+  --rutnat-fin-styrka: 18%;
+  color: var(--color-red);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  mask-image: radial-gradient(200px circle at var(--mx, 50%) var(--my, 50%), black, transparent);
+}
+.hero-rutnat[data-aktiv] .hero-rutnat-ljus {
+  opacity: 1;
+}
+@keyframes rutnat-in {
+  from {
+    opacity: 0;
+  }
+}
+
 /* Reflexen under loggan. */
 .logo-reflex {
   bottom: -9%;
@@ -800,20 +877,10 @@ html:not(.js) .meny-knapp {
   }
 }
 
-/* Formelringen. Glöden väljs under Inställningar → Startsidan. Filtret kostar ett eget ritpass, så det gäller bara medan ringen syns. */
+/* Formelringen: formler i bläckets färg, utan glöd. Den ligger i loggans plan. Med ett eget djup i 3D-rummet ritade Chromium en svart remsa längs sidomenyn på breda skärmar. */
 .logo-formler {
-  --glow-near: #ff0707;
-  --glow-far: rgb(255 7 7 / 0.8);
-  --glow: drop-shadow(0 0 2px var(--glow-near)) drop-shadow(0 0 6px var(--glow-far));
-  transform: translateZ(-18px);
+  color: var(--color-ink);
   text-rendering: geometricPrecision;
-}
-.logo-formler[data-shown] {
-  filter: var(--glow);
-}
-.logo-formler-vit {
-  --glow-near: rgb(255 255 255 / 0.8);
-  --glow-far: rgb(255 255 255 / 0.5);
 }
 .logo-formler text {
   font-family: var(--font-formulas);
@@ -821,18 +888,11 @@ html:not(.js) .meny-knapp {
   font-size: 27px;
 }
 @media (max-width: 640px) {
-  .logo-formler {
-    --glow: drop-shadow(0 0 1.5px var(--glow-near)) drop-shadow(0 0 4px var(--glow-far));
-  }
   .logo-formler text {
     font-size: 30px;
   }
 }
-/* Den suddiga kopian är telefonens glöd. Datorn har filtret ovan. */
-.logo-formler .formler-glod {
-  display: none;
-}
-/* Telefon och surfplatta: hela ringen tonas in och ut (se touchRing i formula-ring.tsx). Texten och glöden ritas en gång; sedan ändras bara genomskinligheten, som grafikkortet sköter utan att något ritas om. */
+/* Telefon och surfplatta: hela ringen tonas in och ut (se touchRing i formula-ring.tsx). Texten ritas en gång; sedan ändras bara genomskinligheten, som grafikkortet sköter utan att något ritas om. */
 @media (hover: none) {
   .logo-formler {
     opacity: 0;
@@ -841,23 +901,15 @@ html:not(.js) .meny-knapp {
   }
   .logo-formler[data-shown] {
     opacity: 1;
-    filter: none;
     transition-duration: 0.9s;
   }
   .logo-formler text {
-    fill: rgb(255 255 255 / 0.85);
-  }
-  .logo-formler .formler-glod {
-    display: inline;
-    fill: var(--glow-near);
+    fill: color-mix(in srgb, currentColor 85%, transparent);
   }
 }
 @media (prefers-reduced-motion: reduce) and (hover: hover) {
-  .floating-logo:hover .logo-formler {
-    filter: var(--glow);
-  }
   .floating-logo:hover .logo-formler text {
-    fill: rgb(255 255 255 / 0.7);
+    fill: color-mix(in srgb, currentColor 70%, transparent);
   }
 }
 
@@ -965,20 +1017,18 @@ html:not(.js) .meny-knapp {
   }
 }
 
-/* Tidslinjen under heron. --linje är var linjen går, räknat från spårets överkant. */
+/* Tidslinjen i startsidans evenemangsdel. --linje är var linjen går, räknat från spårets överkant. */
 .tidsaxel {
   --linje: 3.4rem;
-  --band: 11rem;
-  --kant: max(clamp(1rem, 4vw, 3rem), calc((100vw - 88rem) / 2 + clamp(1rem, 4vw, 3rem)));
+  --band: 10rem;
+  --kant: max(clamp(1.25rem, 3.5vw, 3rem), calc((100vw - var(--sidebar-w) - var(--site-max)) / 2 + clamp(1.25rem, 3.5vw, 3rem)));
   /* Färgerna väljs under Admin → Inställningar → Startsidan. Grundläget är det inverterade: vitt med röd linje. */
-  --tx-yta: #fff;
+  --tx-yta: var(--color-white);
   --tx-text: var(--color-ink);
   --tx-accent: var(--color-red-deep);
   --tx-linje: var(--color-red-deep);
   --tx-dampad: var(--color-stone);
-  --tx-kant: rgb(10 10 10 / 0.1);
-  --tx-pil-yta: var(--color-red-deep);
-  --tx-pil-hover: var(--color-red-dark);
+  --tx-kant: var(--color-line);
   position: relative;
   min-height: var(--band);
   background: var(--tx-yta);
@@ -992,8 +1042,6 @@ html:not(.js) .meny-knapp {
   --tx-linje: #fff;
   --tx-dampad: rgb(255 255 255 / 0.85);
   --tx-kant: var(--color-red-dark);
-  --tx-pil-yta: var(--color-red-dark);
-  --tx-pil-hover: #000;
 }
 /* Natthimlen från STAR, med den röda linjen från loggan. */
 .tidsaxel[data-farg="natt"] {
@@ -1003,8 +1051,6 @@ html:not(.js) .meny-knapp {
   --tx-linje: #ff5a5a;
   --tx-dampad: rgb(255 255 255 / 0.75);
   --tx-kant: rgb(255 255 255 / 0.12);
-  --tx-pil-yta: rgb(255 255 255 / 0.14);
-  --tx-pil-hover: rgb(255 255 255 / 0.28);
 }
 .tidsaxel-reserv::before,
 .tidsaxel-spar::before {
@@ -1055,43 +1101,27 @@ html:not(.js) .meny-knapp {
   width: var(--bredd, 15rem);
   scroll-snap-align: start;
 }
-/* Ett streck per dag fram till nästa händelse. */
-.tidsaxel-hallplats[style*="--streck"]::before {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  top: calc(var(--linje) - 3px);
-  height: 7px;
-  background: linear-gradient(90deg, var(--tx-linje) 1px, transparent 1px) 0 0 / calc(100% / var(--streck)) 100% repeat-x;
-}
 .tidsaxel-forst {
   width: calc(var(--bredd) + 5.5rem);
 }
 .tidsaxel-tom {
   width: min(24rem, 72vw);
 }
-.tidsaxel-mast {
-  position: absolute;
-  left: 0;
-  top: calc(var(--linje) - 1.1rem);
-  height: 2.2rem;
-  width: 1px;
-  background: var(--tx-linje);
-}
-.tidsaxel-stjarna {
+/* Varje evenemang är en ring på linjen, och det som händer härnäst en lite större. */
+.tidsaxel-punkt {
   position: absolute;
   left: 0;
   top: var(--linje);
   translate: -50% -50%;
-  padding: 0.15rem;
-  background: var(--tx-yta);
-  color: var(--tx-linje);
-  font-size: 0.85rem;
-  line-height: 1;
+  width: 0.55rem;
+  height: 0.55rem;
+  border: 1.5px solid var(--tx-linje);
   border-radius: 999px;
+  background: var(--tx-yta);
 }
-.tidsaxel-stjarna-stor {
-  font-size: 1.35rem;
+.tidsaxel-punkt-stor {
+  width: 0.8rem;
+  height: 0.8rem;
 }
 .tidsaxel-nu {
   position: absolute;
@@ -1118,7 +1148,7 @@ html:not(.js) .meny-knapp {
   height: var(--linje);
   padding: 0 0 0.6rem 0.8rem;
   white-space: nowrap;
-  color: var(--tx-accent);
+  color: var(--tx-dampad);
 }
 .tidsaxel-text {
   display: block;
@@ -1127,8 +1157,9 @@ html:not(.js) .meny-knapp {
 .tidsaxel-text .kicker {
   color: var(--tx-dampad);
 }
-/* Det som händer härnäst bär accentfärgen, resten står i textfärgen. */
-.tidsaxel-forst .tidsaxel-rubrik {
+/* Accentfärgen sparas till dagens datum och datumet för det som händer härnäst. Rubrikerna står i textfärgen. */
+.tidsaxel-idag .tidsaxel-datum,
+.tidsaxel-forst .tidsaxel-datum {
   color: var(--tx-accent);
 }
 /* STAR: en bit natthimmel på linjen. Samma tunna, breda versaler och mörkröda streck som på företagssidan. */
@@ -1203,9 +1234,10 @@ html:not(.js) .meny-knapp {
     display: flex;
     gap: 0.25rem;
     padding: 0.2rem;
+    border: 1px solid var(--tx-kant);
     border-radius: 999px;
-    background: var(--tx-pil-yta);
-    color: #fff;
+    background: var(--tx-yta);
+    color: var(--tx-text);
   }
   .tidsaxel-pilar button {
     display: grid;
@@ -1216,13 +1248,13 @@ html:not(.js) .meny-knapp {
     transition: background-color 0.2s;
   }
   .tidsaxel-pilar button:hover:not(:disabled) {
-    background: var(--tx-pil-hover);
+    background: color-mix(in srgb, var(--tx-text) 8%, transparent);
   }
   .tidsaxel-pilar button:disabled {
     opacity: 0.4;
   }
   .tidsaxel-pilar button:focus-visible {
-    outline-color: #fff;
+    outline-color: var(--tx-accent);
     outline-offset: 1px;
     border-radius: 999px;
   }
@@ -1270,15 +1302,11 @@ html:not(.js) .meny-knapp {
     width: auto;
     padding-left: var(--indrag);
   }
-  .tidsaxel-hallplats[style*="--streck"]::before,
-  .tidsaxel-mast {
-    display: none;
-  }
   /* Bandet ska inte bli längre än en skärm: fyra evenemang, och STAR om det ligger längre fram. */
   .tidsaxel-hallplats:nth-child(n + 6):not(:has(.tidsaxel-star)) {
     display: none;
   }
-  .tidsaxel-stjarna {
+  .tidsaxel-punkt {
     left: var(--rad);
     top: 1.2rem;
   }
@@ -1308,7 +1336,7 @@ html:not(.js) .meny-knapp {
     right: 0.1rem;
     top: 50%;
     translate: 0 -50%;
-    color: var(--tx-accent);
+    color: var(--tx-dampad);
   }
   .tidsaxel-datum {
     height: auto;
@@ -1373,12 +1401,9 @@ html:not(.js) .meny-knapp {
   .tidsaxel[data-intro] .tidsaxel-spar::before {
     animation: tidsaxel-rita 1.5s var(--ease-out-expo) both;
   }
-  .tidsaxel[data-intro] .tidsaxel-stjarna {
+  .tidsaxel[data-intro] .tidsaxel-punkt {
     animation: tidsaxel-tand 0.8s var(--ease-out-expo) both;
     animation-delay: calc(0.3s + var(--i) * 0.12s);
-  }
-  .tidsaxel[data-intro] .tidsaxel-hallplats::before {
-    animation: tidsaxel-tona 1s ease-out 0.5s both;
   }
 }
 @media (prefers-reduced-motion: no-preference) and (max-width: 767px) {
@@ -1400,12 +1425,6 @@ html:not(.js) .meny-knapp {
   from {
     opacity: 0;
     scale: 0.2;
-    rotate: -60deg;
-  }
-}
-@keyframes tidsaxel-tona {
-  from {
-    opacity: 0;
   }
 }
 
@@ -1419,4 +1438,69 @@ html:has(#admin-bar[data-corner^="bottom"]) .hero-bunn {
 }
 html:has(#admin-bar[data-corner^="bottom"]) footer {
   padding-bottom: 4.5rem;
+}
+
+/* ---------- Mörkt läge ---------- */
+/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 27) */
+
+/*
+ * Utan genomskinlighetseffekter syns ingen oskärpa bakom något. Ytor av frostat glas (sidhuvudet på telefon, etiketter på bilder,
+ * sökrutans bakgrund) blir hela med klasserna opak:… i komponenterna; den här regeln tar oskärpan överallt, även i dialogernas bakgrund.
+ */
+@media (prefers-reduced-transparency: reduce) {
+  *,
+  ::backdrop {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* Temabytet (ThemeToggle): det nya läget växer fram som en cirkel från knappen, utan webbläsarens vanliga övertoning. */
+:root.tema-byte::view-transition-old(root),
+:root.tema-byte::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/*
+ * Väljs med knappen i menyn och sparas i localStorage (theme-toggle.tsx). Skriptet i layout.tsx sätter data-tema innan sidan ritas.
+ * Rollerna byter värde: papperet blir mörkt, ytorna lite ljusare än papperet, bläcket ljust. En mörk yta (bg-ink) med vit text
+ * blir därmed en ljus yta med mörk text, alltså fortfarande omvänd mot sidan.
+ */
+:root[data-tema="mork"] {
+  color-scheme: dark;
+  --color-ink: #ecebe6;
+  --color-ink-2: #dedcd6;
+  --color-ink-3: #cfcdc6;
+  --color-ink-4: #bdbab3;
+  --color-paper: #121211;
+  --color-paper-2: #1a1a18;
+  --color-paper-3: #262522;
+  --color-white: #1b1b19;
+  --color-stone: #a4a199;
+  --color-stone-light: #6f6c66;
+  --color-line: #2a2926;
+  --color-red-deep: #ff5247;
+  --color-red-dark: #ff8a82;
+  /* Gröna och blå lägesrutor (sparat, publicerat, information) har mörk text på en ljus ton. I mörkt läge blir texten ljus i stället. */
+  --color-emerald-700: oklch(76.5% 0.177 163.223);
+  --color-emerald-800: oklch(84.5% 0.143 164.978);
+  --color-emerald-900: oklch(90.5% 0.093 164.15);
+  --color-sky-900: oklch(90.1% 0.058 230.902);
+}
+
+/*
+ * Ytor med egen fast färg (STAR-himlen, röda kort, bilder med text på) är ritade för vit text. Där gäller ljusa lägets värden, så att
+ * text-white förblir vit och bg-white vit även i mörkt läge.
+ */
+:root[data-tema="mork"] :is(.tema-fast, .star-sky, .bg-red, .bg-red-deep, .bg-star-navy) {
+  --color-ink: #141413;
+  --color-ink-2: #1d1c1a;
+  --color-ink-3: #262522;
+  --color-ink-4: #34332f;
+  --color-white: #fff;
+  --color-stone: #69665f;
+  --color-stone-light: #8b877f;
+  --color-red-deep: #d40000;
+  --color-red-dark: #8f0000;
 }

@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { CommitteeForm } from "@/components/admin/content-forms";
+import { WishBoxAdmin } from "@/components/admin/wish-box-admin";
 import { AdminHeader } from "@/components/admin/ui";
 import { ArrowUpRight } from "@/components/icons";
 import { canEditCommittee, isEditor } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getCommitteeById } from "@/lib/data/content";
+import { listCommitteeWishes } from "@/lib/data/onskelada";
 
 export const metadata = { title: "Redigera utskott" };
 
@@ -25,6 +27,8 @@ async function EditCommittee({ params }: { params: PageProps<"/admin/utskott/[id
   if (!c) notFound();
   if (!canEditCommittee(user, c.id)) redirect("/admin?nekad=1");
   const editor = isEditor(user);
+  // Styrelsen har ingen egen sida på sajten och därför ingen önskelåda.
+  const wishes = c.kind === "styrelse" ? null : await listCommitteeWishes(c.id);
 
   return (
     <>
@@ -40,6 +44,7 @@ async function EditCommittee({ params }: { params: PageProps<"/admin/utskott/[id
           )
         }
       />
+      {wishes && <WishBoxAdmin committee={c} wishes={wishes} markSeen={user.role === "committee" && user.committee_id === c.id} />}
       <CommitteeForm committee={c} editor={editor} />
     </>
   );

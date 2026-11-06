@@ -1,12 +1,16 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-/** Sidhuvudets mörka yta bär sajtens meny. Resten av sidan är papper, och koden ska synas utan att man scrollar på telefonen. */
+/** Sidhuvudet är lågt och avslutas med en tunn linje, så att koden syns utan att man scrollar på telefonen. */
 export function FrageladaHeader() {
   return (
-    <header className="noise relative overflow-hidden bg-ink text-white">
+    <header className="relative overflow-hidden border-b border-line">
+      <div className="grid-paper pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
       <div className="container-site relative pb-7 pt-[calc(var(--header-h)+1.5rem)] md:pb-10 md:pt-[calc(var(--header-h)+3rem)]">
-        <p className="kicker text-white/60">Anonym</p>
+        <p className="kicker flex items-center gap-2.5 text-stone">
+          <span className="size-1.5 rounded-full bg-red" aria-hidden />
+          Anonym
+        </p>
         <h1 className="display-tight mt-2 text-[min(11vw,clamp(2.4rem,7vw,4.5rem))]">Frågelådan</h1>
       </div>
     </header>
@@ -28,7 +32,7 @@ export function FrageladaLayout({ children, aside }: { children: ReactNode; asid
 /** Det som går att lita på. Texten lovar bara det som stämmer i koden: se rapporten och /integritet. */
 export function TrustNotes() {
   return (
-    <aside className="lg:border-l lg:border-ink/15 lg:pl-10">
+    <aside className="lg:border-l lg:border-line lg:pl-10">
       <h2 className="kicker text-stone">Så fungerar lådan</h2>
       <ul className="mt-4 space-y-1 text-[1.2rem] font-bold leading-snug">
         <li>Vi sparar inget namn.</li>
@@ -41,9 +45,9 @@ export function TrustNotes() {
           Mer om vad som sparas
         </Link>
       </p>
-      <p className="mt-6 border-t border-ink/15 pt-5 font-semibold">Skriv inget som avslöjar dig själv.</p>
+      <p className="mt-6 border-t border-line pt-5 font-semibold">Skriv inget som avslöjar dig själv.</p>
       <p className="mt-2 text-[0.95rem] text-stone">Namn, klass eller en händelse som bara du var med om kan räcka för att någon ska förstå vem du är.</p>
-      <p className="mt-6 border-t border-ink/15 pt-5 text-[0.95rem] text-stone">
+      <p className="mt-6 border-t border-line pt-5 text-[0.95rem] text-stone">
         Lådan bevakas inte dygnet runt. Är det akut, ring{" "}
         <a href="tel:112" className="font-bold text-ink underline underline-offset-2">
           112

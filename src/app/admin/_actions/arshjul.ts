@@ -75,7 +75,8 @@ export async function saveWheelItem(_prev: FormState, fd: FormData): Promise<For
   audit(user.id, "create", "wheel_item", Number(res.lastInsertRowid), d.title);
   await renewSessionIfDue();
   revalidateAdmin();
-  redirect(`/admin/arshjul?sparad=1${month ? `&manad=${month}` : ""}`);
+  // Tillbaka till samma vy: månaden punkten hamnade i, och bara de egna punkterna om filtret var på.
+  redirect(`/admin/arshjul?sparad=1${month ? `&manad=${month}` : ""}${fd.get("vara") === "1" ? "&vara=1" : ""}`);
 }
 
 export async function deleteWheelItem(fd: FormData): Promise<FormState> {

@@ -186,7 +186,7 @@ export async function buildSearchIndex(): Promise<SearchEntry[]> {
   }
 
   for (const p of partners) {
-    entries.push({ href: "/foretag", kind: "foretag", title: p.name, meta: p.tier === "huvudpartner" ? "Huvudpartner" : "Partner", text: p.description });
+    entries.push({ href: "/foretag", kind: "foretag", title: p.name, meta: p.tier === "huvudpartner" ? "Huvudsponsor" : "Sponsor", text: p.description });
   }
 
   for (const group of FARDIGHETER) {

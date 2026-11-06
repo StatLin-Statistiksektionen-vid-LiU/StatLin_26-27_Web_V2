@@ -25,7 +25,7 @@ export function NewsForm({
   return (
     <ActionForm action={saveNews} {...publishButtons(item)} onSuccess={onSaved} version={item?.updated_at}>
       {item && <input type="hidden" name="id" value={item.id} />}
-      <div className="grid gap-6 @2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Nyheten">
             <TitleSlugFields defaultTitle={item?.title} defaultSlug={item?.slug} basePath="/nyheter" titleLabel="Rubrik" />

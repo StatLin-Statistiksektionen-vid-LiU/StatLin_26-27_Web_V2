@@ -58,9 +58,9 @@ async function CourseStats({ params }: { params: Params }) {
         lead={
           name && (
             <>
-              <span className="block text-white">{name}</span>
+              <span className="block font-medium text-ink">{name}</span>
               {stats.title.en && stats.title.en !== name && (
-                <span lang="en" className="mt-1 block text-base text-white/50">
+                <span lang="en" className="mt-1 block text-base text-stone">
                   {stats.title.en}
                 </span>
               )}
@@ -80,7 +80,7 @@ async function CourseStats({ params }: { params: Params }) {
             vill se mer.
           </p>
         )}
-        <p className="mt-12 max-w-3xl border-t border-ink/10 pt-6 text-sm leading-relaxed text-stone">
+        <p className="mt-12 max-w-3xl border-t border-line pt-6 text-sm leading-relaxed text-stone">
           Statistiken kommer från LiU via det öppna API som{" "}
           <a href="https://liustats.se/" target="_blank" rel="noopener noreferrer" className="link-underline text-ink">
             liustats.se
@@ -90,7 +90,7 @@ async function CourseStats({ params }: { params: Params }) {
         </p>
       </section>
 
-      <section aria-labelledby="sok-igen" className="border-t border-ink/10 bg-paper-2/50 py-14 md:py-20">
+      <section aria-labelledby="sok-igen" className="border-t border-line bg-paper-2/40 py-14 md:py-20">
         <div className="container-site">
           <h2 id="sok-igen" className="display-tight text-[clamp(1.6rem,3vw,2.4rem)]">
             Sök en annan kurs
@@ -114,12 +114,12 @@ function Missing({ code, unavailable }: { code: string | null; unavailable: bool
   return (
     <>
       <PageHero kicker="Studenter / Tentastatistik" title={code ?? "Tentastatistik"} fitTitle={code ? undefined : "Tentastatistik"} lead={lead} />
-      <div className="container-site relative z-20 -mt-8 pb-20">
+      <div className="container-site relative z-20 pb-20 pt-8 md:pt-10">
         <CourseSearch />
         {code && (
           <div className="mt-10">
             <p className="kicker text-stone">Leta vidare</p>
-            <CourseLinks code={code} light />
+            <CourseLinks code={code} />
           </div>
         )}
         <Link href="/tentastatistik" className="mt-10 inline-flex items-center gap-2 font-semibold">
@@ -132,17 +132,17 @@ function Missing({ code, unavailable }: { code: string | null; unavailable: bool
 }
 
 /** Kursen hos LiU och hos andra som samlar tentor och statistik. */
-function CourseLinks({ code, light }: { code: string; light?: boolean }) {
+function CourseLinks({ code }: { code: string }) {
   const links = [
     { href: `https://studieinfo.liu.se/kurs/${code}`, label: "Kursplan" },
     { href: `https://liutentor.se/search/${code}`, label: "Gamla tentor" },
     { href: `https://liustats.se/${code}`, label: "liustats" },
   ];
   return (
-    <ul className="mt-4 flex flex-wrap gap-3">
+    <ul className="mt-4 flex flex-wrap gap-2">
       {links.map((l) => (
         <li key={l.label}>
-          <a href={l.href} target="_blank" rel="noopener noreferrer" className={light ? "btn btn-ghost btn-sm" : "btn btn-ghost-dark btn-sm"}>
+          <a href={l.href} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm">
             {l.label}
             <ArrowUpRight size={14} />
             <span className="sr-only"> (öppnas i en ny flik)</span>

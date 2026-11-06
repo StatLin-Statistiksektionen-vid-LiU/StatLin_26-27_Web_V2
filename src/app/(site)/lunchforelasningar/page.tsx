@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Mail, MapPin, Star } from "@/components/icons";
+import { ArrowRight, ArrowUpRight, MapPin, Star } from "@/components/icons";
 import { EmptySky } from "@/components/star/star-map";
 import "@/components/star/star.css";
-import { getCommitteeBySlug } from "@/lib/data/content";
 import { listLunchEvents } from "@/lib/data/events";
 import { listPublicWishes } from "@/lib/data/naringsliv";
 import { formatDateLong, formatTimeRange, parts, relativeDay } from "@/lib/dates";
-import { canVoteOnWish, mailtoWithSubject, wishErrorText, WISH_STATUS_LABELS, type LectureWish } from "@/lib/naringsliv";
+import { canVoteOnWish, wishErrorText, WISH_STATUS_LABELS, type LectureWish } from "@/lib/naringsliv";
 import type { EventItem } from "@/lib/types";
 import { cn, mulberry32 } from "@/lib/utils";
 import { WishForm } from "./wish-form";
@@ -24,8 +23,7 @@ const MONTHS = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "
 export const instant = false;
 
 export default async function LunchPage({ searchParams }: PageProps<"/lunchforelasningar">) {
-  const [events, wishes, sasu, sp] = await Promise.all([listLunchEvents(5), listPublicWishes(), getCommitteeBySlug("sasu"), searchParams]);
-  const contact = sasu?.email || "sasu@statlin.se";
+  const [events, wishes, sp] = await Promise.all([listLunchEvents(5), listPublicWishes(), searchParams]);
   const [next, ...others] = events;
   const open = wishes.filter((w) => w.status !== "genomford");
   const done = wishes.filter((w) => w.status === "genomford");
@@ -35,11 +33,12 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
 
   return (
     <>
-      <section className="star-sky lunch-himmel relative isolate overflow-hidden pb-40 pt-[calc(var(--header-h)+3rem)] text-white md:pb-44 md:pt-[calc(var(--header-h)+5rem)]">
+      {/* Rubriken skalar med sektionens bredd och inte fönstrets, så att FÖRELÄSNINGAR ryms även bredvid sajtens sidomeny. */}
+      <section className="@container star-sky lunch-himmel relative isolate overflow-hidden pb-40 pt-[calc(var(--header-h)+3rem)] text-white md:pb-44 md:pt-[calc(var(--header-h)+5rem)]">
         <VoteSky votes={totalVotes} />
         <div className="container-site">
-          <p className="kicker text-white/70">SASU / Näringsliv</p>
-          <h1 className="display mt-5 text-[clamp(1.5rem,8.1vw,6.5rem)]">
+          <p className="kicker text-white/70">För studenter · SASU</p>
+          <h1 className="display mt-5 text-[clamp(1.5rem,7.6cqi,6.5rem)]">
             Lunch&shy;föreläsningar
           </h1>
           <div className="mt-3 h-1 w-[min(100%,26rem)] bg-[#8f1d1d]" aria-hidden />
@@ -134,7 +133,7 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
           </aside>
         </div>
 
-        <CompanyBand contact={contact} />
+        <CompanyPointer />
       </div>
     </>
   );
@@ -327,33 +326,18 @@ function WishRow({ wish, most, litByServer }: { wish: LectureWish; most: number;
   );
 }
 
-function CompanyBand({ contact }: { contact: string }) {
-  const rows = [
-    "Ni väljer ämne: ert arbete, ett case eller hur vardagen ser ut hos er.",
-    "SASU hjälper till med tid och plats och sprider inbjudan till studenterna.",
-    "Upplägget bestämmer vi tillsammans. Berätta vad ni vill uppnå så återkommer vi.",
-  ];
+/** Sidan är studenternas. Ett företag som hamnar här får en väg till företagssidan, där anmälan finns, i stället för önskeformuläret. */
+function CompanyPointer() {
   return (
-    <section className="star-sky text-white">
-      <div className="h-1 w-full bg-[#8f1d1d]" aria-hidden />
-      <div className="container-site grid gap-10 py-16 md:grid-cols-12 md:py-20">
-        <div className="md:col-span-5">
-          <p className="kicker text-white/70">För företag</p>
-          <h2 className="display-tight mt-4 text-3xl lg:text-4xl">Vill ni hålla en lunch&shy;föreläsning?</h2>
-          <a href={mailtoWithSubject(contact, "Vi vill hålla en lunchföreläsning")} className="btn btn-red mt-7">
-            <Mail size={18} /> {contact}
-          </a>
-        </div>
-        <ol className="space-y-5 md:col-span-6 md:col-start-7">
-          {rows.map((row, i) => (
-            <li key={row} className="flex gap-4">
-              <span className="mono-accent text-lg font-semibold text-white/60" aria-hidden>
-                {i + 1}
-              </span>
-              <span className="text-lg leading-snug text-white/90">{row}</span>
-            </li>
-          ))}
-        </ol>
+    <section className="border-t border-line">
+      <div className="container-site flex flex-col items-start justify-between gap-4 py-10 md:flex-row md:items-center">
+        <p className="max-w-2xl text-stone">
+          <span className="font-semibold text-ink">Är du från ett företag?</span> Önskelistan är till för studenterna. Vill ni hålla en lunchföreläsning anmäler ni intresse på
+          företagssidan.
+        </p>
+        <Link href="/foretag#lunchforelasning" className="btn btn-ghost shrink-0">
+          Håll en lunchföreläsning <ArrowRight size={18} />
+        </Link>
       </div>
     </section>
   );

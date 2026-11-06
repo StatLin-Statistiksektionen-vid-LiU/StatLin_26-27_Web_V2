@@ -70,7 +70,7 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await openWheel();
     // Vid en körning till mot samma databas är hjulet redan fyllt, och knappen visas bara när något förslag saknas.
     if ((await fillButton(page).count()) === 0) {
-      // Länken kan ligga under Tidigare i år, så den hittas utan att behöva synas.
+      // Länken kan ligga under Tidigare i år eller Tidigare i höst, så den hittas utan att behöva synas.
       await page.goto(`${BASE}${await page.locator('a[aria-label="Ändra Budget för året"]').getAttribute("href")}`);
       await (await openDeleteConfirm(page)).getByRole("button", { name: "Ta bort" }).click();
       await page.getByText("Punkten är borttagen.").waitFor();
@@ -108,7 +108,9 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await page.waitForURL(/\/admin\/arshjul$/);
     // Skräp i adressen ger hela året i stället för ett fel.
     await page.goto(`${BASE}/admin/arshjul?manad=13&ar=1999`);
-    await page.getByText(`under ${thisYear}`).waitFor();
+    // På hösten visar hjulet hösten och våren efter nyår, och vårens månader får nästa års årtal.
+    await page.getByText(new RegExp(`under (hösten )?${thisYear}`)).waitFor();
+    if (thisMonth >= 7) await page.getByRole("heading", { name: `Januari ${thisYear + 1}` }).waitFor();
   });
 
   await step("Översikten: punkterna hamnar på rätt kort", async () => {
@@ -352,7 +354,8 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await page.goto(nextMonthUrl);
     await row(nextTitle).waitFor();
     assert.equal(await page.getByRole("link", { name: `Ändra ${nextTitle}` }).count(), 0);
-    assert.equal(await row(nextTitle).getByRole("button", { name: "Klar i år" }).count(), 0);
+    // I december gäller nästa månad nästa år, och då står året på knappen i stället för i år.
+    assert.equal(await row(nextTitle).getByRole("button", { name: /^Klar (i år|\d{4})$/ }).count(), 0);
     await page.goto(`${BASE}/admin/arshjul`);
     assert.equal(await page.locator('a[aria-label="Ändra Julsittning"]').count(), 1, "SCB är ansvarigt för julsittningen");
     await page.goto(`${BASE}/admin/arshjul/${adminItem}`);
@@ -369,7 +372,7 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await page.getByText(FORBIDDEN).waitFor();
 
     await page.goto(nextMonthUrl);
-    const klar = row(ownTitle).getByRole("button", { name: "Klar i år" });
+    const klar = row(ownTitle).getByRole("button", { name: /^Klar (i år|\d{4})$/ });
     await waitForHydration(page, klar);
     await forgeId(klar, adminItem);
     await klar.click();
@@ -377,6 +380,12 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await page.goto(nextMonthUrl);
     await row(nextTitle).waitFor();
     assert.equal(await row(nextTitle).getByRole("button", { name: "Lägg på tavlan" }).count(), 1, "punkten får inte ha blivit klar");
+
+    // Bara SCB visar det utskottet är ansvarigt för och det det själv har lagt in, inte andras punkter.
+    await page.goto(`${BASE}/admin/arshjul?vara=1`);
+    await row(ownTitle).waitFor();
+    assert.equal(await row(nextTitle).count(), 0, "filtret ska dölja andras punkter");
+    assert.equal(await page.locator('a[aria-label="Ändra Julsittning"]').count(), 1, "julsittningen är SCB:s");
 
     // Planen: läser, men ser inga ändringsknappar, och servern stoppar den som försöker ändå.
     await page.goto(`${BASE}/admin/projektplaner/${plan}`);

@@ -111,9 +111,9 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     ];
     for (const [from, to] of pairs) {
       await visitor.goto(`${BASE}${from}`);
-      // Rubriken är ett av hålen i skalet, så när den syns har sidhuvudet också fått adressen.
+      // Rubriken är ett av hålen i skalet, så när den syns har menyn också fått adressen. På datorn sitter språklänken i sidomenyn.
       await visitor.locator("main h1").first().waitFor();
-      const link = visitor.locator("header a[hreflang]").first();
+      const link = visitor.locator("aside a[hreflang]").first();
       await waitForHydration(visitor, link);
       assert.equal(await link.getAttribute("href"), to, `Från ${from}`);
     }
@@ -349,8 +349,10 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
       const tagline = site.page.locator("footer p", { hasText: "Sektionen för dig" });
       await tagline.waitFor();
       assert.equal(await tagline.innerText(), "Sektionen för dig som läser Statistics vid LiU.");
+      // I den nya sidfoten är ordet framhävt i bläckets färg mot den grå texten, inte längre i rött.
       const red = tagline.getByText("Statistics", { exact: true });
-      assert.equal(await red.evaluate((el) => getComputedStyle(el).color), "rgb(255, 7, 7)");
+      assert.equal(await red.evaluate((el) => getComputedStyle(el).color), "rgb(20, 20, 19)");
+      assert.notEqual(await tagline.evaluate((el) => getComputedStyle(el).color), "rgb(20, 20, 19)", "ordet ska synas mot texten runt det");
       await site.context.close();
     } finally {
       await setTagline(original);

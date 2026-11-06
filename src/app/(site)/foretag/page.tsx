@@ -12,7 +12,7 @@ import { ScrollToAnchor } from "@/components/ui/scroll-to-anchor";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, getSettings, listPartners } from "@/lib/data/content";
 import { getStarEvent } from "@/lib/data/events";
-import { starIsLive } from "@/lib/naringsliv";
+import { mailtoWithSubject, starIsLive } from "@/lib/naringsliv";
 import { STAR_COPY } from "@/lib/seed-content";
 import { formatDateLong } from "@/lib/dates";
 import { safeExternalUrl } from "@/lib/utils";
@@ -55,10 +55,10 @@ async function Companies() {
         </>
       }
       aside={
-        <div className="sticky top-[calc(var(--header-h)+1.5rem)] rounded-[1.75rem] bg-ink p-7 text-white">
-          <p className="kicker text-white/50">Kontakt</p>
+        <div className="sticky top-[calc(var(--header-h)+1.5rem)] rounded-xl border border-line bg-white p-6">
+          <p className="kicker text-stone">Kontakt</p>
           <p className="display-tight mt-3 text-2xl">Näringslivs&shy;ansvarig</p>
-          <p className="mt-3 text-[0.95rem] leading-relaxed text-white/70">
+          <p className="mt-3 text-[0.95rem] leading-relaxed text-stone">
             SASU tar fram upplägg för lunchföreläsningar, case, annonser och STAR. Berätta vad ni vill uppnå så återkommer vi.
           </p>
           <a href={`mailto:${contact}?subject=${encodeURIComponent("Samarbete med StatLin")}`} className="btn btn-red mt-6 w-full">
@@ -99,17 +99,38 @@ async function Companies() {
         </div>
       </section>
 
-      {/* Lunchföreläsningar */}
-      <section className="border-b border-ink/10 py-14 md:py-16">
-        <div className="container-site flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
-          <div>
+      {/* Lunchföreläsningar: här anmäler företagen intresse. Önskelistan är studenternas och ligger under Studenter. */}
+      <section id="lunchforelasning" className="scroll-mt-[calc(var(--header-h)+1.5rem)] border-b border-line py-14 md:py-20">
+        <ScrollToAnchor id="lunchforelasning" />
+        <div className="container-site grid gap-10 md:grid-cols-12">
+          <div className="md:col-span-5">
             <p className="kicker text-stone">Lunchföreläsningar</p>
-            <p className="display-tight mt-3 text-2xl md:text-3xl">Studenterna önskar, ni föreläser</p>
-            <p className="mt-2 max-w-xl text-stone">Se vad studenterna vill höra om och hur det går till att hålla en lunchföreläsning.</p>
+            <h2 className="display-tight mt-3 text-3xl md:text-4xl">Håll en lunch&shy;föreläsning</h2>
+            <p className="mt-3 max-w-md text-stone">Träffa studenterna över lunchen och berätta vad ni gör. Studenterna önskar själva ämnen, så ni kan se vad de vill höra om.</p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <a href={mailtoWithSubject(contact, "Vi vill hålla en lunchföreläsning")} className="btn btn-red">
+                <Mail size={18} /> Anmäl intresse
+              </a>
+              <Link href="/lunchforelasningar" className="btn btn-ghost">
+                Se vad studenterna önskar <ArrowRight size={18} />
+              </Link>
+            </div>
+            <p className="mt-3 text-sm text-stone">Anmälan öppnar ett mejl till {contact}.</p>
           </div>
-          <Link href="/lunchforelasningar" className="btn btn-ink shrink-0">
-            Till önskelistan <ArrowRight size={18} />
-          </Link>
+          <ol className="space-y-5 md:col-span-6 md:col-start-7">
+            {[
+              "Ni väljer ämne: ert arbete, ett case eller hur vardagen ser ut hos er.",
+              "SASU hjälper till med tid och plats och sprider inbjudan till studenterna.",
+              "Upplägget bestämmer vi tillsammans. Berätta vad ni vill uppnå så återkommer vi.",
+            ].map((row, i) => (
+              <li key={row} className="flex gap-4">
+                <span className="mono-accent text-lg font-semibold text-red" aria-hidden>
+                  {i + 1}
+                </span>
+                <span className="text-lg leading-snug">{row}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       </section>
 
@@ -117,23 +138,23 @@ async function Companies() {
       <section className="py-20 md:py-28">
         <div className="container-site">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <p className="kicker text-stone">Samarbetspartners</p>
+            <p className="kicker text-stone">Sponsorer</p>
             <EditModeLink target={{ type: "page", slug: "foretag" }} href="/admin/partners" icon="edit">
-              Hantera partners
+              Hantera sponsorer
             </EditModeLink>
           </div>
           {partners.length > 0 ? (
-            <ul className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-[1.75rem] border border-ink/10 bg-ink/10 md:grid-cols-4">
+            <ul className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4">
               {partners.map((p) => {
                 const url = safeExternalUrl(p.url);
                 const inner = (
                   <>
                     {p.logo ? (
-                      <SmartImage image={p.logo} sizes="200px" className="h-16 w-auto max-w-[80%] object-contain grayscale transition-all duration-500 group-hover:grayscale-0" alt={p.name} />
+                      <SmartImage image={p.logo} sizes="200px" className="h-16 w-auto max-w-[80%] object-contain grayscale transition-all duration-500 group-hover:grayscale-0 [[data-tema=mork]_&]:rounded-lg [[data-tema=mork]_&]:bg-ink [[data-tema=mork]_&]:px-3 [[data-tema=mork]_&]:py-2" alt={p.name} />
                     ) : (
-                      <span className="display-tight text-xl">{p.name}</span>
+                      <span className="display-tight min-w-0 max-w-full text-center text-lg [overflow-wrap:anywhere] sm:text-xl">{p.name}</span>
                     )}
-                    {p.tier === "huvudpartner" && <span className="chip absolute left-3 top-3 bg-red text-white">Huvudpartner</span>}
+                    {p.tier === "huvudpartner" && <span className="chip absolute left-3 top-3 bg-red text-white">Huvudsponsor</span>}
                   </>
                 );
                 return (
@@ -150,10 +171,10 @@ async function Companies() {
               })}
             </ul>
           ) : (
-            <div className="mt-8 flex flex-col items-start justify-between gap-6 rounded-[1.75rem] border border-dashed border-ink/25 p-10 md:flex-row md:items-center">
+            <div className="mt-8 flex flex-col items-start justify-between gap-6 rounded-xl border border-dashed border-line bg-white p-8 md:flex-row md:items-center">
               <div>
                 <p className="display-tight text-2xl">Er logga här?</p>
-                <p className="mt-2 max-w-lg text-stone">Vi söker partners som vill möta framtidens statistiker och data scientists. Hör av er så berättar vi mer.</p>
+                <p className="mt-2 max-w-lg text-stone">Vi söker sponsorer som vill möta framtidens statistiker och data scientists. Hör av er så berättar vi mer.</p>
               </div>
               <a href={`mailto:${contact}`} className="btn btn-ink shrink-0">
                 Kontakta SASU

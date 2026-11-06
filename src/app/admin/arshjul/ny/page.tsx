@@ -19,10 +19,11 @@ async function NewWheelItem({ searchParams }: { searchParams: PageProps<"/admin/
   const user = await requireUser();
   const sp = await searchParams;
   const options = await listResponsibleOptions();
+  const onlyOurs = sp.vara === "1";
   return (
     <>
-      <AdminHeader back={{ href: "/admin/arshjul", label: "Årshjul" }} title="Ny punkt" description="Något som kommer tillbaka varje år. Du behöver bara skriva in det en gång: hjulet börjar om av sig självt." />
-      <WheelItemForm responsibleOptions={options} defaultMonth={monthParam(sp.manad)} defaultResponsible={user.role === "committee" ? user.post : undefined} />
+      <AdminHeader back={{ href: onlyOurs ? "/admin/arshjul?vara=1" : "/admin/arshjul", label: "Årshjul" }} title="Ny punkt" description="Något som kommer tillbaka varje år. Du behöver bara skriva in det en gång: hjulet börjar om av sig självt." />
+      <WheelItemForm responsibleOptions={options} defaultMonth={monthParam(sp.manad)} defaultResponsible={user.role === "committee" ? user.post : undefined} onlyOurs={onlyOurs} />
     </>
   );
 }

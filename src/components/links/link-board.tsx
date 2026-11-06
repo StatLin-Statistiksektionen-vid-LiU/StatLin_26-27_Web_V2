@@ -56,7 +56,7 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
     <div className="container-site pb-24 md:pb-32">
       {/* Sök – fastnar under sidhuvudet, så att man kan söka igen var man än är på sidan. */}
       <div className="sticky top-[calc(var(--header-h)+0.75rem)] z-20 -mt-8">
-        <label className="flex h-16 items-center gap-3 rounded-full border border-ink/10 bg-white pl-6 pr-3 shadow-[0_24px_60px_-30px_rgb(10_10_10/0.45)] transition-[border-color,box-shadow] focus-within:border-ink focus-within:shadow-[0_0_0_4px_rgb(255_7_7/0.12),0_24px_60px_-30px_rgb(10_10_10/0.45)]">
+        <label className="flex h-14 items-center gap-3 rounded-xl border border-line bg-white pl-5 pr-3 shadow-sm transition-[border-color,box-shadow] focus-within:border-ink/40 focus-within:shadow-[0_0_0_4px_rgb(255_7_7/0.12)]">
           <Search size={20} className="shrink-0 text-stone" />
           <input
             ref={inputRef}
@@ -98,17 +98,17 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
       {code && (
         <Link
           href={`/tentastatistik/${code}`}
-          className="group mt-6 flex items-center justify-between gap-4 rounded-[1.5rem] bg-ink px-5 py-4 text-white transition-colors hover:bg-ink-3 md:px-6"
+          className="group mt-6 flex items-center justify-between gap-4 rounded-xl border border-line bg-white px-5 py-4 transition-colors hover:border-ink/20 md:px-6"
         >
           <span className="flex min-w-0 items-center gap-4">
-            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-red">
+            <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-red text-white">
               <BarChart size={20} />
             </span>
             <span className="min-w-0">
               <span className="block font-semibold">
                 Visa tentastatistik för <span className="font-mono">{code}</span>
               </span>
-              <span className="block text-sm text-white/60">Betyg per tentatillfälle, för vilken LiU-kurs som helst</span>
+              <span className="block text-sm text-stone">Betyg per tentatillfälle, för vilken LiU-kurs som helst</span>
             </span>
           </span>
           <ArrowRight size={20} className="shrink-0 transition-transform duration-500 group-hover:translate-x-1" />
@@ -116,7 +116,7 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
       )}
 
       {nothing && !code && (
-        <div className="mt-6 rounded-[1.5rem] border border-dashed border-ink/20 bg-white/50 p-8 text-center md:p-12">
+        <div className="mt-6 rounded-xl border border-dashed border-line bg-white p-8 text-center md:p-12">
           <p className="font-semibold">Inga träffar på ”{deferred.trim()}”</p>
           <p className="mx-auto mt-2 max-w-md text-stone">
             Söker du en kurs? Skriv kurskoden, till exempel 732G33. Och hittar du inte länken här finns ännu fler hos{" "}
@@ -135,7 +135,7 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
             <Star size={14} fill="currentColor" className="text-red" /> Fästa
           </h2>
           {/* -mb-px gömmer sista radens linje under kortets kant. */}
-          <div className="mt-4 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
+          <div className="mt-4 overflow-hidden rounded-xl border border-line bg-white">
             <ul className="-mb-px grid md:grid-cols-2 [&>li]:border-b [&>li]:border-ink/[0.07] md:[&>li:nth-child(odd)]:border-r">
               {pinned.map((l) => (
                 <LinkRow key={l.id} link={l} pinned />
@@ -168,7 +168,7 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
 
       {/* Tentastatistik. Under en sökning tar raden "Visa tentastatistik för …" över, så att sidan inte hoppar. */}
       {!searching && (
-        <section aria-labelledby="tentastatistik" className="mt-10 grid grid-cols-1 items-center gap-6 rounded-[1.5rem] border border-ink/10 bg-white p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] md:p-7">
+        <section aria-labelledby="tentastatistik" className="mt-10 grid grid-cols-1 items-center gap-6 rounded-xl border border-line bg-white p-5 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] md:p-7">
           <div>
             <h2 id="tentastatistik" className="display-tight text-2xl">
               Tenta<span className="text-red-deep">statistik</span>
@@ -185,7 +185,7 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
       {groups.length > 0 && (
         <div className="mt-12 gap-6 md:columns-2 xl:columns-3">
           {groups.map((g) => (
-            <section key={g.value} aria-labelledby={`grupp-${g.value}`} className="mb-6 break-inside-avoid overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
+            <section key={g.value} aria-labelledby={`grupp-${g.value}`} className="mb-6 break-inside-avoid overflow-hidden rounded-xl border border-line bg-white">
               <h2 id={`grupp-${g.value}`} className="flex items-baseline justify-between gap-4 px-5 pb-2 pt-5">
                 <span className="display-tight text-lg">{g.label}</span>
                 <span className="kicker text-stone">{g.links.length}</span>
@@ -211,7 +211,7 @@ function LinkTile({ link }: { link: LinkItem }) {
   const body = (
     <>
       <span className="flex items-start justify-between gap-3">
-        <span className="grid size-11 place-items-center rounded-full bg-ink text-white transition-colors duration-300 group-hover:bg-red">
+        <span className="grid size-10 place-items-center rounded-lg border border-line bg-paper-2/60 text-ink transition-colors duration-300 group-hover:border-red/40 group-hover:text-red">
           <LinkIcon name={link.icon} size={20} />
         </span>
         <Arrow size={16} className="text-stone-light transition-[color,transform] duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-red" />
@@ -221,7 +221,7 @@ function LinkTile({ link }: { link: LinkItem }) {
       {external && <span className="sr-only"> (öppnas i en ny flik)</span>}
     </>
   );
-  const className = "group flex h-full flex-col rounded-[1.25rem] border border-ink/10 bg-white p-4 transition-colors duration-300 hover:border-ink/40";
+  const className = "group flex h-full flex-col rounded-xl border border-line bg-white p-4 transition-colors duration-300 hover:border-ink/20";
   return external ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
       {body}

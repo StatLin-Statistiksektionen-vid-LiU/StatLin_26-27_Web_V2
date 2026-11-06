@@ -7,8 +7,11 @@ const TZ = "Europe/Stockholm";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
+/** Ett Intl-objekt är dyrt att skapa, så det görs en gång, när det först behövs, och återanvänds sedan. */
+let localFormat: Intl.DateTimeFormat | undefined;
+
 function toLocal(date: Date): string {
-  const parts = new Intl.DateTimeFormat("sv-SE", {
+  localFormat ??= new Intl.DateTimeFormat("sv-SE", {
     timeZone: TZ,
     year: "numeric",
     month: "2-digit",
@@ -16,7 +19,8 @@ function toLocal(date: Date): string {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-  }).formatToParts(date);
+  });
+  const parts = localFormat.formatToParts(date);
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
   return `${get("year")}-${get("month")}-${get("day")}T${get("hour")}:${get("minute")}`;
 }
@@ -102,11 +106,16 @@ function formatters(locale: DateLocale) {
   };
 }
 
-const FORMATS = { "sv-SE": formatters("sv-SE"), "en-GB": formatters("en-GB") };
+/**
+ * Formaterarna skapas först när ett datum ska visas och återanvänds sedan. Modulen följer med i sajtens gemensamma
+ * klientkod, och tolv Intl-objekt direkt vid start tog ungefär 80 ms på en strypt telefon vid varje sidladdning.
+ */
+const FORMATS: Partial<Record<DateLocale, ReturnType<typeof formatters>>> = {};
+const formatsFor = (locale: DateLocale) => (FORMATS[locale] ??= formatters(locale));
 
 export function parts(local: string, locale: DateLocale = "sv-SE") {
   const d = asUtc(local);
-  const { weekdayLong, weekdayShort, monthShort, monthLong } = FORMATS[locale];
+  const { weekdayLong, weekdayShort, monthShort, monthLong } = formatsFor(locale);
   return {
     day: d.getUTCDate(),
     month: d.getUTCMonth() + 1,
@@ -134,7 +143,8 @@ export function formatDayMonthShort(local: string): string {
 }
 
 export function formatDate(local: string, withYear = false, locale: DateLocale = "sv-SE"): string {
-  return show(withYear ? FORMATS[locale].dayMonthYear : FORMATS[locale].dayMonth, asUtc(local), local);
+  const formats = formatsFor(locale);
+  return show(withYear ? formats.dayMonthYear : formats.dayMonth, asUtc(local), local);
 }
 
 export function formatDateLong(local: string): string {
@@ -212,7 +222,10 @@ export function relativeDay(start: string, end: string | null = null, allDay = f
   if (diff === 1) return "I morgon";
   if (diff === -1) return "I går";
   if (diff > 1 && diff < 7) return `Om ${diff} dagar`;
-  if (diff >= 7 && diff < 14) return "Nästa vecka";
+  // Nästa vecka är kalenderveckan efter den här, måndag till söndag. En onsdag tolv dagar bort från en fredag ligger veckan efter.
+  const weekday = today.getUTCDay() || 7;
+  if (diff >= 7 && diff <= 14 - weekday) return "Nästa vecka";
+  if (diff >= 7 && diff < 14) return `Om ${diff} dagar`;
   if (diff >= 14 && diff < 60) return `Om ${Math.round(diff / 7)} veckor`;
   if (diff < 0) return "Har varit";
   return `Om ${Math.round(diff / 30)} mån`;
@@ -274,7 +287,7 @@ export function calendarMonth(value: unknown): string {
 }
 
 export function monthLabel(year: number, month: number) {
-  return capitalize(FORMATS["sv-SE"].monthLong.format(new Date(Date.UTC(year, month - 1, 1)))) + " " + year;
+  return capitalize(formatsFor("sv-SE").monthLong.format(new Date(Date.UTC(year, month - 1, 1)))) + " " + year;
 }
 
 export function isoUtc(): string {
@@ -282,13 +295,15 @@ export function isoUtc(): string {
 }
 
 /** Formaterar ISO-tidsstämplar (UTC, från databasen) i svensk tid. */
+let timestampFormat: Intl.DateTimeFormat | undefined;
+
 export function formatTimestamp(iso: string): string {
-  const format = new Intl.DateTimeFormat("sv-SE", {
+  timestampFormat ??= new Intl.DateTimeFormat("sv-SE", {
     timeZone: TZ,
     day: "numeric",
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
   });
-  return show(format, new Date(iso), iso);
+  return show(timestampFormat, new Date(iso), iso);
 }

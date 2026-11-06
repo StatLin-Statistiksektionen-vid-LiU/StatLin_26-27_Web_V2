@@ -56,16 +56,17 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
           </Link>
         }
       />
-      <div className="mb-5 flex w-fit max-w-full overflow-x-auto rounded-full border border-ink/15 bg-white p-1 [scrollbar-width:none]">
+      {/* På en telefon får flikarna inte plats på en rad, så de ligger två och två i stället för att gömmas utanför kanten. */}
+      <div className="mb-5 grid grid-cols-2 gap-1 rounded-2xl border border-ink/15 bg-white p-1 sm:flex sm:w-fit sm:max-w-full sm:gap-0 sm:overflow-x-auto sm:rounded-full [scrollbar-width:none] [&>:last-child:nth-child(odd)]:col-span-2">
         {tabs.map((t) => (
           <Link
             key={t.key}
             href={t.href}
             aria-current={tab === t.key ? "page" : undefined}
-            className={cn("shrink-0 rounded-full px-3.5 py-2 text-sm font-semibold capitalize sm:px-5", tab === t.key ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
+            className={cn("shrink-0 rounded-xl px-3.5 py-2 text-center text-sm font-semibold capitalize sm:rounded-full sm:px-5", tab === t.key ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
           >
             {t.key}
-            {!!t.count && <span className="tabular ml-1.5 font-normal opacity-70">{t.count}</span>}
+            {!!t.count && <span className="tabular ml-1.5 font-normal">{t.count}</span>}
           </Link>
         ))}
       </div>

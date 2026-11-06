@@ -61,7 +61,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
   const rows = showAll || !collapsible ? occasions : occasions.slice(0, FIRST_ROWS);
   // Samma färg för ett betyg på alla rader, även på tillfällen där inte alla betyg förekommer.
   const order = mergeGradeOrder(occasions.map((o) => o.grades.map((g) => g.grade)));
-  const palette = gradeColors(order);
+  const palette = gradeColors(order).map(temaGra);
   const color = new Map(order.map((g, i) => [g, palette[i]]));
   const summary = summarizeModule(m, now);
   // Kurser som inte getts på tre år visar i stället åren nyckeltalen bygger på.
@@ -96,18 +96,18 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
                 setShowAll(false);
               }}
               className={cn(
-                "h-10 rounded-full border px-4 text-sm font-semibold transition-colors",
-                x.code === m.code ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink hover:border-ink",
+                "h-9 rounded-lg border px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10",
+                x.code === m.code ? "border-ink bg-ink text-paper" : "border-line bg-white text-ink hover:border-ink/25",
               )}
             >
-              {x.title} <span className={cn("ml-1 font-mono text-xs", x.code === m.code ? "text-white/60" : "text-stone")}>{x.code}</span>
+              {x.title} <span className={cn("ml-1 font-mono text-xs", x.code === m.code ? "text-paper/70" : "text-stone")}>{x.code}</span>
             </button>
           ))}
         </div>
       )}
 
       {summary && (
-        <dl className="mt-8 grid grid-cols-2 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white lg:grid-cols-4">
+        <dl className="mt-8 grid grid-cols-2 overflow-hidden rounded-xl border border-line bg-white lg:grid-cols-4">
           <Tile label="Godkända" value={formatPercent(summary.passRate)} note={period} meter={summary.passRate} className="border-b border-r lg:border-b-0" />
           <Tile label="Skrivningar" value={String(summary.total)} note={period} className="border-b lg:border-b-0 lg:border-r" />
           <Tile label="Vanligaste betyg" value={summary.commonGrade ?? "–"} note={`bland godkända, ${period}`} className="border-r" />
@@ -122,12 +122,12 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
 
       <div className="mt-6 grid gap-6 lg:grid-cols-12">
         {showTrend && (
-          <section className="min-w-0 rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-6 lg:col-span-7">
+          <section className="min-w-0 rounded-xl border border-line bg-white p-5 md:p-6 lg:col-span-7">
             <PassRateTrend key={m.code} occasions={occasions} />
           </section>
         )}
         {summary && (
-          <section className={cn("flex min-w-0 flex-col rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-6", showTrend ? "lg:col-span-5" : "lg:col-span-12")}>
+          <section className={cn("flex min-w-0 flex-col rounded-xl border border-line bg-white p-5 md:p-6", showTrend ? "lg:col-span-5" : "lg:col-span-12")}>
             <GradeDistribution key={m.code} grades={summary.grades} color={color} period={period} />
           </section>
         )}
@@ -140,14 +140,14 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
             {m.title} ({m.code}) · nyast först
           </p>
         </div>
-        <div className="inline-flex self-start rounded-full border border-ink/10 bg-white p-1 sm:self-auto" role="group" aria-label="Visa som">
+        <div className="inline-flex self-start rounded-lg border border-line bg-white p-0.5 sm:self-auto" role="group" aria-label="Visa som">
           {(["chart", "table"] as const).map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={view === v}
               onClick={() => setView(v)}
-              className={cn("h-9 rounded-full px-4 text-sm font-semibold transition-colors", view === v ? "bg-ink text-white" : "text-stone hover:text-ink")}
+              className={cn("h-8 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10", view === v ? "bg-ink text-paper" : "text-stone hover:text-ink")}
             >
               {v === "chart" ? "Diagram" : "Tabell"}
             </button>
@@ -167,7 +167,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
 
       {view === "chart" ? (
         // Med mus försvinner rutan när pekaren lämnar diagrammet. Med touch ligger den kvar tills man trycker någon annanstans.
-        <div className="mt-4 rounded-[1.5rem] border border-ink/10 bg-white px-2 py-4 sm:px-3 sm:py-5" onPointerLeave={(e) => e.pointerType !== "touch" && setTip(null)}>
+        <div className="mt-4 rounded-xl border border-line bg-white px-2 py-4 sm:px-3 sm:py-5" onPointerLeave={(e) => e.pointerType !== "touch" && setTip(null)}>
           <div aria-hidden className={cn(ROW, "kicker cursor-auto py-0 pb-1 text-stone")}>
             <span>Datum</span>
             <span className="relative block h-lh">
@@ -240,13 +240,13 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
           </GrafIn>
         </div>
       ) : (
-        <div className="mt-4 overflow-x-auto rounded-[1.25rem] border border-ink/10 bg-white">
+        <div className="mt-4 overflow-x-auto rounded-xl border border-line bg-white">
           <table className="w-full min-w-max text-sm">
             <caption className="sr-only">
               Betyg per tentatillfälle för {m.title} ({m.code})
             </caption>
             <thead>
-              <tr className="border-b border-ink/10 text-left">
+              <tr className="border-b border-line text-left">
                 <th scope="col" className="kicker px-4 py-3 font-medium text-stone">
                   Datum
                 </th>
@@ -263,7 +263,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-ink/[0.07]">
+            <tbody className="divide-y divide-line">
               {rows.map((o, i) => (
                 <tr key={`${o.date}-${i}`}>
                   <th scope="row" className="tabular whitespace-nowrap px-4 py-2.5 text-left font-normal">
@@ -306,11 +306,11 @@ function YearTable({ occasions, caption }: { occasions: ExamOccasion[]; caption:
   return (
     <div className="mt-10">
       <h3 className="display-tight text-lg">Per år</h3>
-      <div className="mt-3 overflow-x-auto rounded-[1.25rem] border border-ink/10 bg-white">
+      <div className="mt-3 overflow-x-auto rounded-xl border border-line bg-white">
         <table className="w-full min-w-max text-sm">
           <caption className="sr-only">Andel godkända per år för {caption}</caption>
           <thead>
-            <tr className="border-b border-ink/10 text-left">
+            <tr className="border-b border-line text-left">
               <th scope="col" className="kicker px-4 py-3 font-medium text-stone">
                 År
               </th>
@@ -326,7 +326,7 @@ function YearTable({ occasions, caption }: { occasions: ExamOccasion[]; caption:
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-ink/[0.07]">
+          <tbody className="divide-y divide-line">
             {passRateByYear(occasions)
               .reverse()
               .map((y) => (
@@ -357,7 +357,7 @@ function tipPlace(row: HTMLElement): TipPlace {
 
 function Tile({ label, value, note, meter, className }: { label: string; value: string; note: string; meter?: number; className?: string }) {
   return (
-    <div className={cn("relative border-ink/10 p-5 md:p-6", className)}>
+    <div className={cn("relative border-line p-5 md:p-6", className)}>
       {/* På mobil bryts längre etiketter på två rader – samma höjd på alla gör att värdena hamnar i linje. */}
       <dt className="kicker min-h-[2lh] text-stone sm:min-h-0">{label}</dt>
       <dd className="mt-3 text-[clamp(1.6rem,3vw,2.2rem)] font-semibold leading-none tracking-tight">{value}</dd>
@@ -387,7 +387,7 @@ function Tooltip({ occasion, color, place }: { occasion: ExamOccasion; color: Ma
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute left-[4.5rem] z-10 w-56 rounded-2xl border border-ink/10 bg-white p-4 text-sm shadow-[0_24px_50px_-24px_rgb(10_10_10/0.45)] sm:left-[6rem]"
+      className="pointer-events-none absolute left-[4.5rem] z-10 w-56 rounded-xl border border-line bg-white p-4 text-sm shadow-lg sm:left-[6rem]"
       style={place}
     >
       <p className="font-semibold">{formatDateShort(occasion.date)}</p>
@@ -406,4 +406,17 @@ function Tooltip({ occasion, color, place }: { occasion: ExamOccasion; color: Ma
       </ul>
     </div>
   );
+}
+
+/**
+ * gradeColors ger fasta gråa för ljus botten som slutar nästan svart. Här blir varje grå samma andel
+ * textfärg blandad i ytan, så att skalan vänder i mörkt läge och bästa betyget alltid har textfärgen.
+ * Underkänt är rött och lika i båda lägena.
+ */
+function temaGra(hex: string): string {
+  if (!/^#[0-9a-f]{6}$/i.test(hex)) return hex;
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  if (Math.max(r, g, b) - Math.min(r, g, b) > 24) return hex;
+  const andel = Math.round(Math.min(1, Math.max(0, (255 - r) / (255 - 0x1d))) * 100);
+  return `color-mix(in oklab, var(--color-ink) ${andel}%, var(--color-white))`;
 }

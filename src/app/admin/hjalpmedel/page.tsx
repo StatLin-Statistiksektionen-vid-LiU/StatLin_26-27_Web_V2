@@ -26,7 +26,7 @@ async function Resources({ searchParams }: { searchParams: PageProps<"/admin/hja
       {sp.raderad && <Notice>Hjälpmedlet är borttaget.</Notice>}
       <AdminHeader
         title="Hjälpmedel"
-        description="Fusklappar, GitHub-länkar och annat som hjälper studenterna, per program och termin. Alla i styrelsen kan lägga upp, ändra och ta bort."
+        description="Fusklappar, GitHub-länkar och annat som hjälper studenterna, per program och termin. Alla poster, i styrelsen och i utskotten, kan lägga upp, ändra och ta bort."
         actions={
           <>
             {resources.length > 0 && <JumpToForm href="#nytt-hjalpmedel">Nytt hjälpmedel</JumpToForm>}

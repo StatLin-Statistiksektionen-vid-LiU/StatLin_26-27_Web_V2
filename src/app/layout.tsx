@@ -27,9 +27,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0a0a0a",
+  themeColor: "#f9f8f5",
   colorScheme: "light",
 };
+
+/** Sätter det sparade temat innan något ritas, så att ett mörkt val inte blinkar ljust. Se theme-toggle.tsx. */
+const THEME_SCRIPT = "try{var t=localStorage.getItem('statlin-tema');if(t==='mork'){document.documentElement.dataset.tema=t;var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content','#121211')}}catch(e){}";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   // Typsnitt hämtas alltid med CORS, så utan crossOrigin skulle webbläsaren inte använda filen och hämta den en gång till. Se fonts.ts.
@@ -40,6 +43,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <style dangerouslySetInnerHTML={{ __html: ARCHIVO_FONT_FACES }} />
         {/* Markerar att JS körs. Utan klassen döljs skeletten i globals.css, eftersom innehållet aldrig kommer i deras ställe. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SCROLL_RESTORE_SCRIPT }} />
       </head>
       <body className="min-h-dvh">

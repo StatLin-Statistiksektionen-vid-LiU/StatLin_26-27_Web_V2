@@ -11,7 +11,7 @@ import Database from "better-sqlite3";
  * Schemat som skripten är skrivna för: user_version efter stegen i src/lib/db/migrations.ts. Talet står
  * medvetet också här, eftersom skripten inte kan importera TypeScript – höj det när ett steg läggs till där.
  */
-const EXPECTED_USER_VERSION = 16;
+const EXPECTED_USER_VERSION = 18;
 
 /** Samma ordlista som src/lib/auth/password.ts. Den ligger här eftersom Docker-imagen har scripts/ men inte src/. */
 const WORDS = JSON.parse(fs.readFileSync(new URL("./password-words.json", import.meta.url), "utf8"));

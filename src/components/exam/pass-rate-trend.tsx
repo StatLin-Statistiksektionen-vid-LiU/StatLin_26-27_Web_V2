@@ -10,8 +10,8 @@ import { GrafIn } from "./graf-in";
  * paret för färgblindhet och kontrast (ΔE 49, över 3:1) men inte som kategoriska färger, eftersom de saknar
  * kulör. Det är linje mot prick som skiljer dem åt, inte färgen, och tabellvyn har samma siffror.
  */
-const LINE = "#0a0a0a";
-const DOT = "#8f8b84";
+const LINE = "var(--color-ink)";
+const DOT = "var(--color-stone-light)";
 const GRID = [100, 75, 50, 25, 0];
 /** Årsetiketter närmare varandra än så här, i procent av bredden, glesas ut. */
 const MIN_LABEL_GAP = 13;
@@ -122,12 +122,12 @@ export function PassRateTrend({ occasions }: { occasions: ExamOccasion[] }) {
                   <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 size-full overflow-visible">
                     <defs>
                       <linearGradient id={fade} x1="0" x2="0" y1="0" y2="1">
-                        <stop offset="0" stopColor={LINE} stopOpacity="0.07" />
-                        <stop offset="1" stopColor={LINE} stopOpacity="0" />
+                        <stop offset="0" style={{ stopColor: LINE }} stopOpacity="0.07" />
+                        <stop offset="1" style={{ stopColor: LINE }} stopOpacity="0" />
                       </linearGradient>
                     </defs>
                     <polygon points={`0,100 0,${y(first)} ${line} 100,${y(last)} 100,100`} fill={`url(#${fade})`} />
-                    <polyline points={line} fill="none" stroke={LINE} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                    <polyline points={line} fill="none" style={{ stroke: LINE }} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
                   </svg>
                 </div>
               </div>
@@ -202,7 +202,7 @@ function MarginLabel({ label, value, top }: { label: string; value: number; top:
 function TrendTooltip({ date, total, rate, yearLabel, yearRate, at }: { date: string; total: number; rate: number; yearLabel: string; yearRate: number; at: number }) {
   return (
     <div
-      className="pointer-events-none absolute z-10 w-44 rounded-2xl border border-ink/10 bg-white px-3.5 py-2.5 text-sm shadow-[0_24px_50px_-24px_rgb(10_10_10/0.45)]"
+      className="pointer-events-none absolute z-10 w-44 rounded-xl border border-line bg-white px-3.5 py-2.5 text-sm shadow-lg"
       style={{ left: `clamp(0px, calc(${at}% - 5.5rem), calc(100% - 11rem))`, ...(rate > 0.5 ? { bottom: "0.25rem" } : { top: "0.25rem" }) }}
     >
       <p className="font-semibold">{formatDateShort(date)}</p>

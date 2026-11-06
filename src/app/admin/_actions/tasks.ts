@@ -138,12 +138,62 @@ export async function claimTask(fd: FormData): Promise<FormState> {
     return { error: existing ? "Någon annan hann ta uppdraget." : "Uppdraget finns inte längre." };
   }
   if (!canSeeTask(user, existing)) return forbidden();
+  // Ett klart uppdrag tas inte: knappen syns inte då, men en flik som laddades före Klart kan fortfarande skicka.
+  if (existing.status === "klar") {
+    revalidateBoard();
+    return { error: "Uppdraget är redan klart." };
+  }
   // updated_at skrivs inte: knappen ligger på samma sida som uppdragets formulär, som skriver mottagaren bara via changedId.
   // Versionen tillhör formulärets egen sparning – annars laddades formuläret om och osparad text försvann (SD-06).
   getDb()
     .prepare("UPDATE tasks SET to_user_id = ?, assigned_at = NULL, status = CASE status WHEN 'planerad' THEN 'pagar' ELSE status END WHERE id = ?")
     .run(user.id, id);
   audit(user.id, "claim", "task", id, existing.title);
+  revalidateBoard();
+  return {};
+}
+
+/** Mottagaren lämnar tillbaka ett uppdrag. Det blir öppet igen, så att någon annan kan ta det. */
+export async function releaseTask(fd: FormData): Promise<FormState> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  const id = Number(fd.get("id"));
+  const existing = loadTask(id);
+  if (!existing) {
+    revalidateBoard();
+    return { error: "Uppdraget finns inte längre." };
+  }
+  if (existing.to_user_id !== user.id) return forbidden();
+  // Ett klart uppdrag släpps inte, för då försvinner vem som gjorde det. Knappen syns inte då, men en flik från före Klart kan skicka.
+  if (existing.status === "klar") {
+    revalidateBoard();
+    return { error: "Uppdraget är redan klart." };
+  }
+  // updated_at skrivs inte, av samma skäl som i claimTask (SD-06).
+  getDb()
+    .prepare("UPDATE tasks SET to_user_id = NULL, assigned_at = NULL, status = CASE status WHEN 'klar' THEN 'klar' ELSE 'planerad' END WHERE id = ?")
+    .run(id);
+  audit(user.id, "release", "task", id, existing.title);
+  revalidateBoard();
+  return {};
+}
+
+const HELP_OFFER = "Jag kan hjälpa till!";
+
+/** Den som ser ett uppdrag som behöver hjälp säger till med en kommentar. Två tryck blir inte två kommentarer. */
+export async function offerHelp(fd: FormData): Promise<FormState> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  const id = Number(fd.get("id"));
+  const existing = loadTask(id);
+  if (!existing || !canSeeTask(user, existing)) return forbidden();
+  if (existing.status !== "hjalp") {
+    revalidateBoard();
+    return { error: "Uppdraget behöver inte hjälp längre." };
+  }
+  const db = getDb();
+  const already = db.prepare("SELECT 1 FROM task_comments WHERE task_id = ? AND user_id = ? AND body = ?").get(id, user.id, HELP_OFFER);
+  if (!already) db.prepare("INSERT INTO task_comments (task_id, user_id, body) VALUES (?, ?, ?)").run(id, user.id, HELP_OFFER);
   revalidateBoard();
   return {};
 }

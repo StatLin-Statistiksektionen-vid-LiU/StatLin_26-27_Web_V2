@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { EventCard, EventRow } from "@/components/content/event-card";
 import { Calendar, ChevronLeft, ChevronRight, Rss } from "@/components/icons";
-import { PageHero } from "@/components/ui/page-hero";
+import { TextHero } from "@/components/ui/text-hero";
 import { Reveal } from "@/components/ui/reveal";
 import { PageSkeleton } from "@/components/ui/skeletons";
 import { listCommittees } from "@/lib/data/content";
@@ -28,21 +28,15 @@ export async function generateMetadata({ searchParams }: PageProps<"/evenemang">
 export default function EventsPage(props: PageProps<"/evenemang">) {
   return (
     <>
-      <PageHero
-        kicker="Kalender"
-        title={
-          <>
-            Evene<span className="text-red">mang</span>
-          </>
-        }
-        lead="Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så missar du inget."
-      >
-        <div className="flex flex-wrap gap-3">
-          <a href="/kalender.ics" className="btn btn-red">
-            <Rss size={18} /> Prenumerera på kalendern
-          </a>
-        </div>
-      </PageHero>
+      <TextHero group="evenemang">
+        {(text) => (
+          <div className="flex flex-wrap gap-3">
+            <a href="/kalender.ics" className="btn btn-red">
+              <Rss size={18} /> {text("text_evenemang_knapp")}
+            </a>
+          </div>
+        )}
+      </TextHero>
       <Suspense fallback={<PageSkeleton />}>
         <EventsContent searchParams={props.searchParams} />
       </Suspense>
@@ -72,7 +66,7 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
     <section className="container-site py-14 md:py-20">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
         <nav aria-label="Filtrera på utskott">
-          <ul className="flex flex-wrap gap-2">
+          <ul className="flex flex-wrap gap-1.5">
             <FilterChip href={href({ utskott: undefined })} active={!active}>
               Alla
             </FilterChip>
@@ -84,12 +78,12 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
           </ul>
         </nav>
         {/* Vanliga länkar: varje vy är en egen adress, så flikar med tablist och panel skulle lova ett beteende som inte finns. */}
-        <nav aria-label="Vy" className="inline-flex shrink-0 self-start rounded-full border border-ink/15 bg-white p-1 lg:self-auto">
+        <nav aria-label="Vy" className="inline-flex shrink-0 self-start rounded-lg border border-line bg-white p-0.5 lg:self-auto">
           <Link
             href={href({ vy: undefined, manad: undefined })}
             scroll={false}
             aria-current={view === "lista" ? "page" : undefined}
-            className={cn("rounded-full px-5 py-2 text-sm font-semibold transition-colors", view === "lista" ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
+            className={cn("inline-flex h-8 items-center rounded-md px-3.5 text-[0.84rem] font-medium transition-colors", view === "lista" ? "bg-ink text-paper" : "text-stone hover:text-ink")}
           >
             Lista
           </Link>
@@ -97,7 +91,7 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
             href={href({ vy: "kalender" })}
             scroll={false}
             aria-current={view === "kalender" ? "page" : undefined}
-            className={cn("inline-flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold transition-colors", view === "kalender" ? "bg-ink text-white" : "text-ink/60 hover:text-ink")}
+            className={cn("inline-flex h-8 items-center gap-2 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors", view === "kalender" ? "bg-ink text-paper" : "text-stone hover:text-ink")}
           >
             <Calendar size={15} /> Kalender
           </Link>
@@ -122,11 +116,11 @@ function FilterChip({ href, active, color, children }: { href: string; active: b
         scroll={false}
         aria-current={active ? "true" : undefined}
         className={cn(
-          "inline-flex h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all",
-          active ? "border-ink bg-ink text-white" : "border-ink/15 bg-white text-ink/75 hover:border-ink/40 hover:text-ink",
+          "inline-flex h-8 items-center gap-2 rounded-lg border px-3 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10",
+          active ? "border-ink bg-ink text-paper" : "border-line bg-white text-stone hover:border-ink/25 hover:text-ink",
         )}
       >
-        {color && <span className="size-2 rounded-full" style={{ background: active ? "#fff" : color }} aria-hidden />}
+        {color && <span className="size-2 rounded-full" style={{ background: active ? "var(--color-paper)" : color }} aria-hidden />}
         {children}
       </Link>
     </li>
@@ -146,7 +140,7 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
   return (
     <>
       {upcoming.length === 0 ? (
-        <div className="mt-12 rounded-[1.75rem] border border-dashed border-ink/20 p-14 text-center">
+        <div className="mt-12 rounded-xl border border-dashed border-line bg-white p-14 text-center">
           <p className="display-tight text-2xl">Tomt i kalendern</p>
           <p className="mt-2 text-stone">
             {committeeName ? `${committeeName} har inga kommande evenemang just nu.` : "Inga kommande evenemang just nu. Håll utkik!"}
@@ -157,13 +151,13 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
           const [y, m] = key.split("-").map(Number);
           return (
             <div key={key} className="mt-14">
-              <div className="flex items-baseline gap-4 border-b border-ink/10 pb-4">
+              <div className="flex items-baseline gap-4 border-b border-line pb-4">
                 <h2 className="display-tight text-[clamp(1.6rem,3vw,2.4rem)]">{monthLabel(y, m)}</h2>
                 <span className="kicker text-stone">
                   {events.length} evenemang
                 </span>
               </div>
-              <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {events.map((e, i) => (
                   <Reveal key={e.id} delay={(i % 3) * 80}>
                     <EventCard event={e} className="h-full" />
@@ -178,7 +172,7 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
       {past.length > 0 && (
         <div className="mt-24">
           <h2 className="kicker text-stone">Tidigare evenemang</h2>
-          <div className="mt-4 border-t border-ink/10">
+          <div className="mt-4 border-t border-line">
             {past.map((e) => (
               <EventRow key={e.id} event={e} />
             ))}
@@ -191,7 +185,7 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
 
 /** Bläddringen i kalendern. En månad utanför gränsen skulle visa innevarande månad, så där går det inte att gå vidare. */
 function MonthStep({ month, href, label, children }: { month: string; href: string; label: string; children: React.ReactNode }) {
-  const className = "grid size-11 place-items-center rounded-full border border-ink/15 bg-white";
+  const className = "grid size-9 place-items-center rounded-lg border border-line bg-white text-stone";
   if (!calendarMonthInRange(month)) {
     return (
       <button type="button" disabled aria-label={label} className={cn(className, "opacity-40")}>
@@ -200,7 +194,7 @@ function MonthStep({ month, href, label, children }: { month: string; href: stri
     );
   }
   return (
-    <Link href={href} scroll={false} rel="nofollow" aria-label={label} className={cn(className, "hover:border-ink")}>
+    <Link href={href} scroll={false} rel="nofollow" aria-label={label} className={cn(className, "hover:border-ink/25 hover:text-ink")}>
       {children}
     </Link>
   );
@@ -234,7 +228,7 @@ async function MonthView({
           <MonthStep month={prev} href={href({ manad: prev })} label="Föregående månad">
             <ChevronLeft size={18} />
           </MonthStep>
-          <Link href={href({ manad: undefined })} scroll={false} className="hidden h-11 items-center rounded-full border border-ink/15 bg-white px-4 text-sm font-semibold hover:border-ink sm:inline-flex">
+          <Link href={href({ manad: undefined })} scroll={false} className="hidden h-9 items-center rounded-lg border border-line bg-white px-3 text-[0.84rem] font-medium hover:border-ink/25 sm:inline-flex">
             I dag
           </Link>
           <MonthStep month={next} href={href({ manad: next })} label="Nästa månad">
@@ -244,8 +238,8 @@ async function MonthView({
       </div>
 
       {/* Desktop: rutnät */}
-      <div className="mt-6 hidden overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white md:block">
-        <div className="grid grid-cols-7 border-b border-ink/10 bg-paper-2/50">
+      <div className="mt-6 hidden overflow-hidden rounded-xl border border-line bg-white md:block">
+        <div className="grid grid-cols-7 border-b border-line bg-paper-2/50">
           {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((d) => (
             <div key={d} className="kicker px-3 py-3 text-stone">
               {d}
@@ -260,7 +254,7 @@ async function MonthView({
               <div
                 key={d.date}
                 className={cn(
-                  "min-h-[8.5rem] border-ink/10 p-2",
+                  "min-h-[8.5rem] border-line p-2",
                   i % 7 !== 6 && "border-r",
                   i < days.length - 7 && "border-b",
                   !d.inMonth && "bg-paper/60",
@@ -279,11 +273,11 @@ async function MonthView({
                     <li key={e.id}>
                       <Link
                         href={`/evenemang/${e.slug}`}
-                        className="group block truncate rounded-lg px-2 py-1 text-[0.78rem] font-semibold leading-tight text-white transition-transform hover:-translate-y-px"
-                        style={{ background: e.committee?.accent ?? "#0a0a0a" }}
+                        className="group block truncate rounded-md border-l-2 bg-paper-2 px-2 py-1 text-[0.78rem] font-medium leading-tight text-ink transition-colors hover:bg-paper-3"
+                        style={{ borderLeftColor: e.committee?.accent ?? "var(--color-ink)" }}
                         title={e.title}
                       >
-                        <span className="font-mono font-normal opacity-80">{e.all_day || e.starts_at.slice(0, 10) !== d.date ? "" : e.starts_at.slice(11, 16)} </span>
+                        <span className="font-mono font-normal text-stone">{e.all_day || e.starts_at.slice(0, 10) !== d.date ? "" : e.starts_at.slice(11, 16)} </span>
                         {e.title}
                       </Link>
                     </li>
@@ -297,7 +291,7 @@ async function MonthView({
       </div>
 
       {/* Mobil: lista för månaden */}
-      <div className="mt-6 border-t border-ink/10 md:hidden">
+      <div className="mt-6 border-t border-line md:hidden">
         {monthEvents.length === 0 ? (
           <p className="py-10 text-center text-stone">Inga evenemang den här månaden.</p>
         ) : (

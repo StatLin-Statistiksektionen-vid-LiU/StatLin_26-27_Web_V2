@@ -26,7 +26,7 @@ export function ResourceBoard({ resources, initialProgram }: { resources: Resour
   return (
     <section aria-label="Hjälpmedel per program" className="container-site py-12 md:py-20">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div role="tablist" aria-label="Program" className="inline-flex rounded-full border border-ink/10 bg-white p-1">
+        <div role="tablist" aria-label="Program" className="inline-flex rounded-lg border border-line bg-white p-0.5">
           {PROGRAMS.map((p) => (
             <button
               key={p.value}
@@ -48,7 +48,7 @@ export function ResourceBoard({ resources, initialProgram }: { resources: Resour
                 chooseProgram(next.value);
                 document.getElementById(`flik-${next.value}`)?.focus();
               }}
-              className={cn("h-10 rounded-full px-5 text-sm font-semibold transition-colors", program === p.value ? "bg-ink text-white" : "text-stone hover:text-ink")}
+              className={cn("h-8 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10", program === p.value ? "bg-ink text-paper" : "text-stone hover:text-ink")}
             >
               {p.label}
             </button>
@@ -114,15 +114,15 @@ function ResourceList({ items }: { items: ResourceItem[] }) {
         const Action = r.file ? Download : ArrowUpRight;
         const meta = r.file ? fileLabel(r.file) : linkHost(r.url);
         return (
-          <li key={r.id} className="border-b border-ink/10">
-            <a href={href ?? "#"} target={href ? "_blank" : undefined} rel="noopener noreferrer" className="group flex items-center gap-4 py-5 transition-colors hover:bg-white/70 sm:gap-5">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-ink text-white transition-colors group-hover:bg-red">
+          <li key={r.id} className="border-b border-line">
+            <a href={href ?? "#"} target={href ? "_blank" : undefined} rel="noopener noreferrer" className="group flex items-center gap-4 py-5 transition-colors hover:bg-paper-2/60 sm:gap-5">
+              <span className="grid size-10 shrink-0 place-items-center rounded-lg border border-line bg-paper-2/60 text-ink transition-colors group-hover:border-red/40 group-hover:text-red">
                 <Icon size={20} />
               </span>
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <span className="min-w-0 font-bold tracking-tight [overflow-wrap:anywhere]">{r.title}</span>
-                  <span className="rounded-full border border-ink/15 px-2.5 py-0.5 text-xs font-semibold text-stone">{RESOURCE_CATEGORIES[r.category]}</span>
+                  <span className="rounded-md border border-line px-2 py-0.5 text-xs font-medium text-stone">{RESOURCE_CATEGORIES[r.category]}</span>
                 </span>
                 {r.description && <span className="mt-1 block text-sm text-stone">{r.description}</span>}
                 {meta && <span className="kicker mt-1.5 block text-stone">{meta}</span>}

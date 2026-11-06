@@ -77,7 +77,7 @@ export function ImageField({
           if (first) upload(first, rest.length > 0 ? `Här används bara en bild: ${first.name}. De andra laddades inte upp.` : null);
         }}
         className={cn(
-          "group relative min-h-28 w-full overflow-hidden rounded-2xl border-2 border-dashed transition-colors",
+          "@container group relative min-h-28 w-full overflow-hidden rounded-2xl border-2 border-dashed transition-colors",
           aspect,
           over ? "border-red bg-red/5" : image ? "border-transparent" : "border-ink/15 bg-paper/60 hover:border-ink/30",
           // En logga ska synas hel. Med fingret står knapparna kvar, så där får de en egen plats under den.
@@ -95,9 +95,10 @@ export function ImageField({
               className={cn("absolute inset-0 h-full w-full", fit === "cover" ? "object-cover" : "object-contain p-4 pointer-coarse:pb-16")}
               style={{ backgroundColor: fit === "cover" ? image.color : undefined }}
             />
-            <div className={cn("absolute inset-x-0 bottom-0 flex justify-end gap-2 p-3 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 pointer-coarse:opacity-100", fit === "cover" ? "bg-gradient-to-t from-black/60 to-transparent" : "[&>button]:ring-1 [&>button]:ring-ink/10")}>
+            <div className={cn("absolute inset-x-0 bottom-0 flex flex-wrap justify-end gap-2 p-3 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100 pointer-coarse:opacity-100", fit === "cover" ? "bg-gradient-to-t from-black/60 to-transparent" : "[&>button]:ring-1 [&>button]:ring-ink/10")}>
               <button type="button" onClick={() => inputRef.current?.click()} className="btn btn-light btn-sm">
-                <Upload size={15} /> Byt
+                {/* I en liten ruta, som en logga på en telefon, får bara ikonen plats. Namnet finns kvar för skärmläsare. */}
+                <Upload size={15} /> <span className="sr-only @[10rem]:not-sr-only">Byt</span>
               </button>
               <button type="button" onClick={() => setImage(null)} className="btn btn-sm bg-white/90 text-red-deep hover:bg-white" aria-label="Ta bort bild">
                 <Trash size={15} />
@@ -112,7 +113,7 @@ export function ImageField({
           </button>
         )}
         {progress !== null && (
-          <div className="absolute inset-0 grid place-items-center bg-white/80 backdrop-blur-sm">
+          <div className="absolute inset-0 grid place-items-center bg-white/80 backdrop-blur-sm opak:bg-white">
             <div className="w-2/3">
               <div className="h-1.5 overflow-hidden rounded-full bg-ink/10">
                 <div className="h-full bg-red transition-[width]" style={{ width: `${Math.round(progress * 100)}%` }} />

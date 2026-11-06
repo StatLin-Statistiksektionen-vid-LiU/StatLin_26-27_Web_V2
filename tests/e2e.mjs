@@ -172,6 +172,9 @@ async function openDeleteConfirm(page) {
       await page.locator(".logo-formler").waitFor({ state: "attached" });
       assert.equal(await page.locator(".logo-formler").count(), 1);
       assert.equal(await ringRadius(page), "0", "formlerna ska vara dolda när sidan laddats");
+      // Ringen strömmas in efter skalet (den kan stängas av under Inställningar) och lyssnar på musen först när den har hydrerats.
+      await waitForHydration(page, page.locator(".logo-formler"));
+      await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       await moveOverLogo(page);
       await page.waitForFunction(ringIsVisible, null, { timeout: 5000 });
       await page.waitForFunction(ringIsHidden, null, { timeout: 10000 });
@@ -180,18 +183,16 @@ async function openDeleteConfirm(page) {
       await page.waitForFunction(ringIsHidden, null, { timeout: 10000 });
     });
 
-    await step("Formelringen sveper efter 2,6 sekunder och sedan var 4:e minut", async () => {
+    await step("Formelringen rör sig inte av sig själv, inte heller efter introt eller efter fyra minuter", async () => {
       // Helt fejkad tid: klockan står still och flyttas bara av testet, så en upptagen dator ändrar inte resultatet (ST-25).
       const clockCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
       const clocked = await clockCtx.newPage();
-      // Ringen börjar räkna när den börjar bevaka loggan. Då sparas tiden, och en egen bevakning visar när webbläsaren sett en scroll.
+      // Ringen är igång när den börjar bevaka loggan. Då sparas tiden.
       await clocked.addInitScript(() => {
         const observe = IntersectionObserver.prototype.observe;
         IntersectionObserver.prototype.observe = function (target) {
           observe.call(this, target);
-          if (!target.matches(".floating-logo") || window.ringMountedAt !== undefined) return;
-          window.ringMountedAt = performance.now();
-          observe.call(new IntersectionObserver(([entry]) => (window.logoOnScreen = entry.isIntersecting)), target);
+          if (target.matches(".floating-logo") && window.ringMountedAt === undefined) window.ringMountedAt = performance.now();
         };
       });
       await clocked.clock.install();
@@ -203,41 +204,11 @@ async function openDeleteConfirm(page) {
         assert.ok(Date.now() < deadline, "ringen startade inte");
         await clocked.clock.runFor(20);
       }
-      const mountedAt = await clocked.evaluate(() => window.ringMountedAt);
-      const now = () => clocked.evaluate(() => performance.now());
-      // Hoppar fram till en tid, som när datorn sovit, och kör sedan 0,4 sekunder bild för bild. Under hoppet ritas inga bilder,
-      // så ett svep som startat, för tidigt eller i tid, syns först efteråt.
-      const jumpTo = async (ms) => {
-        await clocked.clock.fastForward(ms - (await now()));
-        await clocked.clock.runFor(400);
-      };
-
-      await clocked.clock.runFor(mountedAt + 2500 - (await now()));
-      assert.equal(await ringRadius(clocked), "0", "formlerna ska vara dolda före 2,6 sekunder");
-      await clocked.clock.runFor(500);
-      assert.ok(await clocked.evaluate(ringIsVisible), "svepet ska ha börjat efter 2,6 sekunder");
-      let sweep = mountedAt + 2600;
-      await jumpTo(sweep + 7100);
-      assert.equal(await ringRadius(clocked), "0", "svepet ska vara över efter 7 sekunder");
-      await jumpTo(sweep + 239_000);
-      assert.equal(await ringRadius(clocked), "0", "inget nytt svep före 4 minuter");
-      sweep += 240_000;
-      await jumpTo(sweep);
-      assert.ok(await clocked.evaluate(ringIsVisible), "nästa svep ska komma efter 4 minuter");
-      await jumpTo(sweep + 7100);
-      assert.equal(await ringRadius(clocked), "0", "även det svepet ska vara över efter 7 sekunder");
-      // Är loggan utanför skärmen när svepet ska gå hoppas det över. Nästa kommer 4 minuter senare, inte när man scrollar tillbaka.
-      await clocked.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
-      await clocked.waitForFunction(() => window.logoOnScreen === false);
-      sweep += 240_000;
-      await jumpTo(sweep);
-      await clocked.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
-      await clocked.waitForFunction(() => window.logoOnScreen === true);
-      await clocked.clock.runFor(1000);
-      assert.equal(await ringRadius(clocked), "0", "svepet som hoppades över ska inte komma i efterhand");
-      sweep += 240_000;
-      await jumpTo(sweep);
-      assert.ok(await clocked.evaluate(ringIsVisible), "svepet efter det som hoppades över ska komma i tid");
+      await clocked.clock.runFor(10_000);
+      assert.equal(await ringRadius(clocked), "0", "inget svep efter introt");
+      await clocked.clock.fastForward(240_000);
+      await clocked.clock.runFor(400);
+      assert.equal(await ringRadius(clocked), "0", "inget svep efter fyra minuter heller");
       await clockCtx.close();
     });
 
@@ -248,104 +219,32 @@ async function openDeleteConfirm(page) {
       await moveOverLogo(still);
       await still.waitForTimeout(3500);
       assert.equal(await ringRadius(still), "0", "gradienten ska inte animeras");
-      const fill = await still.locator(".logo-formler text:not(.formler-glod)").evaluate((el) => getComputedStyle(el).fill);
-      assert.match(fill, /^(rgba\(255, 255, 255, 0\.7\)|rgb\(255 255 255 \/ 0\.7\))$/, "musen över loggan ska visa hela ringen");
+      const fill = await still.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill);
+      assert.match(fill, /0\.7\)$/, "musen över loggan ska visa hela ringen");
       await stillCtx.close();
     });
 
-    await step("Formelringens glöd är röd som förval och kan bytas till vit under Inställningar", async () => {
-      const glowCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-      const glow = await glowCtx.newPage();
-      const ringGlow = async (color) => {
-        await glow.goto(`${BASE}/`);
-        await glow.locator(".logo-formler").waitFor({ state: "attached" });
-        await moveOverLogo(glow);
-        await glow.waitForFunction(ringIsVisible, null, { timeout: 8000 });
-        assert.match(await glow.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter), color);
-      };
-      await ringGlow(/255, 7, 7/);
-      await login(glow, "info@statlin.se", "lokal-demo-2026");
-      // Listan får inte ändras förrän sidan är hydrerad. Annars ritar React om formuläret och klicket försvinner.
-      const hydrated = () => glow.waitForFunction(() => Object.keys(document.querySelector("#hero_ring_color") ?? {}).some((k) => k.startsWith("__react")));
-      await glow.goto(`${BASE}/admin/installningar`);
-      await hydrated();
-      const field = glow.locator("#hero_ring_color");
-      assert.equal(await field.inputValue(), "red");
-      assert.deepEqual(await field.locator("option").allTextContents(), ["Röd", "Vit"]);
-      const save = glow.getByRole("button", { name: "Spara", exact: true });
-      // Servern ska neka ett påhittat värde, även om någon manipulerar listan.
-      await field.evaluate((el) => {
-        el.add(new Option("Blå", "blue"));
-        el.value = "blue";
-      });
-      await save.click();
-      await glow.getByText("Välj röd eller vit.").first().waitFor();
-      await glow.reload();
-      await hydrated();
-      assert.equal(await field.inputValue(), "red");
-      await field.selectOption("white");
-      await save.click();
-      await glow.getByText("Inställningarna är sparade.").waitFor();
-      await ringGlow(/255, 255, 255/);
-      await glow.screenshot({ path: `${SHOTS}/formelring-vit.png` });
-      // Sparar man med pennan på startsidan ska valet stå kvar.
-      await glow.locator('#admin-bar [role="switch"][aria-checked="true"]').waitFor();
-      await glow.locator("button:visible", { hasText: "Redigera texten" }).first().click();
-      const panel = glow.getByRole("dialog");
-      const inDrawer = panel.locator('select[name="hero_ring_color"]');
-      await inDrawer.waitFor();
-      assert.equal(await inDrawer.inputValue(), "white");
-      await panel.getByRole("button", { name: "Spara", exact: true }).click();
-      await panel.waitFor({ state: "detached" });
-      await ringGlow(/255, 255, 255/);
-      // Tillbaka till förvalet, så att senare steg inte påverkas.
-      await glow.goto(`${BASE}/admin/installningar`);
-      await hydrated();
-      await field.selectOption("red");
-      await save.click();
-      await glow.getByText("Inställningarna är sparade.").waitFor();
-      await glowCtx.close();
-    });
-
     await step("Telefonen får de enklare effekterna och datorn behåller sina", async () => {
-      // Skuggoskärpan syns bara i anropen till ritytan, så det högsta värdet sparas. Ritningarna räknas för att se takten.
-      const watchCanvas = () => {
-        window.__canvas = { blur: 0, draws: 0 };
-        const proto = CanvasRenderingContext2D.prototype;
-        const blur = Object.getOwnPropertyDescriptor(proto, "shadowBlur");
-        Object.defineProperty(proto, "shadowBlur", {
-          get() {
-            return blur.get.call(this);
-          },
-          set(value) {
-            window.__canvas.blur = Math.max(window.__canvas.blur, value);
-            blur.set.call(this, value);
-          },
-        });
-        const clear = proto.clearRect;
-        proto.clearRect = function (...args) {
-          window.__canvas.draws++;
-          return clear.apply(this, args);
-        };
-      };
+      // Heron har inte längre någon ritad bakgrundsgraf (DataField, en canvas) och inget korn. Bakom loggan ligger ett rutnät i ren CSS (HeroGrid),
+      // så kontrollerna av ritytan är borttagna. I stället kollas att rutnätets ljus bara följer en mus och att telefonen inte skriver något i det.
+      // Kornet finns kvar på det röda kortet längre ner på startsidan, och där kollas det i stället.
       const open = async (options) => {
         const context = await browser.newContext({ deviceScaleFactor: 3, ...options });
         const p = await context.newPage();
-        await p.addInitScript(watchCanvas);
         await p.goto(`${BASE}/`);
         await p.locator(".logo-formler").waitFor({ state: "attached" });
         await p.locator("h1").waitFor();
         await p.waitForFunction(() => Object.keys(document.querySelector(".floating-logo")).some((k) => k.startsWith("__react")));
-        // Ritytans kontext ska finnas innan testet frågar efter den. Annars skapar frågan en egen kontext med andra inställningar.
-        await p.locator("canvas.data-field[data-drawn]").waitFor({ state: "attached" });
+        // Kortet med kornet strömmas in efter heron.
+        await p.locator("main a.noise").first().waitFor({ state: "attached" });
         return p;
       };
       const effects = (p) =>
         p.evaluate(() => {
           const css = (selector, pseudo) => getComputedStyle(document.querySelector(selector), pseudo);
-          const grain = css("section.noise", "::after");
+          const grain = css("main a.noise", "::after");
           const title = getComputedStyle(document.querySelector("h1").closest('[class*="fade-up"]'));
-          const buttons = getComputedStyle(document.querySelector("section.noise a.btn-red").closest('[class*="fade-up"]'));
+          const buttons = getComputedStyle(document.querySelector("section[data-startsida] a.btn-ink").closest('[class*="fade-up"]'));
           return {
             sway: css(".logo-tilt").animationName,
             intro: css('.floating-logo svg[role="img"]').animationName,
@@ -355,23 +254,21 @@ async function openDeleteConfirm(page) {
             grain: grain.content === "none" ? "none" : grain.mixBlendMode,
             title: `${title.animationDelay} ${title.animationDuration}`,
             buttons: `${buttons.animationName} ${buttons.animationDelay}`,
-            canvasWidth: document.querySelector("canvas").width,
-            // Stillbilden ritas i mjukvara, så att canvasen inte blir ett eget lager på grafikkortet.
-            field: document.querySelector("canvas.data-field").getContext("2d").getContextAttributes().willReadFrequently ? "mjukvara" : "grafikkort",
-            shadowBlur: window.__canvas.blur,
             sections: css(".below-fold").contentVisibility,
             titleFont: css("h1").fontFamily.includes("Archivo Reserv"),
           };
         });
       const inlineTilt = (p) => p.locator(".logo-tilt").evaluate((el) => el.style.transform);
       const ringFilter = (p) => p.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter);
-      const draws = (p) => p.evaluate(() => window.__canvas.draws);
+      // Rutnätets ljus: data-aktiv och pekarens läge som två CSS-variabler, satta av HeroGrid.
+      const gridLight = (p) => p.locator(".hero-rutnat").evaluate((el) => ({ active: el.hasAttribute("data-aktiv"), style: el.style.cssText }));
       // Introt får inte hålla kvar sina lager på telefonen när det är slut. Slutbilden är densamma utan dem.
       const introIsOver = () => !document.getAnimations().some((a) => ["logo-ring-in", "grid-wipe", "logo-fade", "logo-glow-in", "sig-wipe", "sig-glow"].includes(a.animationName));
-      const scrollHeader = async (p) => {
-        await p.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
-        await p.locator("header.backdrop-blur-xl").waitFor();
-      };
+      const header = (p) =>
+        p.locator("header").first().evaluate((el) => {
+          const style = getComputedStyle(el);
+          return { display: style.display, backdrop: style.backdropFilter, background: style.backgroundColor };
+        });
 
       const mobile = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
       const phone = await open(mobile);
@@ -382,34 +279,28 @@ async function openDeleteConfirm(page) {
         mask: "none",
         reflex: "none",
         grain: "none",
-        title: "0.3s 0.8s",
-        buttons: "none 0s",
-        canvasWidth: 780,
-        field: "mjukvara",
-        shadowBlur: 0,
+        title: "0.08s 0.9s",
+        buttons: "fade-up 0.16s",
         sections: "auto",
         titleFont: true,
       });
       assert.equal(await inlineTilt(phone), "", "ingen loop i JS ska vrida loggan på telefon");
-      // Telefonen får en stillbild: den ritas en gång, och igen bara om ytan byter storlek.
-      await phone.locator("canvas.data-field[data-drawn]").waitFor({ state: "attached" });
-      const drawsBefore = await draws(phone);
-      await phone.waitForTimeout(2000);
-      assert.ok((await draws(phone)) - drawsBefore <= 2, "ritytan ska stå still på telefon");
       await phone.waitForFunction(introIsOver, null, { timeout: 15000 });
-      // Ringen tonas in som helhet efter introt och göms igen. Den ritas aldrig om, och glöden är en färdig suddig kopia i stället för ett filter.
+      // Ringen kommer fram som helhet först när man trycker på loggan. Den ritas aldrig om och har ingen glöd.
       const ringShown = () => document.querySelector(".logo-formler").hasAttribute("data-shown");
       await phone.waitForFunction(() => !document.querySelector(".logo-formler").hasAttribute("data-shown"), null, { timeout: 10000 });
       const logo = await phone.locator(".floating-logo").boundingBox();
       await phone.touchscreen.tap(logo.x + logo.width / 2, logo.y + logo.height / 2);
       await phone.waitForFunction(ringShown, null, { timeout: 5000 });
       await phone.waitForFunction(() => getComputedStyle(document.querySelector(".logo-formler")).opacity === "1", null, { timeout: 5000 });
-      assert.equal(await ringFilter(phone), "none", "telefonen ska inte rita ringens glöd med filter");
-      assert.notEqual(await phone.locator(".logo-formler .formler-glod").evaluate((el) => getComputedStyle(el).display), "none", "telefonen ska visa den färdiga glöden");
+      assert.equal(await ringFilter(phone), "none", "formlerna ska inte ha någon glöd");
       assert.equal(await phone.locator(".logo-formler radialGradient").getAttribute("r"), "0", "gradienten ska inte animeras på telefon");
-      await scrollHeader(phone);
-      assert.equal(await phone.locator("header").first().evaluate((el) => getComputedStyle(el).backdropFilter), "none");
-      await phone.waitForFunction(() => getComputedStyle(document.querySelector("header")).backgroundColor === "rgb(10, 10, 10)", null, { timeout: 5000 });
+      // Telefonen lyssnar inte på pekaren i heron, så trycket lämnade inget ljus och inga variabler efter sig i rutnätet.
+      assert.deepEqual(await gridLight(phone), { active: false, style: "" }, "rutnätet ska inte lysa upp på telefon");
+      // Listen överst är hel på telefonen, utan oskärpa bakom sig, också när sidan är scrollad. Den har pappersfärgen.
+      await phone.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
+      await phone.waitForTimeout(300);
+      assert.deepEqual(await header(phone), { display: "flex", backdrop: "none", background: "rgb(249, 248, 245)" });
       await phone.context().close();
 
       // Heron hoppar inte under laddningen. Loggan ska stå på samma höjd i skalet (utan JS) som med rubriken på plats, både före och efter Archivo.
@@ -430,16 +321,21 @@ async function openDeleteConfirm(page) {
         assert.ok(Math.max(...tops) - Math.min(...tops) <= 1, `loggan hoppar vid ${width} px: ${tops.join(", ")}`);
       }
 
-      // Telefon med minskad rörelse: ingen ny gungning och ingen loop.
+      // Telefon med minskad rörelse: ingen gungning, ingen loop och ingenting i loggan som rör sig.
       const stillPhone = await open({ ...mobile, reducedMotion: "reduce" });
       const stillEffects = await effects(stillPhone);
       assert.equal(stillEffects.sway, "none");
-      assert.equal(stillEffects.field, "mjukvara");
       assert.equal(await inlineTilt(stillPhone), "");
-      await stillPhone.waitForTimeout(500);
-      const stillDraws = await draws(stillPhone);
       await stillPhone.waitForTimeout(1000);
-      assert.equal(await draws(stillPhone), stillDraws, "ritytan ska stå still");
+      assert.equal(await inlineTilt(stillPhone), "");
+      const moving = await stillPhone.evaluate(() =>
+        document
+          .getAnimations()
+          .filter((a) => a.playState === "running" && a.effect?.target?.closest?.(".floating-logo"))
+          .map((a) => a.animationName || a.transitionProperty),
+      );
+      assert.deepEqual(moving, [], "loggan ska stå still");
+      assert.deepEqual(await gridLight(stillPhone), { active: false, style: "" });
       await stillPhone.context().close();
 
       // Sektionernas gissade höjder gäller en smal skärm. En surfplatta lägger ut allt direkt.
@@ -455,11 +351,8 @@ async function openDeleteConfirm(page) {
         mask: "url",
         reflex: "blur(14px)",
         grain: "overlay",
-        title: "1.6s 1.2s",
-        buttons: "fade-up 1.85s",
-        canvasWidth: 2880,
-        field: "grafikkort",
-        shadowBlur: 18,
+        title: "0.08s 0.9s",
+        buttons: "fade-up 0.16s",
         sections: "visible",
         titleFont: false,
       });
@@ -467,21 +360,31 @@ async function openDeleteConfirm(page) {
       await desktop.mouse.move(100, 100);
       await desktop.waitForTimeout(500);
       assert.notEqual(await inlineTilt(desktop), tiltBefore, "loggan ska följa musen");
-      // Ringens filter gäller bara medan ringen syns.
+      // Rutnätet bakom loggan lyser upp kring musen och släcks när musen lämnar heron (här mot sidomenyn).
+      const hero = await desktop.locator("section[data-startsida]").boundingBox();
+      await desktop.mouse.move(hero.x + 200, hero.y + 200, { steps: 4 });
+      await desktop.waitForFunction(() => document.querySelector(".hero-rutnat").hasAttribute("data-aktiv"), null, { timeout: 5000 });
+      assert.match((await gridLight(desktop)).style, /--mx: \d+px; --my: \d+px;/);
+      await desktop.mouse.move(100, 300, { steps: 4 });
+      await desktop.waitForFunction(() => !document.querySelector(".hero-rutnat").hasAttribute("data-aktiv"), null, { timeout: 5000 });
+      // Formlerna har ingen glöd, så ringen har inget filter när den syns.
       await moveOverLogo(desktop);
       await desktop.waitForFunction(ringIsVisible, null, { timeout: 5000 });
-      assert.match(await ringFilter(desktop), /drop-shadow/);
-      await desktop.waitForFunction(ringIsHidden, null, { timeout: 15000 });
-      assert.equal(await ringFilter(desktop), "none", "en dold ring ska inte ha filter");
-      await scrollHeader(desktop);
+      assert.equal(await ringFilter(desktop), "none", "formlerna ska inte ha någon glöd");
+      // Datorn har sidomenyn i stället för listen överst. I ett smalare fönster kommer listen tillbaka, och med mus har den kvar sin oskärpa.
+      assert.equal((await header(desktop)).display, "none");
+      assert.equal(await desktop.locator("aside").first().evaluate((el) => getComputedStyle(el).display), "flex");
+      await desktop.setViewportSize({ width: 900, height: 800 });
+      await desktop.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
       await desktop.waitForFunction(() => getComputedStyle(document.querySelector("header")).backdropFilter.includes("blur(24px)"), null, { timeout: 5000 });
       await desktop.context().close();
 
-      // Minskad rörelse på dator: musen över loggan visar hela ringen med glöd, utan loop.
+      // Minskad rörelse på dator: musen över loggan visar hela ringen, utan loop och utan glöd.
       const stillDesktop = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
       await moveOverLogo(stillDesktop);
       await stillDesktop.waitForTimeout(300);
-      assert.match(await ringFilter(stillDesktop), /drop-shadow/);
+      assert.equal(await ringFilter(stillDesktop), "none");
+      assert.match(await stillDesktop.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill), /0\.7\)$/);
       await stillDesktop.context().close();
     });
 
@@ -1164,8 +1067,9 @@ async function openDeleteConfirm(page) {
 
     await step("Mottagaren ändrar status och kommenterar", async () => {
       await page.goto(taskUrl);
-      await page.locator('button[aria-pressed="false"]', { hasText: "Behöver hjälp" }).click();
-      await page.locator('button[aria-pressed="true"]', { hasText: "Behöver hjälp" }).waitFor();
+      // Hjälp är inget eget steg: uppdraget pågår, och knappen ger det en markering som alla ser.
+      await page.getByRole("button", { name: "Be om hjälp" }).click();
+      await page.getByRole("button", { name: "Hjälpen behövs inte längre" }).waitFor();
       await page.fill('textarea[name="body"]', "Vilket format vill ni ha?");
       await page.getByRole("button", { name: "Skicka", exact: true }).click();
       await page.getByText("Kommentaren är skickad.").waitFor();
@@ -1333,7 +1237,7 @@ async function openDeleteConfirm(page) {
       await signedOutNotice.waitFor();
       await switchAccount(page, "admin@statlin.se");
       await page.goto(url);
-      await statusButton(true, "Planerat").waitFor();
+      await statusButton(true, "Att göra").waitFor();
     });
 
     await step("Beskedet står inte kvar när man kommer tillbaka till sidan", async () => {

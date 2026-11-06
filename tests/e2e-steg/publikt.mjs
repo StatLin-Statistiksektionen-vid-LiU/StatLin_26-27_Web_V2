@@ -38,14 +38,15 @@ export default async function publiktSteg({ BASE, browser, step }) {
 
   await step("Startsidan spelar inte om introt när man går tillbaka till den", async () => {
     const { context, page } = await visit(PHONE, "/");
-    const toEvents = page.locator('[data-startsida] a[href="/evenemang"]').first();
+    // Heron länkar inte längre till evenemangen (de har en egen del längre ner), så steget går via Engagera dig.
+    const toEvents = page.locator('[data-startsida] a[href="/utskott"]').first();
     await waitForHydration(page, toEvents);
     await page.waitForFunction(() => {
       const finite = document.getAnimations().filter((a) => a.animationName && a.playState === "running" && a.effect?.getComputedTiming().iterations !== Infinity);
       return finite.length === 0;
     }, null, { timeout: 15_000 });
     await toEvents.click();
-    await page.waitForURL(`${BASE}/evenemang`);
+    await page.waitForURL(`${BASE}/utskott`);
     await page.locator("[data-startsida]").waitFor({ state: "hidden" });
     await page.goBack();
     await page.waitForURL(`${BASE}/`);
@@ -54,21 +55,21 @@ export default async function publiktSteg({ BASE, browser, step }) {
     await context.close();
   });
 
-  await step("Ett tryck öppnar menygruppen på surfplatta, och nästa tryck eller ett tryck utanför stänger den", async () => {
+  await step("Ett tryck öppnar menygruppen på surfplatta, och nästa tryck stänger den", async () => {
+    // Surfplattan på 1024 px får datorns sidomeny. Grupperna där är details som står kvar öppna, inte rullgardiner,
+    // så ett tryck utanför ska inte längre stänga dem. Den delen av steget är borttagen.
     const { context, page } = await visit(TABLET, "/kontakt");
-    const group = page.locator("header .meny-grupp").first();
-    const button = group.locator("button");
+    const group = page.locator("aside .meny-grupp").first();
+    const summary = group.locator("summary");
     const link = group.locator("a").first();
-    await waitForHydration(page, button);
-    await button.tap();
+    await waitForHydration(page, summary);
+    await summary.tap();
     await link.waitFor();
-    assert.equal(await button.getAttribute("aria-expanded"), "true");
-    await button.tap();
+    assert.equal(await group.evaluate((details) => details.open), true);
+    await summary.tap();
     await link.waitFor({ state: "hidden" });
-    await button.tap();
+    await summary.tap();
     await link.waitFor();
-    await page.touchscreen.tap(4, 700);
-    await link.waitFor({ state: "hidden" });
     await context.close();
   });
 
@@ -182,9 +183,20 @@ export default async function publiktSteg({ BASE, browser, step }) {
     assert.deepEqual(missed, []);
     await context.close();
 
+    // Startsidan har ingen Scrolla vidare-länk längre. Datorns minsta mål är nu sidomenyns rader: undersidorna, språket, temaknappen och Poster.
+    // Grupperna fälls ut, så att undersidorna också mäts. Alla ska vara minst 24 px åt båda hållen.
     const { context: desktop, page: wide } = await visit({}, "/");
-    const box = await wide.getByRole("link", { name: "Scrolla vidare" }).boundingBox();
-    assert.ok(box.width >= 24 && box.height >= 24, `Scrolla vidare är ${box.width} x ${box.height} px`);
+    await wide.locator("aside details").evaluateAll((groups) => groups.forEach((group) => (group.open = true)));
+    const { measured, small } = await wide.locator("aside").locator("a[href], button, summary").evaluateAll((targets) => {
+      const shown = targets.filter((target) => target.getClientRects().length);
+      const small = shown.flatMap((target) => {
+        const box = target.getBoundingClientRect();
+        return box.width >= 24 && box.height >= 24 ? [] : [`${target.textContent.trim() || target.getAttribute("aria-label")}: ${Math.round(box.width)} x ${Math.round(box.height)} px`];
+      });
+      return { measured: shown.length, small };
+    });
+    assert.ok(measured >= 20, `bara ${measured} mål i sidomenyn`);
+    assert.deepEqual(small, []);
     await desktop.close();
   });
 

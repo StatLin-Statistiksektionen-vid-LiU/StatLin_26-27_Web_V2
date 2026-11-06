@@ -36,7 +36,9 @@ export async function GET(request: Request) {
       return page ? json({ page }) : missing();
     }
     case "home":
-    case "footer": {
+    case "footer":
+    case "contact":
+    case "texts": {
       if (!canManageSettings(user)) return denied();
       return json({ settings: await getSettings() });
     }

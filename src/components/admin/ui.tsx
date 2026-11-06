@@ -34,7 +34,8 @@ export function AdminHeader({
           </Link>
         )}
         {kicker && <p className="kicker text-red-deep">{kicker}</p>}
-        <h1 className="mt-1 text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold leading-tight tracking-tight [font-stretch:110%]">{title}</h1>
+        {/* Långa ord som Intresseanmälningar ryms inte på en rad vid 320 pixlar: de avstavas, och annars bryts de, i stället för att sidan kan dras i sidled. */}
+        <h1 className="mt-1 break-words text-[clamp(1.8rem,3.5vw,2.5rem)] font-extrabold leading-tight tracking-tight hyphens-auto [font-stretch:110%]">{title}</h1>
         {description && <p className="mt-2 max-w-2xl text-stone">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}

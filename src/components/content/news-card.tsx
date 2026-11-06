@@ -17,7 +17,7 @@ export function NewsCard({ item, featured, className }: { item: NewsItem; featur
     >
       <div
         className={cn(
-          "relative overflow-hidden rounded-[1.5rem]",
+          "relative overflow-hidden rounded-xl border border-line",
           featured ? "aspect-[16/10] md:aspect-auto md:w-[58%]" : "aspect-[16/10]",
         )}
       >
@@ -36,14 +36,14 @@ export function NewsCard({ item, featured, className }: { item: NewsItem; featur
             className="h-full w-full transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"
           />
         )}
-        {item.pinned && <span className="chip absolute left-4 top-4 bg-red text-white">Fäst</span>}
+        {item.pinned && <span className="chip absolute left-3 top-3 bg-red text-white">Fäst</span>}
       </div>
       <div className={cn("flex flex-col pt-5", featured && "md:flex-1 md:justify-center md:pt-0")}>
         <p className="kicker flex flex-wrap items-center gap-x-3 gap-y-1 text-stone">
           <time dateTime={item.published_at}>{newsDate(item)}</time>
           {item.committee && (
             <>
-              <span className="h-px w-4 bg-ink/20" aria-hidden />
+              <span className="h-px w-4 bg-ink/25" aria-hidden />
               <span>{item.committee.short_name}</span>
             </>
           )}
@@ -51,7 +51,7 @@ export function NewsCard({ item, featured, className }: { item: NewsItem; featur
         <h3
           className={cn(
             "mt-3 font-bold leading-[1.15] tracking-tight transition-colors group-hover:text-red-deep [font-stretch:108%]",
-            featured ? "text-[clamp(1.7rem,3vw,2.6rem)]" : "text-[1.35rem]",
+            featured ? "text-[clamp(1.6rem,2.8vw,2.4rem)]" : "text-[1.25rem]",
           )}
         >
           {item.title}

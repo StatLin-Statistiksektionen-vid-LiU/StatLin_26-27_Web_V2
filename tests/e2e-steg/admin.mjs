@@ -347,7 +347,7 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
     // Platsen väljs när partnern finns: en ny hamnar sist.
     await order.fill("7");
     await page.getByRole("button", { name: /Spara/ }).click();
-    await page.getByText("Partnern är sparad.").waitFor();
+    await page.getByText("Sponsorn är sparad.").waitFor();
     await page.goto(url);
     await waitForHydration(page, order);
     assert.equal(await order.inputValue(), "7");
@@ -357,7 +357,7 @@ export default async function adminSteg({ BASE, browser, page, step, switchAccou
       await page.fill('textarea[name="description"], input[name="description"]', `Ändrad ${uniqueId()}`);
       await change();
       await page.getByRole("button", { name: /Spara/ }).click();
-      await page.getByText("Partnern är sparad.").waitFor();
+      await page.getByText("Sponsorn är sparad.").waitFor();
       await page.goto(url);
       await waitForHydration(page, order);
       assert.equal(await order.inputValue(), "7", "Platsen ska bestå");

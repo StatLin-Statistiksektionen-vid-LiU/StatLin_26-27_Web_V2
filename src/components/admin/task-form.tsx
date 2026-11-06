@@ -50,7 +50,7 @@ export function TaskForm({
               <legend className="mb-2 text-sm font-semibold">Vem ser uppdraget?</legend>
               <div className="space-y-2">
                 {[
-                  { value: "alla", title: "Hela styrelsen", hint: "Visas på den gemensamma tavlan." },
+                  { value: "alla", title: "Alla poster", hint: "Visas på den gemensamma tavlan." },
                   { value: "privat", title: "Bara vi och mottagaren", hint: "Ordförande, vice och info ser alltid allt." },
                 ].map((o) => (
                   <label key={o.value} className="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink/10 p-3 has-[:checked]:border-ink has-[:checked]:bg-paper/60">

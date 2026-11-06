@@ -1,6 +1,8 @@
 import "server-only";
 import { STAR_COPY } from "@/lib/seed-content";
 import { cache } from "react";
+import { SITE_TEXT_DEFAULTS } from "@/lib/site-texts";
+import { DEFAULT_MEETING_TEMPLATE } from "@/lib/meeting-template";
 import { readDb } from "./db";
 import { fileHref, MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
 import { EDUCATION_COMMITTEE_SLUG } from "@/lib/seed-content";
@@ -17,10 +19,12 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   sektionsrum: "",
   org_number: "",
   tagline: "Sektionen för dig som läser statistik och dataanalys eller Statistics and Machine Learning vid Linköpings universitet.",
+  footer_slogan: "Allt blir mer *signifikant* tillsammans.",
   hero_kicker: "Statistiksektionen i Linköping",
   hero_title: "Sektionen för *statistik*, dataanalys och maskininlärning vid LiU",
   hero_text: "Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet. Drivet av studenter, för studenter.",
   hero_ring_color: "red",
+  hero_formulas: "pa",
   band_color: "vit",
   home_intro: "Vi är statistikstudenternas sektion i Linköping. Här möts *gemenskap*, *utbildning* och vägen ut i *arbetslivet*.",
   announcement: "",
@@ -41,6 +45,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   star_company_text: "Vill ni ställa ut eller sponsra? SASU berättar hur det går till och tar fram ett upplägg med er.",
   star_teaser: "Vi förbereder nästa STAR. Snart ser du här vilka företag som kommer, vad de söker och hur dagen ser ut.",
   education_committee_id: "",
+  meeting_template: DEFAULT_MEETING_TEMPLATE,
+  ...SITE_TEXT_DEFAULTS,
 };
 
 /** Läses en gång per rendering, hur många komponenter som än frågar: startsidan frågar sju gånger. Utanför en rendering läses den på nytt. */
@@ -54,8 +60,8 @@ export const getSettings = cache(async (): Promise<SiteSettings> => {
 
 /* ---------- Utskott ---------- */
 
-type CommitteeRow = Omit<Committee, "visible"> & { visible: number };
-const mapCommittee = (r: CommitteeRow): Committee => ({ ...r, visible: Boolean(r.visible) });
+type CommitteeRow = Omit<Committee, "visible" | "wishes_open"> & { visible: number; wishes_open: number };
+const mapCommittee = (r: CommitteeRow): Committee => ({ ...r, visible: Boolean(r.visible), wishes_open: Boolean(r.wishes_open) });
 
 export async function listCommittees(opts: { visibleOnly?: boolean } = {}): Promise<Committee[]> {
   const db = await readDb();

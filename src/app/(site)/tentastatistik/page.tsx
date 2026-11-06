@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CourseSearch } from "@/components/exam/course-search";
 import { ArrowUpRight } from "@/components/icons";
-import { PageHero } from "@/components/ui/page-hero";
+import { TextHero } from "@/components/ui/text-hero";
 import { normalizeCourseCode } from "@/lib/exam-stats";
 import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
@@ -25,18 +25,9 @@ const SOURCES = [
 export default function ExamStatsPage(props: PageProps<"/tentastatistik">) {
   return (
     <>
-      <PageHero
-        kicker="Studenter / Tentastatistik"
-        title={
-          <>
-            Tenta<span className="text-red">statistik</span>
-          </>
-        }
-        fitTitle="Tentastatistik"
-        lead="Hur brukar tentan gå? Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle."
-      />
-      {/* Sökfältet ligger över hörnet på sidhuvudet, så att förslagslistan inte klipps av det. */}
-      <div className="container-site relative z-20 -mt-8 pb-16 md:pb-24">
+      <TextHero group="tentastatistik" />
+      {/* Sökfältet ligger i ett lager ovanför det som följer, så att förslagslistan inte hamnar under nästa sektion. */}
+      <div className="container-site relative z-20 pb-16 pt-8 md:pb-24 md:pt-10">
         <Suspense fallback={<CourseSearch />}>
           <Search searchParams={props.searchParams} />
         </Suspense>
@@ -55,7 +46,7 @@ async function Search({ searchParams }: { searchParams: PageProps<"/tentastatist
 
 function MoreSources() {
   return (
-    <section aria-labelledby="fler-kallor" className="border-t border-ink/10 bg-paper-2/50 py-16 md:py-20">
+    <section aria-labelledby="fler-kallor" className="border-t border-line bg-paper-2/40 py-16 md:py-20">
       <div className="container-site grid gap-10 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <p className="kicker text-stone">Om statistiken</p>
@@ -74,7 +65,7 @@ function MoreSources() {
                 href={s.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex h-full flex-col rounded-[1.25rem] border border-ink/10 bg-white p-5 transition-colors duration-300 hover:border-ink/40"
+                className="group flex h-full flex-col rounded-xl border border-line bg-white p-5 transition-colors duration-300 hover:border-ink/20"
               >
                 <span className="flex items-start justify-between gap-3">
                   <span className="font-semibold">{s.label}</span>

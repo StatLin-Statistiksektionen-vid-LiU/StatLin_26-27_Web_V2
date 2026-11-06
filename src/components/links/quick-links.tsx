@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, Mail } from "@/components/icons";
 import { isExternalUrl } from "@/lib/links";
 import type { LinkItem } from "@/lib/types";
 import { safeExternalUrl } from "@/lib/utils";
+import { FadeInOnce } from "@/components/ui/fade-in-once";
 import { LinkIcon } from "./link-icon";
 import { SiteLink } from "./site-link";
 
@@ -27,28 +28,34 @@ const shortcuts = (links: LinkItem[]) =>
     return href ? [{ ...l, href }] : [];
   });
 
-const chipClass = "group inline-flex h-10 items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] pl-1.5 pr-4 text-sm font-semibold transition-colors hover:border-white hover:bg-white/15";
-const chipIconClass = "grid size-7 place-items-center rounded-full bg-white text-ink transition-colors group-hover:bg-red group-hover:text-white";
+const chipClass = "group inline-flex h-8 items-center gap-2 rounded-lg border border-line bg-white px-2.5 text-[0.84rem] font-medium text-ink transition-colors hover:border-ink/25 hover:bg-paper-2/60 pointer-coarse:h-10";
+const chipIconClass = "text-stone transition-colors group-hover:text-red";
 
-/** Raden direkt under heron, ovanför bandet. Mörk som heron, så att den hör ihop med den och bandet får stå för sig. */
+/** Raden direkt under heron, ovanför tidslinjen: genvägarna som små knappar på en rad. */
 export function QuickLinksRow({ links, fragelada = false }: { links: LinkItem[]; fragelada?: boolean }) {
   if (links.length === 0 && !fragelada) return null;
   return (
-    <section aria-labelledby="genvagar-start" className="border-t border-white/10 bg-ink text-white">
-      <div className="container-site flex flex-col gap-4 py-5 lg:flex-row lg:items-center lg:gap-8">
-        <h2 id="genvagar-start" className="kicker shrink-0 text-white/60">
-          Genvägar för studenter
-        </h2>
-        <ul className="flex flex-wrap gap-2">
-          {shortcuts(links).map((l) => (
-            <li key={l.id}>
+    <section aria-labelledby="genvagar-start" className="border-b border-line">
+      <div className="container-site py-5">
+        <div className="flex items-center justify-between gap-4">
+          <h2 id="genvagar-start" className="kicker text-stone">
+            Genvägar för studenter
+          </h2>
+          <Link href="/studenter/lankar" className="tryck group inline-flex shrink-0 items-center gap-1.5 text-[0.84rem] font-medium text-stone transition-colors hover:text-ink">
+            Alla länkar
+            <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+        <ul className="mt-3 flex flex-wrap gap-1.5">
+          {shortcuts(links).map((l, i) => (
+            <FadeInOnce key={l.id} group="genvagar" delay={0.2 + i * 0.04}>
               <AnyLink href={l.href} className={chipClass}>
                 <span className={chipIconClass}>
                   <LinkIcon name={l.icon} size={14} />
                 </span>
                 {l.label}
               </AnyLink>
-            </li>
+            </FadeInOnce>
           ))}
           {fragelada && (
             <li>
@@ -61,12 +68,6 @@ export function QuickLinksRow({ links, fragelada = false }: { links: LinkItem[];
             </li>
           )}
         </ul>
-        <Link href="/studenter/lankar" className="tryck group inline-flex shrink-0 items-center gap-2 self-start text-sm font-semibold lg:ml-auto lg:self-auto">
-          <span className="link-underline">Alla länkar</span>
-          <span className="grid size-8 place-items-center rounded-full bg-red text-white transition-transform duration-500 group-hover:translate-x-1">
-            <ArrowRight size={14} />
-          </span>
-        </Link>
       </div>
     </section>
   );
@@ -74,13 +75,13 @@ export function QuickLinksRow({ links, fragelada = false }: { links: LinkItem[];
 
 /** Ett kort i sidokolumnen på Kandidat, Master och Nya studenter. extra = sidans egna länkar under genvägarna. */
 export function QuickLinksCard({ links, extra = [] }: { links: LinkItem[]; extra?: { href: string; label: string }[] }) {
-  const rowClass = "group flex items-center gap-3 px-5 py-3.5 font-semibold transition-colors hover:bg-paper/60";
+  const rowClass = "group flex items-center gap-3 px-5 py-3 text-[0.94rem] font-medium transition-colors hover:bg-paper-2/60";
   return (
-    <div className="overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
+    <div className="overflow-hidden rounded-xl border border-line bg-white">
       {links.length > 0 && (
         <>
           <p className="kicker px-5 pb-1 pt-5 text-stone">Genvägar</p>
-          <ul className="divide-y divide-ink/[0.07]">
+          <ul className="divide-y divide-line">
             {shortcuts(links).map((l) => (
               <li key={l.id}>
                 <AnyLink href={l.href} className={rowClass}>
@@ -97,11 +98,11 @@ export function QuickLinksCard({ links, extra = [] }: { links: LinkItem[]; extra
           </ul>
         </>
       )}
-      <ul className={links.length > 0 ? "divide-y divide-ink/10 border-t border-ink/10" : "divide-y divide-ink/10"}>
+      <ul className={links.length > 0 ? "divide-y divide-line border-t border-line" : "divide-y divide-line"}>
         {/* En länk som redan är genväg ska inte stå två gånger i samma kort. */}
         {[...extra.filter((e) => !links.some((l) => l.url === e.href)), { href: "/studenter/lankar", label: "Alla länkar" }].map((l) => (
           <li key={l.href}>
-            <AnyLink href={l.href} className="group flex items-center justify-between px-5 py-4 font-semibold hover:bg-paper/60">
+            <AnyLink href={l.href} className="group flex items-center justify-between px-5 py-3.5 text-[0.94rem] font-medium transition-colors hover:bg-paper-2/60">
               {l.label}
               {isExternalUrl(l.href) ? (
                 <ArrowUpRight size={16} className="text-red transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />

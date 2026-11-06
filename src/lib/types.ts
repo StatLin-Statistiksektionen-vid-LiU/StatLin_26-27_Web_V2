@@ -1,3 +1,5 @@
+import type { SiteTextKey } from "./site-texts";
+
 export const ROLE_VALUES = ["admin", "editor", "committee"] as const;
 export type Role = (typeof ROLE_VALUES)[number];
 
@@ -10,7 +12,7 @@ export const ROLE_LABELS: Record<Role, string> = {
 export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   admin: "Allt, inklusive konton och granskning av evenemang.",
   editor: "Allt innehåll och sajtens inställningar: evenemang, nytt, bilder, sidor, styrelse och dokument.",
-  committee: "Det egna utskottets evenemang, nytt, bilder och utskottssida.",
+  committee: "Det egna utskottets evenemang, nytt, bilder och sida. Uppdragstavlan, projektplanerna och årshjulet delas med alla poster.",
 };
 
 export interface Media {
@@ -56,6 +58,8 @@ export interface Committee {
   kind: "styrelse" | "utskott" | "ovrigt";
   sort_order: number;
   visible: boolean;
+  /** Önskelådan på utskottets sida. Utskottet slår på och av den själv. */
+  wishes_open: boolean;
   updated_at: string;
 }
 
@@ -164,7 +168,7 @@ export const DOCUMENT_CATEGORIES: Record<DocumentCategory, string> = {
 export type TaskStatus = "planerad" | "pagar" | "hjalp" | "klar";
 
 export const TASK_STATUSES: Record<TaskStatus, string> = {
-  planerad: "Planerat",
+  planerad: "Att göra",
   pagar: "Pågår",
   hjalp: "Behöver hjälp",
   klar: "Klart",
@@ -279,8 +283,11 @@ export interface ResourceItem {
   file: { href: string; size: number; ext: string; image: boolean } | null;
 }
 
-export interface SiteSettings {
+/** Inställningarna, och sajtens fasta texter i site-texts.ts som går att ändra med pennan i redigeringsläget. */
+export interface SiteSettings extends Record<SiteTextKey, string> {
   contact_email: string;
+  /** Dagordningsmallen för styrelsemötena, en punkt per rad. Ändras av ordföranden under Möten. */
+  meeting_template: string;
   instagram: string;
   facebook: string;
   linkedin: string;
@@ -288,10 +295,14 @@ export interface SiteSettings {
   sektionsrum: string;
   org_number: string;
   tagline: string;
+  /** Den stora raden under loggan i sidfoten. *ord* blir röda. Tom: ingen rad. */
+  footer_slogan: string;
   hero_kicker: string;
   hero_title: string;
   hero_text: string;
   hero_ring_color: "red" | "white";
+  /** Formelringen runt loggan på startsidan, på eller av. */
+  hero_formulas: "pa" | "av";
   band_color: "vit" | "rod" | "natt";
   home_intro: string;
   announcement: string;

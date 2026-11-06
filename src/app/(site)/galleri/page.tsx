@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { SmartImage } from "@/components/content/smart-image";
-import { PageHero } from "@/components/ui/page-hero";
+import { TextHero } from "@/components/ui/text-hero";
 import { Reveal } from "@/components/ui/reveal";
 import { PageSkeleton } from "@/components/ui/skeletons";
 import { listGalleryAlbums } from "@/lib/data/events";
@@ -16,15 +16,7 @@ export const metadata: Metadata = {
 export default function GalleryPage() {
   return (
     <>
-      <PageHero
-        kicker="Sektionen / Galleri"
-        title={
-          <>
-            Galle<span className="text-red">ri</span>
-          </>
-        }
-        lead="Bilder från sittningar, pubar, idrott och allt annat. Uppladdade av sektionens poster."
-      />
+      <TextHero group="galleri" />
       <Suspense fallback={<PageSkeleton />}>
         <Albums />
       </Suspense>
@@ -58,14 +50,14 @@ async function Albums() {
                     return (
                       <div
                         key={img.id}
-                        className="absolute inset-0 overflow-hidden rounded-[1.5rem] shadow-[0_20px_40px_-20px_rgba(0,0,0,0.45)] ring-1 ring-black/5 transition-transform duration-700 ease-[var(--ease-out-expo)]"
+                        className="absolute inset-0 overflow-hidden rounded-xl ring-1 ring-line transition-transform duration-700 ease-[var(--ease-out-expo)]"
                         style={{ transform: `rotate(${depth * (depth % 2 ? -3 : 3)}deg) translateY(${depth * -6}px)` }}
                       >
                         <SmartImage image={img} sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="h-full w-full transition-transform duration-700 group-hover:scale-105" alt="" />
                       </div>
                     );
                   })}
-                <span className="chip absolute bottom-4 left-4 z-10 bg-white/95 text-ink">{event.image_count} {event.image_count === 1 ? "bild" : "bilder"}</span>
+                <span className="chip absolute bottom-4 left-4 z-10 bg-white/95 text-ink opak:bg-white">{event.image_count} {event.image_count === 1 ? "bild" : "bilder"}</span>
               </div>
               <p className="kicker mt-6 text-stone">
                 {formatDate(event.starts_at, true)} · {event.committee?.short_name ?? "StatLin"}

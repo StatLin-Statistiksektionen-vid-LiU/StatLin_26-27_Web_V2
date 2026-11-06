@@ -106,7 +106,7 @@ function StepRow({
               {sent ? (
                 <span className="inline-flex flex-wrap items-center gap-x-1.5">
                   {step.status && <span className={cn("size-1.5 rounded-full print:hidden", STATUS_STYLES[step.status as TaskStatus]?.dot)} aria-hidden />}
-                  På tavlan{step.status ? ` · ${TASK_STATUSES[step.status as TaskStatus] ?? step.status}` : ""} · {step.open ? "Öppet" : (step.label ?? "Ingen")}
+                  På tavlan{step.status ? ` · ${TASK_STATUSES[step.status as TaskStatus] ?? step.status}` : ""} · {step.open ? (step.status === "klar" ? "Ingen mottagare" : "Öppet") : (step.label ?? "Ingen")}
                 </span>
               ) : (
                 <span className={cn(!step.done && "max-sm:hidden")}>{step.done ? "Klart utan uppdrag" : "Inte på tavlan än"}</span>

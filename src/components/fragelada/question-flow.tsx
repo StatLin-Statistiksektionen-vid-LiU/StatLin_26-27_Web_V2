@@ -167,7 +167,7 @@ function CodeLock({
 
         <div aria-live="polite" className="min-h-6">
           {error && (
-            <p id="kod-fel" role="alert" className="mt-4 max-w-[27rem] rounded-2xl border border-ink/15 bg-white px-4 py-3 text-[0.95rem] font-semibold">
+            <p id="kod-fel" role="alert" className="mt-4 max-w-[27rem] rounded-xl border border-line bg-white px-4 py-3 text-[0.95rem] font-semibold">
               {error}
             </p>
           )}
@@ -179,7 +179,7 @@ function CodeLock({
         </button>
       </form>
 
-      <div className="mt-10 max-w-[27rem] border-t border-ink/15 pt-6">
+      <div className="mt-10 max-w-[27rem] border-t border-line pt-6">
         <p className="font-bold">Ingen kod?</p>
         <p className="mt-1 text-[0.95rem] text-stone">
           Titta i mejlet från den som ordnar, eller fråga din lärare.{fixedBoxes.length > 0 ? " De här lådorna är alltid öppna och behöver ingen kod." : ""}
@@ -188,7 +188,7 @@ function CodeLock({
           <ul className="mt-3 space-y-2">
             {fixedBoxes.map((b) => (
               <li key={b.slug}>
-                <Link href={`/fragelada/${b.slug}`} className="group flex items-center justify-between gap-3 rounded-xl border border-ink/15 bg-white px-4 py-3 font-semibold transition-colors hover:border-ink">
+                <Link href={`/fragelada/${b.slug}`} className="group flex items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3 font-semibold transition-colors hover:border-ink/25">
                   {b.title}
                   <ArrowRight size={16} className="shrink-0 transition-transform group-hover:translate-x-0.5" />
                 </Link>
@@ -262,7 +262,7 @@ function Note({ box, autoFocus, onSent, onChangeCode }: { box: PublicBox; autoFo
         </div>
 
         {state.error && (
-          <p role="alert" className="mt-4 rounded-2xl border border-ink/15 bg-white px-4 py-3 text-[0.95rem] font-semibold">
+          <p role="alert" className="mt-4 rounded-xl border border-line bg-white px-4 py-3 text-[0.95rem] font-semibold">
             {state.error}
           </p>
         )}

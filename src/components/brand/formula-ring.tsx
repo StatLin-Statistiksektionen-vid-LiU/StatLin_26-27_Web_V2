@@ -2,8 +2,6 @@
 
 import { useEffect, useId, useRef } from "react";
 import { LOGO_GEOMETRY as G, LOGO_VIEWBOX } from "@/lib/brand/logo-paths";
-import type { SiteSettings } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 /** Formlernas radie, utanför loggans tunna vita kant. */
 const RADIUS = 494;
@@ -13,20 +11,12 @@ const SEPARATOR = "  ∎  ";
 // Gradientens radie i loggans enheter. Hela ringen ryms inom 2000.
 const WHOLE_RING = 2000;
 const ARC = 700;
-const SWEEP_ARC = 460;
 const HIDDEN_BELOW = 8;
 
-const FIRST_SWEEP_MS = 2600;
-const SWEEP_MS = 7000;
-const SWEEP_PERIOD_MS = 240000;
 const STILL_MS = 1000;
 const TAP_MS = 5000;
 const DRAW_MS = 30;
-// Telefon: ringen tonas in som helhet efter introt och står kvar så här länge.
-const TOUCH_FIRST_MS = 2000;
-const TOUCH_SHOW_MS = 3200;
 
-const TAU = Math.PI * 2;
 const DEG = Math.PI / 180;
 const FRAME_MS = 1000 / 60;
 
@@ -38,9 +28,6 @@ const STOPS = Array.from({ length: 9 }, (_, i) => {
   const alpha = (Math.exp(-((spread * s) ** 2) / 2) - tail) / (1 - tail);
   return { offset: s.toFixed(3), opacity: (alpha * 0.85).toFixed(3) };
 });
-
-/** Modulen lever tills sidan laddas om. Det första svepet hör till introt, så när startsidan visas igen efter ett sidbyte väntar ringen på nästa ordinarie svep. */
-let sweptOnce = false;
 
 const shortestTurn = (to: number, from: number) => Math.atan2(Math.sin(to - from), Math.cos(to - from));
 const smooth = (x: number) => x * x * (3 - 2 * x);
@@ -86,56 +73,32 @@ function Formulas() {
 }
 
 /**
- * Telefon och surfplatta: ingen mus att följa. Ringen tonas in och ut som helhet med CSS (data-shown), efter introt, var fjärde minut och när man trycker på loggan.
+ * Telefon och surfplatta: ingen mus att följa. Ringen kommer fram som helhet när man trycker på loggan och tonas bort igen, med CSS (data-shown).
  * Inget ritas om medan den syns: bara genomskinligheten ändras, och den sköter grafikkortet.
  */
-function touchRing(layer: SVGSVGElement, root: HTMLElement, reduced: boolean) {
+function touchRing(layer: SVGSVGElement, root: HTMLElement) {
   let hideTimer = 0;
-  let sweepTimer = 0;
-  let visible = true;
-
-  const show = (ms: number) => {
+  const onTap = () => {
     window.clearTimeout(hideTimer);
     layer.dataset.shown = "true";
-    hideTimer = window.setTimeout(() => delete layer.dataset.shown, ms);
+    hideTimer = window.setTimeout(() => delete layer.dataset.shown, TAP_MS);
   };
-  const schedule = (ms: number) => {
-    window.clearTimeout(sweepTimer);
-    sweepTimer = window.setTimeout(sweep, ms);
-  };
-  const sweep = () => {
-    schedule(SWEEP_PERIOD_MS);
-    sweptOnce = true;
-    if (visible && !document.hidden) show(TOUCH_SHOW_MS);
-  };
-  const onTap = () => {
-    show(TAP_MS);
-    if (!reduced) schedule(SWEEP_PERIOD_MS);
-  };
-
-  const io = new IntersectionObserver(([entry]) => {
-    visible = entry.isIntersecting;
-  });
-  io.observe(root);
   root.addEventListener("click", onTap);
-  // Utan rörelse kommer ringen bara fram när man trycker.
-  if (!reduced) schedule(sweptOnce ? SWEEP_PERIOD_MS : TOUCH_FIRST_MS);
   return () => {
     window.clearTimeout(hideTimer);
-    window.clearTimeout(sweepTimer);
     delete layer.dataset.shown;
-    io.disconnect();
     root.removeEventListener("click", onTap);
   };
 }
 
 /**
- * Formler som kommer fram runt loggan när musen rör sig nära den, och i ett svep med jämna mellanrum.
+ * Formler som kommer fram runt loggan när musen rör sig nära den. Ringen rör sig aldrig av sig själv, så heron står lugn.
  * Texten ligger still på sin bana och fylls med en gradient, så bara gradienten och en rotation ändras när ringen rör sig.
  * Servern ritar gradienten med radie 0, vilket gör texten helt genomskinlig.
- * På telefon fylls texten i stället med CSS och hela ringen tonas in och ut, se touchRing.
+ * På telefon kommer hela ringen fram när man trycker på loggan, se touchRing.
+ * Formlerna har ingen glöd i den här designen, bara bläckets färg på papperet.
  */
-export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_color"] }) {
+export function FormulaRing() {
   const rawId = useId();
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const layerRef = useRef<SVGSVGElement>(null);
@@ -147,7 +110,7 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
     const root = layer?.closest<HTMLElement>(".floating-logo");
     if (!layer || !gradient || !root) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (window.matchMedia("(hover: none)").matches) return touchRing(layer, root, reduced);
+    if (window.matchMedia("(hover: none)").matches) return touchRing(layer, root);
     // Utan rörelse visas hela ringen stilla med CSS när musen är över loggan.
     if (reduced) return;
 
@@ -155,11 +118,9 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
     let target = angle;
     let width = 0;
     let targetWidth = 0;
-    let sweepStart: number | null = null;
     let showUntil = 0;
     let last = 0;
     let raf = 0;
-    let timer = 0;
     let running = false;
     let visible = true;
 
@@ -172,23 +133,10 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       const dt = Math.min(50, Math.max(0, t - last));
       last = t;
 
-      if (sweepStart !== null) {
-        const p = (t - sweepStart) / SWEEP_MS;
-        if (p >= 1) {
-          sweepStart = null;
-          width = 0;
-          targetWidth = 0;
-        } else {
-          // Bågen växer i början av varvet och krymper i slutet.
-          angle = target = -Math.PI / 2 + p * TAU;
-          width = SWEEP_ARC * smooth(Math.min(1, Math.max(0, Math.min(p, 1 - p)) / 0.12));
-        }
-      } else {
-        // Musen står stilla: ringen tonar bort.
-        if (targetWidth !== 0 && t > showUntil) targetWidth = 0;
-        angle += shortestTurn(target, angle) * ease(0.09, dt);
-        width += (targetWidth - width) * ease(targetWidth > width ? 0.07 : 0.035, dt);
-      }
+      // Musen står stilla: ringen tonar bort.
+      if (targetWidth !== 0 && t > showUntil) targetWidth = 0;
+      angle += shortestTurn(target, angle) * ease(0.09, dt);
+      width += (targetWidth - width) * ease(targetWidth > width ? 0.07 : 0.035, dt);
 
       // Formlerna kryper långsamt medurs. Gradienten ligger i det roterade lagrets koordinater.
       const rotation = (t / 1000) * 0.028;
@@ -198,7 +146,7 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       gradient.setAttribute("r", width.toFixed(1));
 
       // Dold och inget på gång: loopen stannar helt.
-      if (sweepStart === null && targetWidth === 0 && width < HIDDEN_BELOW) {
+      if (targetWidth === 0 && width < HIDDEN_BELOW) {
         width = 0;
         gradient.setAttribute("r", "0");
         delete layer.dataset.shown;
@@ -216,28 +164,13 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       raf = requestAnimationFrame(tick);
     };
 
-    // Nästa svep räknas från förra svepet eller från senaste musrörelsen nära loggan.
-    const schedule = (ms = SWEEP_PERIOD_MS) => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(playSweep, ms);
-    };
-    const playSweep = () => {
-      schedule();
-      sweptOnce = true;
-      if (!visible || document.hidden) return;
-      sweepStart = performance.now();
-      start();
-    };
-
-    /** Visar ringen runt en punkt i stället för ett pågående svep. */
+    /** Visar ringen runt punkten närmast musen. */
     const showAround = (dx: number, dy: number, ringWidth: number, ms: number) => {
-      sweepStart = null;
       target = Math.atan2(dy, dx);
       // Ringen börjar komma fram på den sida musen kom ifrån.
       if (width < HIDDEN_BELOW) angle = target;
       targetWidth = ringWidth;
       showUntil = performance.now() + ms;
-      schedule();
       start();
     };
 
@@ -258,13 +191,12 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
 
       if (near > 0) {
         showAround(dx, dy, near, STILL_MS);
-      } else if (sweepStart === null && targetWidth !== 0) {
+      } else if (targetWidth !== 0) {
         targetWidth = 0;
         start();
       }
     };
     const onLeave = () => {
-      if (sweepStart !== null) return;
       targetWidth = 0;
       start();
     };
@@ -274,7 +206,7 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       if (!visible) {
         running = false;
         cancelAnimationFrame(raf);
-      } else if (sweepStart !== null || targetWidth !== 0 || width >= HIDDEN_BELOW) {
+      } else if (targetWidth !== 0 || width >= HIDDEN_BELOW) {
         start();
       }
     });
@@ -282,12 +214,10 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
 
     window.addEventListener("pointermove", onMove, { passive: true });
     document.documentElement.addEventListener("pointerleave", onLeave);
-    schedule(sweptOnce ? SWEEP_PERIOD_MS : FIRST_SWEEP_MS);
     return () => {
       running = false;
       cancelAnimationFrame(raf);
-      window.clearTimeout(timer);
-      // Sidan kan gömmas mitt i ett svep. Annars står en halv ring frusen där när den visas igen.
+      // Sidan kan gömmas medan ringen syns. Annars står en halv ring frusen där när den visas igen.
       gradient.setAttribute("r", "0");
       delete layer.dataset.shown;
       io.disconnect();
@@ -301,25 +231,16 @@ export function FormulaRing({ glow = "red" }: { glow?: SiteSettings["hero_ring_c
       ref={layerRef}
       aria-hidden
       viewBox={LOGO_VIEWBOX}
-      className={cn("logo-formler pointer-events-none absolute inset-0 h-full w-full overflow-visible", glow === "white" && "logo-formler-vit")}
+      className="logo-formler pointer-events-none absolute inset-0 h-full w-full overflow-visible"
     >
       <defs>
         <radialGradient ref={gradientRef} id={`${id}-fade`} gradientUnits="userSpaceOnUse" cx={G.cx} cy={G.cy} r="0">
           {STOPS.map((stop) => (
-            <stop key={stop.offset} offset={stop.offset} stopColor="#fff" stopOpacity={stop.opacity} />
+            <stop key={stop.offset} offset={stop.offset} stopColor="currentColor" stopOpacity={stop.opacity} />
           ))}
         </radialGradient>
         <path id={`${id}-path`} d={PATH} />
-        <filter id={`${id}-glod`}>
-          <feGaussianBlur stdDeviation="4.5" />
-        </filter>
       </defs>
-      {/* Telefonens glöd: en suddig kopia under texten. Den ritas en gång, medan ett CSS-filter skulle räknas om i varje bildruta som loggan gungar. Döljs på datorn, se .formler-glod. */}
-      <text className="formler-glod" filter={`url(#${id}-glod)`}>
-        <textPath href={`#${id}-path`} lengthAdjust="spacing" textLength={3100}>
-          <Formulas />
-        </textPath>
-      </text>
       <text fill={`url(#${id}-fade)`}>
         <textPath href={`#${id}-path`} lengthAdjust="spacing" textLength={3100}>
           <Formulas />

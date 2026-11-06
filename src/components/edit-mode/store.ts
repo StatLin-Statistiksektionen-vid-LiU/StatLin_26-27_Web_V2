@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { canEditCommittee, canEditImages, canEditOwned, canManageSettings, isEditor } from "@/lib/auth/permissions";
+import type { SiteTextGroup } from "@/lib/site-texts";
 import type { SessionUser } from "@/lib/types";
 
 /**
@@ -14,6 +15,10 @@ export type EditTarget =
   | { type: "page"; slug: string }
   | { type: "home" }
   | { type: "footer" }
+  /** Kontaktuppgifterna och sociala medier, t.ex. på kontaktsidan. De sparas under Inställningar. */
+  | { type: "contact" }
+  /** En grupp av sajtens fasta texter, se site-texts.ts: rubrikerna på startsidan och huvudena på listsidorna. */
+  | { type: "texts"; group: SiteTextGroup }
   | { type: "committee"; id: number }
   | { type: "event"; id: number; committeeId: number | null }
   | { type: "news"; id: number; committeeId: number | null }
@@ -132,6 +137,8 @@ export function canEditTarget(user: EditUser, target: EditTarget): boolean {
       return isEditor(user);
     case "home":
     case "footer":
+    case "contact":
+    case "texts":
       return canManageSettings(user);
     case "committee":
       return canEditCommittee(user, target.id);
@@ -152,5 +159,6 @@ export function targetQuery(target: EditTarget): string {
   const p = new URLSearchParams({ typ: target.type });
   if ("id" in target) p.set("id", String(target.id));
   if ("slug" in target) p.set("slug", target.slug);
+  if ("group" in target) p.set("grupp", target.group);
   return p.toString();
 }

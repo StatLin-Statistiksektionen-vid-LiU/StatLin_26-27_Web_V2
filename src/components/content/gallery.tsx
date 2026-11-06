@@ -105,7 +105,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
           role="dialog"
           aria-modal="true"
           aria-label={`${title}, bild ${index + 1} av ${items.length}`}
-          className="fixed inset-0 z-[100] flex flex-col bg-black text-white [animation:logo-fade_0.25s_ease-out]"
+          className="fixed inset-0 z-[100] flex flex-col bg-paper text-ink [animation:logo-fade_0.25s_ease-out]"
           onTouchStart={(e) => (touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY })}
           onTouchEnd={(e) => {
             if (!touch.current) return;
@@ -117,14 +117,14 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
           }}
         >
           <div className="flex items-center justify-between px-4 py-3 md:px-6">
-            <span className="kicker text-white/60 tabular">
+            <span className="kicker text-stone tabular">
               {String(index + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
             </span>
             <div className="flex items-center gap-2">
               <a
                 href={current.image.srcSet.split(", ").pop()?.split(" ")[0] ?? current.image.src}
                 download
-                className="grid size-11 place-items-center rounded-full border border-white/15 hover:border-white/50"
+                className="grid size-10 place-items-center rounded-lg border border-line bg-white hover:border-ink/25"
                 aria-label="Ladda ner bild"
               >
                 <Download size={18} />
@@ -133,7 +133,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
                 ref={closeRef}
                 type="button"
                 onClick={close}
-                className="grid size-11 place-items-center rounded-full border border-white/15 hover:border-white/50"
+                className="grid size-10 place-items-center rounded-lg border border-line bg-white hover:border-ink/25"
                 aria-label="Stäng"
               >
                 <Close size={20} />
@@ -157,7 +157,7 @@ export function Gallery({ items, title }: { items: GalleryItem[]; title: string 
               </>
             )}
           </div>
-          <p className={cn("min-h-14 px-6 py-4 text-center text-sm text-white/70", !current.caption && "opacity-0")}>
+          <p className={cn("min-h-14 px-6 py-4 text-center text-sm text-stone", !current.caption && "opacity-0")}>
             {current.caption}
           </p>
         </div>
@@ -173,7 +173,7 @@ function NavButton({ side, onClick }: { side: "left" | "right"; onClick: () => v
       onClick={onClick}
       aria-label={side === "left" ? "Föregående bild" : "Nästa bild"}
       className={cn(
-        "absolute top-1/2 hidden size-12 -translate-y-1/2 place-items-center rounded-full border border-white/15 bg-black/40 transition-colors hover:border-white hover:bg-red md:grid",
+        "absolute top-1/2 hidden size-11 -translate-y-1/2 place-items-center rounded-lg border border-line bg-white transition-colors hover:border-ink/25 md:grid",
         side === "left" ? "left-4" : "right-4",
       )}
     >

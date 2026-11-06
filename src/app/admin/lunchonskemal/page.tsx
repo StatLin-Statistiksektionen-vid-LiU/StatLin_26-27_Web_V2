@@ -48,7 +48,7 @@ async function LunchWishes({ searchParams }: { searchParams: PageProps<"/admin/l
       {sp.raderad && <Notice>Önskemålet är borttaget.</Notice>}
       <AdminHeader
         title="Lunchönskemål"
-        description="Önskemål från besökarna syns på sajten först när någon har godkänt dem. Inget om den som skrev sparas, men läs texten: står det något om en enskild person som inte hör dit, ta bort det."
+        description="Studenternas önskemål från sidan Lunchföreläsningar syns där först när någon har godkänt dem. Inget om den som skrev sparas, men läs texten: står det något om en enskild person som inte hör dit, ta bort det."
         actions={
           <Link href="/lunchforelasningar" target="_blank" className="btn btn-ghost btn-sm">
             Visa sidan <ArrowUpRight size={15} />

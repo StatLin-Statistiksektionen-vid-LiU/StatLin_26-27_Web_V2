@@ -5,6 +5,7 @@ import { ColorInput, Field, FormSection, Select, TextArea, TextInput, Toggle } f
 import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
 import { TEXT_LIMITS } from "@/lib/admin/limits";
+import { SITE_TEXT_GROUPS, textDef, textsIn, type SiteTextGroup } from "@/lib/site-texts";
 
 /*
  * Formulären används både på adminsidorna och i redigeringspanelen på sajten. onSaved anges bara
@@ -35,7 +36,7 @@ export function CommitteeForm({ committee: c, editor, onSaved }: { committee: Co
     <ActionForm action={saveCommittee} onSuccess={onSaved} version={c.updated_at}>
       <input type="hidden" name="id" value={c.id} />
       {/* Ingen logo_url här: loggan byts genom att ladda upp en bild (SD-10). */}
-      <div className="grid gap-6 @2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Presentation">
             <div className="grid gap-5 @md:grid-cols-[1fr_10rem]">
@@ -110,7 +111,7 @@ export function BoardMemberForm({
       {member && <input type="hidden" name="id" value={member.id} />}
       {/* Platsen ändras med pilarna i listan. Bara en ny post får en plats härifrån, så att en gammal flik inte flyttar tillbaka en post. */}
       {!member && <input type="hidden" name="sort_order" value={nextOrder} />}
-      <div className="grid gap-6 @2xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 @2xl:grid-cols-3">
         <div className="space-y-6 @2xl:col-span-2">
           <FormSection title="Post">
             <div className="grid gap-5 @md:grid-cols-2">
@@ -166,17 +167,17 @@ export function HomeTextsSection({ s, className }: { s: SiteSettings; className?
       <Field label="Om sektionen" name="home_intro" required hint="Den stora texten under ”01 Om sektionen”.">
         <TextArea name="home_intro" defaultValue={s.home_intro} rows={3} maxLength={400} required />
       </Field>
-      <Field label="Formelringens glöd" name="hero_ring_color" hint="Färgen på glöden runt formlerna på startsidan. Formlerna är alltid vita.">
-        <Select name="hero_ring_color" defaultValue={s.hero_ring_color}>
-          <option value="red">Röd</option>
-          <option value="white">Vit</option>
-        </Select>
-      </Field>
-      <Field label="Bandets färger" name="band_color" hint="Tidslinjen med kommande evenemang under genvägarna.">
+      <Field label="Bandets färger" name="band_color" hint="Tidslinjen med kommande evenemang i startsidans evenemangsdel.">
         <Select name="band_color" defaultValue={s.band_color}>
           <option value="vit">Vitt med röd linje</option>
           <option value="rod">Rött med vit text</option>
           <option value="natt">Natthimmel som på STAR</option>
+        </Select>
+      </Field>
+      <Field label="Formelringen runt loggan" name="hero_formulas" hint="Formlerna som kommer fram runt loggan när musen är nära. På telefon kommer de fram när man trycker på loggan.">
+        <Select name="hero_formulas" defaultValue={s.hero_formulas}>
+          <option value="pa">På</option>
+          <option value="av">Av, bara loggan</option>
         </Select>
       </Field>
     </FormSection>
@@ -248,21 +249,62 @@ export function EducationCommitteeSection({ s, committees }: { s: SiteSettings; 
   );
 }
 
+/** Sidfotens två texter: den stora sloganen under loggan och beskrivningen under den. */
 export function TaglineSection({ s }: { s: SiteSettings }) {
   return (
-    <FormSection title="Beskrivning">
-      <Field label="Slogan" name="tagline" hint="Visas i sidfoten. Skriv *ord* med stjärnor för att göra dem röda.">
+    <FormSection title="Sidfoten">
+      <Field label="Slogan" name="footer_slogan" hint="Den stora raden under loggan längst ner på sidan. Skriv *ord* med stjärnor för att göra dem röda. Lämna tomt för att ta bort raden.">
+        <TextInput name="footer_slogan" defaultValue={s.footer_slogan} maxLength={120} />
+      </Field>
+      <Field label="Beskrivning" name="tagline" hint="Visas i sidfoten. Skriv *ord* med stjärnor för att göra dem röda.">
         <TextInput name="tagline" defaultValue={s.tagline} maxLength={200} />
       </Field>
     </FormSection>
   );
 }
 
-/** Startsidans texter, för pennan på heron och "Om sektionen". */
+/** En grupp av sajtens fasta texter, se site-texts.ts. Fältet visar det som står på sajten nu, och ett tomt fält ger standardtexten. */
+export function SiteTextsSection({ group, s, className, title }: { group: SiteTextGroup; s: SiteSettings; className?: string; title?: string }) {
+  return (
+    <FormSection title={title ?? SITE_TEXT_GROUPS[group]} description="Skriv *ord* med stjärnor i rubriker och texter för att göra dem röda. Ett tomt fält ger tillbaka standardtexten." className={className}>
+      {textsIn(group).map((key) => {
+        const t = textDef(key);
+        return (
+          <Field key={key} label={t.label} name={key} hint={`Standard: ${t.default}`}>
+            {t.long ? <TextArea name={key} defaultValue={s[key]} rows={4} maxLength={t.max} /> : <TextInput name={key} defaultValue={s[key]} maxLength={t.max} />}
+          </Field>
+        );
+      })}
+    </FormSection>
+  );
+}
+
+/** Startsidans texter, för pennan på heron och "Om sektionen": rubriken, texten om sektionen, knapparna och siffrorna. */
 export function HomeTextsForm({ s, onSaved }: { s: SiteSettings; onSaved?: () => void }) {
   return (
     <ActionForm action={saveSettings} onSuccess={onSaved}>
       <HomeTextsSection s={s} />
+      <SiteTextsSection group="start-om" s={s} title="Om sektionen, knapparna och siffrorna" />
+    </ActionForm>
+  );
+}
+
+/** En grupp av sajtens fasta texter, för pennorna på startsidans rubriker och listsidornas huvuden. */
+export function SiteTextsForm({ group, s, onSaved }: { group: SiteTextGroup; s: SiteSettings; onSaved?: () => void }) {
+  return (
+    <ActionForm action={saveSettings} onSuccess={onSaved}>
+      {/* Panelens rubrik säger redan vilken del av sajten det gäller. */}
+      <SiteTextsSection group={group} s={s} title="Texterna" />
+    </ActionForm>
+  );
+}
+
+/** Kontaktuppgifterna och sociala medier, för pennorna på kontaktsidan. */
+export function ContactSettingsForm({ s, onSaved }: { s: SiteSettings; onSaved?: () => void }) {
+  return (
+    <ActionForm action={saveSettings} onSuccess={onSaved}>
+      <ContactSection s={s} />
+      <SocialSection s={s} />
     </ActionForm>
   );
 }

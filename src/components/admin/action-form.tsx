@@ -252,7 +252,7 @@ export function ActionForm({
         <div
           className={cn(
             "flex flex-wrap items-center justify-between gap-3 border-t border-ink/10 pt-5",
-            stickyFooter && "sticky bottom-0 z-10 -mx-1 bg-paper/90 px-1 pb-4 backdrop-blur",
+            stickyFooter && "sticky bottom-0 z-10 -mx-1 bg-paper/90 px-1 pb-4 backdrop-blur opak:bg-paper",
           )}
         >
           <div className="flex flex-wrap items-center gap-2">{footer}</div>

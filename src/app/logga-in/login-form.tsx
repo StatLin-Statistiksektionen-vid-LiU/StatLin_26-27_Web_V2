@@ -16,15 +16,15 @@ export function LoginForm({ children, error }: { children?: ReactNode; error?: s
   const [show, setShow] = useState(false);
   const message = state.error ?? error;
   return (
-    <form action={action} className="mt-8 space-y-4">
+    <form action={action} className="mt-7 space-y-4">
       {children}
       {message && (
-        <p role="alert" className="rounded-xl border border-red/30 bg-red/[0.06] px-4 py-3 text-sm font-semibold text-red-dark">
+        <p role="alert" className="rounded-lg border border-red/30 bg-red/[0.06] px-4 py-3 text-sm font-semibold text-red-dark">
           {message}
         </p>
       )}
       <div>
-        <label htmlFor="email" className="mb-1.5 block text-sm font-semibold">
+        <label htmlFor="email" className="mb-1.5 block text-[0.84rem] font-semibold">
           E-post
         </label>
         <input
@@ -36,11 +36,11 @@ export function LoginForm({ children, error }: { children?: ReactNode; error?: s
           autoFocus
           defaultValue={state.data?.email ?? ""}
           placeholder="info@statlin.se"
-          className="w-full rounded-xl border border-ink/15 bg-white px-4 py-3 outline-none transition focus:border-ink focus:ring-4 focus:ring-ink/[0.06]"
+          className="w-full rounded-lg border border-line bg-paper px-3.5 py-2.5 outline-none transition placeholder:text-stone-light hover:border-ink/25 focus:border-ink/50 focus:bg-white focus:ring-4 focus:ring-ink/[0.06]"
         />
       </div>
       <div>
-        <label htmlFor="password" className="mb-1.5 block text-sm font-semibold">
+        <label htmlFor="password" className="mb-1.5 block text-[0.84rem] font-semibold">
           Lösenord
         </label>
         <div className="relative">
@@ -50,19 +50,19 @@ export function LoginForm({ children, error }: { children?: ReactNode; error?: s
             type={show ? "text" : "password"}
             autoComplete="current-password"
             required
-            className="w-full rounded-xl border border-ink/15 bg-white px-4 py-3 pr-12 outline-none transition focus:border-ink focus:ring-4 focus:ring-ink/[0.06]"
+            className="w-full rounded-lg border border-line bg-paper px-3.5 py-2.5 pr-12 outline-none transition hover:border-ink/25 focus:border-ink/50 focus:bg-white focus:ring-4 focus:ring-ink/[0.06]"
           />
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
-            className="absolute right-2 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-stone hover:bg-paper hover:text-ink"
+            className="absolute right-1.5 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-stone transition-colors hover:bg-paper-2 hover:text-ink"
             aria-label={show ? "Dölj lösenord" : "Visa lösenord"}
           >
             <Eye size={18} />
           </button>
         </div>
       </div>
-      <button type="submit" disabled={pending} className="btn btn-red w-full disabled:opacity-70">
+      <button type="submit" disabled={pending} className="btn btn-red !mt-6 w-full disabled:opacity-70">
         {pending ? "Loggar in…" : "Logga in"}
       </button>
     </form>

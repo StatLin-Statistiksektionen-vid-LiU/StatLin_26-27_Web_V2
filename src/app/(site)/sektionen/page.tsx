@@ -57,11 +57,11 @@ async function AboutContent() {
         <Editable target={{ type: "page", slug: "om" }} label="Redigera texten" className="min-w-0 lg:col-span-7">
           {page && <Markdown source={page.body_md} />}
         </Editable>
-        <aside className="lg:col-span-4 lg:col-start-9">
+        <aside className="lg:col-span-5 lg:col-start-8 xl:col-span-4 xl:col-start-9">
           <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
-            <div className="rounded-[1.75rem] border border-ink/10 bg-white p-7">
+            <div className="rounded-xl border border-line bg-white p-6">
               <p className="kicker text-stone">Snabbfakta</p>
-              <dl className="mt-5 space-y-4 text-[0.95rem]">
+              <dl className="@container mt-5 space-y-4 text-[0.95rem]">
                 <Fact label="Namn">Statistiksektionen i Linköping</Fact>
                 <Fact label="Förkortning">
                   <span className="font-mono">StatLin · StLn · StL · SL · S</span>
@@ -89,9 +89,9 @@ async function AboutContent() {
                 { href: "/grafisk-profil", label: "Grafisk profil", Icon: Layers },
                 { href: "/galleri", label: "Galleri", Icon: ImageIcon },
               ].map(({ href, label, Icon }) => (
-                <Link key={href} href={href} className="group flex items-center gap-4 rounded-2xl border border-ink/10 bg-white px-5 py-4 transition-colors hover:border-ink/30">
+                <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border border-line bg-white px-4 py-3 transition-colors hover:border-ink/20">
                   <Icon size={18} className="text-red" />
-                  <span className="flex-1 font-semibold">{label}</span>
+                  <span className="flex-1 text-[0.94rem] font-medium">{label}</span>
                   <ArrowUpRight size={16} className="opacity-40 transition-opacity group-hover:opacity-100" />
                 </Link>
               ))}
@@ -101,7 +101,7 @@ async function AboutContent() {
       </section>
 
       {board.length > 0 && (
-        <section className="border-t border-ink/10 bg-paper-2/50 py-20 md:py-28">
+        <section className="border-t border-line py-16 md:py-24">
           <div className="container-site">
             <Reveal>
               <SectionHeading kicker="Styrelsen" title={<>Möt <span className="mono-accent text-red-deep">styrelsen</span></>} href="/sektionen/styrelsen" linkLabel="Hela styrelsen" />
@@ -117,7 +117,7 @@ async function AboutContent() {
         </section>
       )}
 
-      <section className="py-20 md:py-28">
+      <section className="border-t border-line py-16 md:py-24">
         <div className="container-site">
           <Reveal>
             <SectionHeading kicker="Utskott" title={<>Våra <span className="mono-accent text-red-deep">utskott</span></>} href="/utskott" linkLabel="Alla utskott" />
@@ -125,10 +125,10 @@ async function AboutContent() {
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {utskott.map((c, i) => (
               <Reveal key={c.id} delay={(i % 4) * 60}>
-                <Link href={`/utskott/${c.slug}`} className="group flex h-full items-center gap-4 rounded-[1.5rem] border border-ink/10 bg-white p-5 transition-all hover:-translate-y-1 hover:border-ink/25 hover:shadow-[0_20px_40px_-25px_rgba(0,0,0,0.3)]">
+                <Link href={`/utskott/${c.slug}`} className="group flex h-full items-center gap-4 rounded-xl border border-line bg-white p-4 transition-colors hover:border-ink/20">
                   {c.logo_url && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={c.logo_url} alt="" className="size-16 shrink-0 object-contain transition-transform duration-700 group-hover:rotate-[-10deg]" loading="lazy" />
+                    <img src={c.logo_url} alt="" className="size-16 shrink-0 rounded-xl object-contain p-1 transition-transform duration-700 group-hover:rotate-[-10deg] [[data-tema=mork]_&]:bg-ink" loading="lazy" />
                   )}
                   <span className="min-w-0">
                     <span className="display-tight block text-lg normal-case">{c.short_name}</span>
@@ -151,9 +151,9 @@ async function AboutContent() {
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-[6.5rem_1fr] gap-3 border-b border-ink/[0.07] pb-4 last:border-0 last:pb-0 max-[20.5625rem]:grid-cols-1 max-[20.5625rem]:gap-1.5">
+    <div className="grid gap-1.5 border-b border-line pb-4 last:border-0 last:pb-0 @[17rem]:grid-cols-[6.5rem_minmax(0,1fr)] @[17rem]:gap-3">
       <dt className="kicker pt-0.5 text-stone">{label}</dt>
-      <dd className="font-medium">{children}</dd>
+      <dd className="min-w-0 break-words font-medium">{children}</dd>
     </div>
   );
 }

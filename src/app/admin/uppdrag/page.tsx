@@ -65,12 +65,12 @@ async function TaskBoard({ searchParams }: { searchParams: PageProps<"/admin/upp
       {unseen > 0 && <MarkTasksSeen />}
       {sp.raderat && <Notice>Uppdraget är borttaget.</Notice>}
       <AdminHeader
-        kicker="Styrelsen"
+        kicker="Sektionen"
         title="Uppdragstavla"
         description={
           seesAllTasks(user)
-            ? "Uppdrag mellan styrelsens poster. Du ser allt, även det som skickats privat."
-            : "Uppdrag mellan styrelsens poster. Du ser det som delats med hela styrelsen och det som rör dig."
+            ? "Uppdrag mellan sektionens poster. Du ser allt, även det som skickats privat."
+            : "Uppdrag mellan sektionens poster. Du ser det som delats med alla och det som rör dig."
         }
       />
       <TaskQuickAdd recipients={recipients} />
@@ -102,7 +102,7 @@ async function TaskBoard({ searchParams }: { searchParams: PageProps<"/admin/upp
       )}
       <p className="mt-4 text-xs text-stone">
         {view === "tavla" && <span className="pointer-coarse:hidden">Dra ett kort till en annan kolumn för att flytta det. </span>}
-        Avklarade uppdrag försvinner från tavlan efter 30 dagar.
+        Fastnar du kan du be om hjälp på uppdragets sida, så syns det för alla. Avklarade uppdrag försvinner från tavlan efter 30 dagar.
       </p>
     </>
   );
