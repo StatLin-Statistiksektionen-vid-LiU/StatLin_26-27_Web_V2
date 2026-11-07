@@ -12,6 +12,7 @@ import { START } from "./block/start";
 import { UBU } from "./block/ubu";
 import { HANDSKRIFT } from "./block/handskrift";
 import { ESTIG } from "./block/estig";
+import { ANTECKNINGAR, franGamlaTexter, GAMLA_NYCKLAR } from "./block/anteckningar";
 import type { BlockNyckel } from "./poster";
 import { textRegel } from "./regler";
 import type { BlockVarde } from "./typer";
@@ -20,7 +21,7 @@ import type { BlockVarde } from "./typer";
  * Blocken läses här. Ett block som aldrig ändrats har ingen rad, och då gäller standardvärdet i koden. Går raden inte att
  * läsa (en äldre version av innehållet, ett fel) visas också standardvärdet, så att sidan aldrig går sönder.
  */
-export const BLOCK_DEF = { meny: MENY, start: START, kompetens: KOMPETENS, branscher: BRANSCHER, ubu: UBU, handskrift: HANDSKRIFT, estig: ESTIG } satisfies {
+export const BLOCK_DEF = { meny: MENY, start: START, kompetens: KOMPETENS, branscher: BRANSCHER, ubu: UBU, handskrift: HANDSKRIFT, estig: ESTIG, anteckningar: ANTECKNINGAR } satisfies {
   [K in BlockNyckel]: { standard: () => BlockVarde[K]; schema: { safeParse: (v: unknown) => { success: boolean } } };
 };
 
@@ -59,6 +60,13 @@ export function lasBlock<K extends BlockNyckel>(db: Database.Database, nyckel: K
       const knapp = start.om[g.key === "text_start_om_knapp" ? 0 : 1];
       if (knapp && g.value.trim()) knapp.text = g.value.trim().slice(0, 40);
     }
+  }
+  // Anteckningarna var sajttexter förut, en per sida. Tills blocket sparats första gången gäller texterna som ändrats där.
+  if (nyckel === "anteckningar" && !rad) {
+    const gamla = db
+      .prepare(`SELECT key, value FROM settings WHERE key IN (${GAMLA_NYCKLAR.map(() => "?").join(", ")})`)
+      .all(...GAMLA_NYCKLAR) as { key: string; value: string }[];
+    return franGamlaTexter(Object.fromEntries(gamla.map((g) => [g.key, g.value]))) as BlockVarde[K];
   }
   return varde;
 }

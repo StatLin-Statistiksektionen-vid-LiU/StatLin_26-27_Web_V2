@@ -53,3 +53,10 @@ En egen liten LaTeX-tolk som ritar formeln i handstilen Mynerve, så att den kan
 - tsc, eslint och hela e2e-sviten, ensam.
 
 Inget läggs ut förrän du säger ja. Menylagningen från i morse följer med i samma fråga.
+
+## Läge 2026-11-07
+
+- Formlerna (avsnitt 1 till 3) gick ut som release v4, bc0c997.
+- Anteckningarna (avsnitt 4) är klara. De fem står som förut i Chromium och WebKit, i ljust och mörkt läge. På en smal
+  telefon får bara den på Om StatLin plats, precis som förut. Dra, peka om, ändra, lägga till, ta bort och spara fungerar i
+  båda motorerna, och en ny anteckning hamnar inte ovanpå en som redan står där.

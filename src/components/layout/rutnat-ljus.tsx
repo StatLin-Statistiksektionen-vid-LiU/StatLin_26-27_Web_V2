@@ -221,6 +221,11 @@ export function RutnatLjus() {
       const runt = new Set<Element>();
       for (const el of traffade) for (let e: Element | null = el; e && e !== stopp && !runt.has(e); e = e.parentElement) runt.add(e);
       for (const e of runt) if (linjeGenom(e, ruta)) return;
+      // Inte heller över en anteckning eller dess pil. De står i ett lager som inte tar klick, så punkterna ovan går rakt igenom dem.
+      for (const el of document.querySelectorAll(".anteckning-lapp, .anteckning-pil path")) {
+        const q = el.getBoundingClientRect();
+        if ((q.width || q.height) && q.left < ruta.r + 12 && q.right > ruta.l - 12 && q.top < ruta.b + 12 && q.bottom > ruta.t - 12) return;
+      }
 
       // Baslinjen hamnar på en linje i rutnätet, och formelns överkant ligger h em över den.
       const ovan = ritad.ruta.h * STORLEK;

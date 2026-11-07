@@ -17,6 +17,7 @@ export const BLOCK = {
   ubu: { etikett: "UBU:s knappar", behorighet: "ubu" },
   handskrift: { etikett: "Handskriften", behorighet: "installningar" },
   estig: { etikett: "eSTIG:s sida", behorighet: "estig" },
+  anteckningar: { etikett: "Anteckningarna", behorighet: "installningar" },
 } as const satisfies Record<string, { etikett: string; behorighet: Behorighet }>;
 
 export type BlockNyckel = keyof typeof BLOCK;

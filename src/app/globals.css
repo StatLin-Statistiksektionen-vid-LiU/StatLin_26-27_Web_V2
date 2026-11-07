@@ -1019,7 +1019,7 @@ html:not(.js) .handskrift {
  * har radhöjd 1 så att raden inte blir högre. En hel rad för hand står för sig, större och lite snett.
  */
 .hs-penna,
-.anteckning-lager {
+.anteckningar {
   color: var(--color-ink);
 }
 .hs-rod {
@@ -1040,26 +1040,123 @@ html:not(.js) .handskrift {
   transform: rotate(-1.5deg);
   transform-origin: 0 70%;
 }
-/* Anteckningarna med pil (Anteckning i anteckning.tsx). Rutan täcker föräldern, och anteckningen och pilen läggs i den där de får plats. */
-.anteckning-lager {
+/*
+ * Anteckningarna med pil (AnteckningLager i anteckning-lager.tsx). Lagret täcker sidan och sidfoten och tar inga klick. Varje
+ * anteckning står där den räknats fram, och pilen ritas från dess övre vänstra hörn. Bara texten lutar, så att pilen når ordet.
+ */
+.anteckningar {
   position: absolute;
   inset: 0;
+  z-index: 30;
   pointer-events: none;
 }
-.anteckning {
+.anteckning-lapp {
   position: absolute;
   white-space: nowrap;
   font-size: 1.45rem;
   line-height: 1.1;
+}
+.anteckning-text {
+  display: block;
   rotate: -2deg;
   transform-origin: 0 100%;
 }
 .anteckning-pil {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
   pointer-events: none;
+}
+/*
+ * I redigeringsläget (anteckning-redigerare.tsx): greppet över anteckningen dras och klickas, och ringen vid pilens spets dras till ett
+ * ord. En anteckning som besökare inte ser där den står har grå ram och en etikett som säger varför.
+ */
+.anteckning-grepp {
+  position: absolute;
+  inset: -6px -8px;
+  border-radius: 0.4rem;
+  outline: 1.5px dashed color-mix(in oklab, var(--color-red) 45%, transparent);
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+  transition: outline-color 0.15s;
+}
+.anteckning-grepp:hover,
+.anteckning-grepp:focus-visible {
+  outline: 1.5px solid var(--color-red);
+}
+.anteckning-grepp:active {
+  cursor: grabbing;
+}
+.anteckning-lapp:not([data-syns="har"]) .anteckning-grepp {
+  outline-color: color-mix(in oklab, var(--color-stone) 75%, transparent);
+}
+.anteckning-spets {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  translate: -50% -50%;
+  border: 1.5px solid var(--color-red);
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--color-red) 14%, transparent);
+  cursor: crosshair;
+  pointer-events: auto;
+  touch-action: none;
+  transition: background-color 0.15s;
+}
+.anteckning-spets:hover,
+.anteckning-spets:focus-visible {
+  background: color-mix(in oklab, var(--color-red) 35%, transparent);
+}
+.anteckning-etikett {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: -0.5rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  background: var(--color-ink);
+  color: var(--color-white);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  pointer-events: none;
+}
+/* Lägger till en anteckning på sidan. Står överst mitt över sidan, som redigeringslisten. */
+.anteckning-ny {
+  position: fixed;
+  z-index: 45;
+  top: calc(var(--header-h) + 0.75rem);
+  left: calc(50% + var(--sidebar-w) / 2);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  translate: -50% 0;
+  padding: 0.45rem 0.95rem;
+  border-radius: 9999px;
+  background: var(--color-ink);
+  color: var(--color-white);
+  box-shadow: 0 14px 34px -14px rgb(0 0 0 / 0.6);
+  outline: 1px solid color-mix(in oklab, var(--color-white) 15%, transparent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: background-color 0.15s;
+  animation: fade-up 0.3s var(--ease-out-expo) both;
+}
+.anteckning-ny:hover:not(:disabled) {
+  background: var(--color-red-deep);
+}
+.anteckning-ny:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+@media (prefers-reduced-motion: reduce) {
+  .anteckning-ny {
+    animation: none;
+  }
 }
 /*
  * Formlerna på papperet (RutnatLjus). De är gömda och syns bara i ljuset: masken är en cirkel kring pekaren, där --px och --py är
@@ -2712,7 +2809,7 @@ body {
 }
 
 /* ---------- Mörkt läge ---------- */
-/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 45) */
+/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 46) */
 
 /*
  * Utan genomskinlighetseffekter syns ingen oskärpa bakom något. Ytor av frostat glas (sidhuvudet på telefon, etiketter på bilder,

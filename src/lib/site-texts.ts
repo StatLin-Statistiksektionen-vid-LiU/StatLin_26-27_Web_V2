@@ -2,7 +2,7 @@
  * Sajtens fasta texter som inte hör till en sida i Admin: rubrikerna på startsidan och huvudena på listsidorna.
  * Standardtexten står här. Det som skrivs med pennan i redigeringsläget sparas som en vanlig inställning, och ett tomt
  * fält ger tillbaka standardtexten. Skriv *ord* med stjärnor för att göra dem röda där texten är en rubrik eller en ingress, och
- * _ord_ med understreck för att skriva dem för hand (_*ord*_ med rödpenna). Anteckningarna för hand med pil tas bort med ett -.
+ * _ord_ med understreck för att skriva dem för hand (_*ord*_ med rödpenna).
  */
 
 /** Grupperna är det en penna öppnar, med rubriken i panelen. */
@@ -19,7 +19,6 @@ export const SITE_TEXT_GROUPS = {
   dokument: "Dokument: sidhuvudet",
   tentastatistik: "Tentastatistik: sidhuvudet",
   styrelsen: "Styrelsen: sidhuvudet",
-  om: "Om StatLin: sidhuvudet",
 } as const;
 
 export type SiteTextGroup = keyof typeof SITE_TEXT_GROUPS;
@@ -34,13 +33,6 @@ function hero<G extends HeroGroup>(group: G, kicker: string, title: string, lead
     [`text_${group}_rubrik`]: { group, label: "Rubrik", default: title, max: 60 },
     [`text_${group}_ingress`]: { group, label: "Ingress", default: lead, max: 300, long: true },
   } as unknown as Record<`text_${G}_kicker` | `text_${G}_rubrik` | `text_${G}_ingress`, TextDef>;
-}
-
-/** En anteckning för hand med en pil till slutet av sidhuvudets rubrik (Anteckning i anteckning.tsx). */
-function anteckningDef<G extends HeroGroup>(group: G, text: string) {
-  return {
-    [`text_${group}_anteckning`]: { group, label: "Anteckning för hand vid rubriken, - tar bort den, *text* blir röd", default: text, max: 40 },
-  } as unknown as Record<`text_${G}_anteckning`, TextDef>;
 }
 
 const START = {
@@ -89,7 +81,6 @@ export const SITE_TEXTS = {
   ...START,
   ...hero("evenemang", "Kalender", "Evene*mang*", "Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så _missar du inget._"),
   ...hero("nyheter", "Från sektionen", "Senaste *nytt*", "Information från styrelsen och utskotten, från sittningsanmälningar till beslut på sektionsmötet."),
-  ...anteckningDef("nyheter", "(färskt ur pressen)"),
   ...hero(
     "utskott",
     "Sektionen / Utskott",
@@ -97,9 +88,7 @@ export const SITE_TEXTS = {
     "_Utskotten är hjärtat i sektionen._ Varje utskott har sin egen logga, alla byggda på samma baslogotyp men med sin egen bakgrundsgrafik.",
   ),
   ...hero("galleri", "Sektionen / Galleri", "Galle*ri*", "Bilder från sittningar, pubar, idrott och allt annat. Uppladdade av sektionens poster."),
-  ...anteckningDef("galleri", "*(bevis på att P(kul) = 1)*"),
   ...hero("dokument", "Sektionen / Dokument", "Doku*ment*", "Stadgar, reglemente, mötesprotokoll och styrdokument. Allt som styr sektionen, samlat på ett ställe."),
-  ...anteckningDef("dokument", "(spännande läsning, lovar)"),
   ...hero(
     "tentastatistik",
     "Studenter / Tentastatistik",
@@ -112,9 +101,6 @@ export const SITE_TEXTS = {
     "Styrel*sen*",
     "Styrelsen väljs på sektionsmötet och leder sektionen under ett verksamhetsår. Hör av dig direkt till rätt post.",
   ),
-  ...anteckningDef("styrelsen", "(vi bits inte)"),
-  // Ändras där den står, i redigeringsläget på Om StatLin.
-  text_om_anteckning: { group: "om", label: "Anteckningen för hand som pekar på StatLin i rubriken, - tar bort den, *text* blir röd", default: "(topp 5 sektion)", max: 40 } satisfies TextDef,
 };
 
 export type SiteTextKey = keyof typeof SITE_TEXTS;
@@ -139,9 +125,3 @@ export function siteText(s: Record<SiteTextKey, string>, key: SiteTextKey): stri
   return s[key]?.trim() || SITE_TEXTS[key].default;
 }
 
-/** En anteckning för hand: den sparade texten eller standardtexten, och ingen alls när någon har skrivit - eller nyckeln inte finns. */
-export function anteckningText(s: Record<SiteTextKey, string>, key: string): string {
-  if (!Object.hasOwn(SITE_TEXTS, key)) return "";
-  const v = siteText(s, key as SiteTextKey).trim();
-  return v === "-" ? "" : v;
-}

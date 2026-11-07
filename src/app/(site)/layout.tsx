@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { SidansAnteckningar } from "@/components/content/anteckningar";
 import { AdminBarLoader } from "@/components/edit-mode/admin-bar-loader";
 import { Announcement } from "@/components/layout/announcement";
 import { MenyTrad } from "@/components/layout/meny-trad";
@@ -51,6 +52,10 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
         <SiteFooter />
+        {/* Anteckningarna för hand med pil, över sidan och sidfoten. */}
+        <Suspense fallback={null}>
+          <SidansAnteckningar />
+        </Suspense>
       </div>
       {/* Sökrutan: sökknapparna och snabbtangenterna öppnar den, och dess kod hämtas först när den behövs. */}
       <Suspense fallback={null}>
