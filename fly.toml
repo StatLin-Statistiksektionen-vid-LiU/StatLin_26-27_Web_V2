@@ -2,7 +2,7 @@
 # Databasen (SQLite) och uppladdningarna ligger på volymen, så appen måste köra på exakt
 # en maskin: skala aldrig upp med `fly scale count`.
 
-app = "statlin-web"
+app = "statlin-web-v2"
 primary_region = "arn"
 # Reserv om bildbehandlingen (sharp) tillfälligt behöver mer minne än maskinen har.
 swap_size_mb = 512
@@ -15,10 +15,10 @@ kill_timeout = "30s"
 [build]
   [build.args]
     # Bakas in i förrenderade sidor – bygg om (fly deploy) efter att adressen ändrats.
-    SITE_URL = "https://statlin-web.fly.dev"
+    SITE_URL = "https://statlin-web-v2.fly.dev"
 
 [env]
-  SITE_URL = "https://statlin-web.fly.dev"
+  SITE_URL = "https://statlin-web-v2.fly.dev"
   # Fly sätter besökarens IP i Fly-Client-IP, som besökaren inte kan förfalska.
   CLIENT_IP_HEADER = "fly-client-ip"
 

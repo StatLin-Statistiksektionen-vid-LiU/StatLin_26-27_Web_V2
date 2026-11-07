@@ -1,17 +1,24 @@
-# StatLin – webbplats och adminpanel
+# StatLin: webbplats och adminpanel (V2)
 
-Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sektionens [grafiska styrdokument](public/brand/download/grafiskt-styrdokument.pdf). Besökare möts av sektionsloggan som svävar i 3D över en levande tidsserie, och sektionens poster kan logga in och själva lägga upp evenemang, nyheter och bilder.
+Webbplats för **StatLin, Statistiksektionen i Linköping**, byggd efter sektionens [grafiska styrdokument](public/brand/download/grafiskt-styrdokument.pdf). Det här är V2, den nya designen: sidomeny på datorn och meny på telefonen, mörkt läge som standard och ett svagt rutnät i sidhuvudena som lyser upp kring muspekaren, där formler då och då skrivs fram för hand. Sektionens poster loggar in och lägger själva upp evenemang, nyheter och bilder, och ändrar texterna direkt på sajten.
 
-![Startsidan](public/og.png)
+V2 körs som en egen app på Fly.io, [statlin-web-v2.fly.dev](https://statlin-web-v2.fly.dev), från grenen `main` i det här repot. Den gamla sajten, appen `statlin-web`, körs från repot [StatLin_26-27_Web](https://github.com/StatLin-Statistiksektionen-vid-LiU/StatLin_26-27_Web) och grenen `Main-Real`, och den påverkas inte av något här. Se [Driftsättning](#driftsättning).
+
+![Delningsbilden](public/og.png)
 
 ## Innehåll
 
 **Publik webbplats**
 
-- **Startsida** med den svävande sektionsloggan. Den röda StatLin-grafiken ritas fram som en stigande graf, och loggan lutar efter muspekaren. Under heron finns ett löpband med kommande evenemang, nyckeltal, utskott, nyheter och genvägar för nya studenter och företag.
+- **Startsida** om sektionen. Heron har den svävande sektionsloggan med formelringen runt sig, och direkt under den kommer tidslinjen med kommande evenemang. Sektionens siffror står som en lista, och rubriken, knapparna och korten ändras i redigeringsläget.
+- **Mörkt och ljust läge**: sajten öppnas i mörkt läge, och knappen i menyn byter läge med en cirkel som sprider sig från knappen. Besökarens val sparas i webbläsaren. Admin väljer under *Inställningar → Mörkt eller ljust läge* vilket läge sajten öppnas i för den som inte har valt, ett för datorn (där sidomenyn syns, från 1024 px bredd) och ett för telefonen.
+- **Rutnätet och handstilen**: startsidans hero och sidhuvudena har ett svagt rutnät som lyser upp kring muspekaren. Där ljuset är skrivs då och då en formel fram för hand, i den ordning man skriver, och tonas sedan bort. Ljuset och formlerna finns också med minska rörelse. Formlerna skrivs i LaTeX och står i blocket Handskriften. I redigeringsläget finns de i en lista i sidfoten, där de läggs till, ändras, tas bort och byter ordning, och rutan för en formel visar den medan man skriver. I sajtens texter skrivs `_ord_` för hand med bläck och `_*ord*_` med rödpenna.
+- **Anteckningar med pil**: korta anteckningar för hand med en pil mot ett ord på sidan. I redigeringsläget dras anteckningen dit den ska stå och pilens spets till ordet. Ett klick öppnar rutan där texten, ordet och rödpennan ändras och anteckningen tas bort, och *Ny anteckning* lägger till en på sidan man står på.
+- **Sponsorer**: huvudsponsorerna står i sidomenyn på datorn och i menyn och sidfoten på telefonen, de andra i sidfoten, i den ordning SASU och admin väljer.
 - **Evenemang**: listvy, månadskalender, filter per utskott, detaljsidor med bildgalleri och lightbox. Det går att lägga till ett enskilt evenemang i kalendern (iCal eller Google), och hela kalendern finns som prenumererbart flöde (`/kalender.ics`).
 - **Nytt** med fästa inlägg, schemalagd publicering och avsändande utskott.
 - **Sektionen**: om StatLin, styrelsen, utskott (en egen sida per utskott med deras evenemang och nytt), galleri, dokument och **grafisk profil**. Den sista är en interaktiv version av styrdokumentet med loggvarianter, färgkoder som kopieras med ett klick och nedladdningar.
+- **Önskelådan** på utskottens sidor: besökare skickar önskemål till utskottet, som läser dem på utskottets sida i adminpanelen. eSTIG:s sida har ett eget tema, en Discordknapp, spelönskemål och spelet Stapla normalen.
 - **Studenter** med **Kandidat**, **Master** och **Nya studenter** (med en teckning av overallen), **För företag** (med STAR) och **Kontakt**. De gamla adresserna /utbildning och /ny-student skickas vidare.
 - **Länkar** (`/studenter/lankar`): de vanligaste LiU-länkarna – schema, boka rum, karta, skriva ut, tentamensanmälan och e-post, som på Tenuil – och fler i grupper. Sökningen bryr sig inte om å/ä/ö, stjärnan fäster favoriter överst (sparas i webbläsaren), och sidan visar veckonumret. Här finns också sökfältet till tentastatistiken. Genvägarna finns även på startsidan och på Kandidat, Master och Nya studenter.
 - **Tentastatistik** (`/tentastatistik`): sök på kurskoden för vilken LiU-kurs som helst, med förslag medan du skriver. Kurssidan visar andel godkända de senaste tre åren, grafen *Godkända över tid*, betygsfördelningen och betygen på varje tentatillfälle, som diagram eller tabell. Statistiken kommer från samma öppna källa som liustats.se, sparas i databasen och hämtas om högst en gång per dygn. Tillfällen med färre än fem resultat visas inte.
@@ -23,7 +30,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 **Adminpanel för poster (`/admin`)**
 
 - Inloggning per post med roller (se nedan). Efter upprepade fel lösenord från samma IP-adress får nästa försök mot kontot vänta, högst en minut, medan inloggning från andra adresser fungerar som vanligt. Misslyckade inloggningar sparas i revisionsloggen i databasen (`audit_log`, åtgärden `login_failed`) med e-postadressen men utan IP, utom de som spärren per IP stoppar. Försöken mot ett konto syns under *Senaste aktivitet* på kontots sida i *Konton*, men inte i översikten.
-- **Redigeringsläge direkt på sajten**: inloggade ser en list längst ner. Med *Redigeringsläge* på får allt man får ändra en streckad ram och en penna: startsidans texter, sidtexter, utskottssidor, evenemang, nyheter, styrelsekort och sidfotens kontaktuppgifter. Pennan öppnar formuläret i en sidopanel, och ändringen syns direkt när man sparar. *Byt bilder* på evenemang och *Byt omslag* på nyheter öppnar bara bilderna. Utskotten ser pennor bara på sitt eget innehåll. Besökare märker ingenting.
+- **Redigeringsläge direkt på sajten**: inloggade ser en list längst ner. Med *Redigeringsläge* på ändras texter, länkar, bilder och listor där de står, och ändringarna samlas i listen med *Ångra* (Ctrl+Z), *Förhandsvisa* och *Spara* (Ctrl+S). Startsidans rubrik, knappar och kort, menyn, Vad studenterna kan, formlerna och anteckningarna har standardvärden i koden och ändras här. Det som ligger i egna tabeller, som evenemang och nyheter, har kvar pennan som öppnar formuläret i en sidopanel. *Byt bilder* på evenemang och *Byt omslag* på nyheter öppnar bara bilderna. Utskotten ser pennor bara på sitt eget innehåll. Besökare märker ingenting.
 - **Utskottsvy**: utskotten och övriga poster får en egen översikt i sin färg och med sin logga, genvägar till nytt evenemang, ny nyhet och den egna sidan, och bara sitt eget innehåll. Formulären visar det viktigaste först och resten under *Fler detaljer*.
 - **Evenemang** med bildgalleri. Dra in flera bilder samtidigt, så laddas de upp med förloppsindikator. Bilderna roteras automatiskt rätt, skalas om till flera storlekar och får **GPS- och EXIF-data borttagna**. Originalet sparas orört – med sin metadata – i `DATA_DIR/originals`, som inte går att nå från webben. Bildtexter, ordning (dra och släpp) och omslag ändras direkt i galleriet.
 - **Bilder**: en sida med alla omslag, galleribilder och utskottsloggor. En bild sparas så fort den har laddats upp. Kontot med **grafiskt ansvar** byter bilderna på alla evenemang, nyheter och utskott men inte texterna, ser kommande evenemang som saknar omslag i sin översikt och lägger upp mallar som visas under *Mallar och material* på sidan Grafisk profil.
@@ -34,6 +41,7 @@ Webbplats för **StatLin – Statistiksektionen i Linköping**, byggd efter sekt
 - **Konton** (endast admin). Nya konton får ett läsbart engångslösenord med fyra ord och ett tal, till exempel `kvartil-uggla-prognos-fika-4821`, som måste bytas vid första inloggningen.
 - **Uppdragstavla** för styrelsen: posterna skickar uppdrag till varandra, till exempel från SASU till grafiskt ansvarig om en affisch. Uppdragen sorteras i Planerat, Pågår, Behöver hjälp och Klart och har kommentarer, deadline och koppling till evenemang. Avsändaren väljer om uppdraget syns för hela styrelsen eller bara för mottagaren. Ordförande, vice och info ser alltid allt. Uppdrag utan mottagare kan vem som helst ta, och nya uppdrag till dig syns som en siffra i menyn.
 - **Granskning**: administratörerna bockar av evenemang som granskade. Nya och ändrade evenemang från utskotten och övriga poster samlas under *Att granska* i översikten. Bocken påverkar aldrig om ett evenemang visas på sajten.
+- **Möten** (`/admin/moten`): ordföranden lägger in nästa möte, och alla i portalen föreslår punkter, som hamnar direkt på dagordningen före Övriga frågor. Dagordningen fylls i från dagordningsmallen och kan ändras på mötets sida.
 - **Revisionslogg**: översikten visar vem som ändrade vad.
 
 ## Roller
@@ -131,7 +139,7 @@ npx playwright install chromium
 
 ## Driftsättning
 
-All data (SQLite-databas och uppladdade filer) ligger i en enda katalog, `DATA_DIR`. Sajten behöver därför en server med beständig disk: en VPS, Docker eller en värd med Docker och volym. Produktionen kör på [Fly.io](#flyio) från grenen `Main-Real`. Hur den sköts står under [Överlämning](#överlämning), och andra värdar finns i [bilagan](#bilaga-andra-värdar) sist.
+All data (SQLite-databas och uppladdade filer) ligger i en enda katalog, `DATA_DIR`. Sajten behöver därför en server med beständig disk: en VPS, Docker eller en värd med Docker och volym. V2 kör på [Fly.io](#flyio) som appen `statlin-web-v2` från grenen `main`. Hur den sköts står under [Överlämning](#överlämning), och andra värdar finns i [bilagan](#bilaga-andra-värdar) sist.
 
 ### Docker (rekommenderat)
 
@@ -153,35 +161,35 @@ Utan flagga (`--reset`) får bara ett befintligt konto ett nytt lösenord, och e
 
 ### Fly.io
 
-Inställningarna finns i `fly.toml`: appen `statlin-web` i region `arn` (Stockholm), en maskin med 1 GB minne och volymen `statlin_data` monterad på `/data`. Första gången:
+Inställningarna finns i `fly.toml`: appen `statlin-web-v2` i region `arn` (Stockholm), en maskin med 1 GB minne och volymen `statlin_data` monterad på `/data`. Alla `fly`-kommandon i den här filen körs i repots rot och gäller då den appen. Appen skapades 2026-11-06 med en kopia av den gamla sajtens data. En ny app skapas så här:
 
 ```bash
-fly apps create statlin-web
+fly apps create statlin-web-v2
 fly volumes create statlin_data --region arn --size 3
 fly deploy --ha=false
 ```
 
-Därefter driftsätts nya versioner från grenen `Main-Real` med `fly deploy`, se [Driftsätta en ny version](#driftsätta-en-ny-version).
+Därefter driftsätts nya versioner från grenen `main` med `fly deploy`, se [Driftsätta en ny version](#driftsätta-en-ny-version). Den gamla sajten har en egen `fly.toml` med appen `statlin-web` i sitt repo, och hur den sköts står i det repots README.
 
 - Appen måste köra på **exakt en maskin**, eftersom SQLite-databasen ligger på volymen. Skala aldrig upp med `fly scale count`.
 - Maskinen stängs av när ingen besöker sajten och startar automatiskt vid nästa besök, vilket tar några sekunder. Sätt `min_machines_running = 1` i `fly.toml` för att alltid ha den igång.
 - Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar (`fly volumes snapshots list <volym-id>`). Hur en ögonblicksbild återställs står under [Återställning och rollback](#återställning-och-rollback). Volymen växer automatiskt upp till 10 GB, och det får bara finnas en volym som heter `statlin_data` (se [Volymen](#volymen)).
 - Skapa sektionens konton, ett per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)), med engångslösenord: `fly ssh console -u statlin -C "node scripts/create-accounts.mjs"`. Konton som redan finns lämnas orörda.
 - Återställ lösenordet för ett konto: `fly ssh console -u statlin -C "node scripts/create-admin.mjs ordforande@statlin.se"`. Rollen ändras inte, och en felskriven adress avbryter skriptet i stället för att skapa ett konto. Med `--make-admin` skapas en ny administratör, eller blir ett befintligt konto administratör.
-- **Egen domän** (från `statlin-web.fly.dev` till `statlin.se`), i den här ordningen:
+- **Egen domän** (från `statlin-web-v2.fly.dev` till `statlin.se`), i den här ordningen:
   1. Kontrollera först att varje underdomän till statlin.se som öppnas i en webbläsare, till exempel `www.statlin.se`, svarar över HTTPS. Sajten skickar `Strict-Transport-Security` med `includeSubDomains` (`next.config.ts`): den som har besökt statlin.se får sedan bara https mot alla underdomäner i två år, och en underdomän som bara klarar http – till exempel `www` genom registratorns vidarebefordran – blir oåtkomlig för den besökaren. Ska `www` peka hit: `fly certs add www.statlin.se` och DNS-posterna som kommandot visar.
   2. Kör `fly certs add statlin.se` och lägg in DNS-posterna som kommandot visar hos domänregistratorn. Låt MX-posterna för e-posten stå kvar. Vänta tills `fly certs check statlin.se` visar att certifikatet är utfärdat.
   3. Byt `SITE_URL` till `https://statlin.se` på båda ställena i `fly.toml`, under `[build.args]` och `[env]`. Adressen bakas in i förrenderade sidor (delningsbild, `canonical`, `robots.txt`) när sajten byggs, så `fly secrets set` räcker inte – sajten måste byggas om.
-  4. Lägg den här regeln först i `redirects()` i `next.config.ts`, så att den gamla adressen skickar vidare till den nya i stället för att visa samma innehåll en gång till (dubblettinnehåll för sökmotorerna). Flys hälsokontroll anropar maskinen över det privata nätet, inte `statlin-web.fly.dev`, och påverkas inte.
+  4. Lägg den här regeln först i `redirects()` i `next.config.ts`, så att den gamla adressen skickar vidare till den nya i stället för att visa samma innehåll en gång till (dubblettinnehåll för sökmotorerna). Flys hälsokontroll anropar maskinen över det privata nätet, inte `statlin-web-v2.fly.dev`, och påverkas inte.
      ```ts
-     { source: "/:path*", has: [{ type: "host", value: "statlin-web.fly.dev" }], destination: "https://statlin.se/:path*", permanent: true },
+     { source: "/:path*", has: [{ type: "host", value: "statlin-web-v2.fly.dev" }], destination: "https://statlin.se/:path*", permanent: true },
      ```
      Pekar `www` hit (steg 1): lägg till samma regel för den också:
      ```ts
      { source: "/:path*", has: [{ type: "host", value: "www.statlin.se" }], destination: "https://statlin.se/:path*", permanent: true },
      ```
   5. Kalenderhändelsernas UID innehåller värden (`event-<id>@<värd>`, `src/lib/ics.ts`) och byter värd samtidigt. Bestäm före bytet hur det ska hanteras för dem som prenumererar på kalendern eller har lagt in evenemang i sin egen.
-  6. Kör `fly deploy` och kontrollera: `curl -sI https://statlin-web.fly.dev/` ger `308` med `location: https://statlin.se`, `curl -sI https://www.statlin.se/` ger `308` med `location: https://statlin.se` (om www pekar hit), `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` ger `0`, och `node tests/smoke.mjs https://statlin.se` är grönt – smoke jämför delningsbild, `canonical`, sitemap och `robots.txt` med adressen den provar. Byt sedan `statlin-web.fly.dev` mot `statlin.se` i kommandona i den här filen.
+  6. Kör `fly deploy` och kontrollera: `curl -sI https://statlin-web-v2.fly.dev/` ger `308` med `location: https://statlin.se`, `curl -sI https://www.statlin.se/` ger `308` med `location: https://statlin.se` (om www pekar hit), `curl -s https://statlin.se/sitemap.xml | grep -c fly.dev` ger `0`, och `node tests/smoke.mjs https://statlin.se` är grönt. Smoke jämför delningsbild, `canonical`, sitemap och `robots.txt` med adressen den provar. Byt sedan `statlin-web-v2.fly.dev` mot `statlin.se` i kommandona i den här filen.
 
 ### Utan Docker
 
@@ -225,24 +233,26 @@ Kolla vem som står på varje tjänst och på betalkortet, och flytta dem till e
 
 | Tjänst | Vad | Står på |
 | --- | --- | --- |
-| Fly.io | Appen `statlin-web`: maskinen, volymen och fakturorna | `<fyll i>` |
+| Fly.io | Appen `statlin-web-v2`: maskinen, volymen och fakturorna. Den gamla sajten, `statlin-web`, ligger på samma konto. | `<fyll i>` |
 | Name.com | Domänen `statlin.se` | `<fyll i>` |
 | Betalkort | Kortet som tjänsterna dras från | `<fyll i>` |
-| GitHub | Repot `StatLin-Statistiksektionen-vid-LiU/StatLin_26-27_Web` (publikt) | `<fyll i>` |
+| GitHub | Repot `StatLin-Statistiksektionen-vid-LiU/StatLin_26-27_Web_V2` (publikt). Den gamla sajten ligger i `StatLin_26-27_Web`. | `<fyll i>` |
 
 Kontona på själva sajten står under [Konton på sajten](#konton-på-sajten).
 
 ### Driftsätta en ny version
 
-Sajten driftsätts för hand från en dator där `fly` är inloggat på Fly-kontot. `fly deploy` skickar med allt i arbetskatalogen, också ändringar som inte är committade, så arbetsträdet ska vara rent och stå på `Main-Real`:
+Sajten driftsätts för hand från en dator där `fly` är inloggat på Fly-kontot. `fly deploy` skickar med allt i arbetskatalogen, också ändringar som inte är committade, så arbetsträdet ska vara rent och stå på `main`. Ta en ögonblicksbild av volymen först, så att databasen går att återställa till läget före versionen om den har ett nytt steg i `src/lib/db/migrations.ts`:
 
 ```bash
-git status                                         # "On branch Main-Real" och "nothing to commit, working tree clean"
-fly deploy
-node tests/smoke.mjs https://statlin-web.fly.dev   # läser bara, säker mot produktionen
+git status                                            # "On branch main" och "nothing to commit, working tree clean"
+fly volumes list                                      # volymens id (vol_…)
+fly volumes snapshots create <vol-id>                 # sparar läget före den nya versionen
+fly deploy --image-label v2-$(git rev-parse --short HEAD)
+node tests/smoke.mjs https://statlin-web-v2.fly.dev   # läser bara, säker mot produktionen
 ```
 
-Ett deploy-skript är planerat.
+Etiketten ger imagen commitens namn, till exempel `registry.fly.io/statlin-web-v2:v2-ff16dc0`, så att `fly releases --image` visar vilken commit varje version kör. Ett deploy-skript är planerat.
 
 ### Återställning och rollback
 
@@ -252,7 +262,7 @@ Fly tar en ögonblicksbild av volymen varje dag och sparar den i fem dagar. En �
 
 ```bash
 fly releases --image          # versionerna med sina images – välj den senaste som fungerade
-fly deploy --image <image>    # ur kolumnen Docker Image, t.ex. registry.fly.io/statlin-web:deployment-01…
+fly deploy --image <image>    # ur kolumnen Docker Image, t.ex. registry.fly.io/statlin-web-v2:v2-ea7c367
 ```
 
 Har den nya versionen ett nytt steg i `src/lib/db/migrations.ts` har den migrerat databasen, och då räcker det inte. Den äldre koden vägrar använda en nyare databas: hälsokontrollen svarar 503, `fly deploy` väntar förgäves på den, och `fly logs` visar `databasen är nyare än koden` när någon öppnar en sida. Databasen återställs därför först till en ögonblicksbild från före driftsättningen, och `fly deploy --image` med den förra imagen kommer sist, enligt nästa stycke.
@@ -277,7 +287,7 @@ fly deploy --image <image>                    # återställningen blir en releas
 - Klonen får imagen från maskinen den klonas från. Därför byts imagen innan maskinen klonas: kod som är nyare än ögonblicksbilden får aldrig öppna den återställda databasen, för då migrerar den den igen.
 - Den nya volymen måste heta `statlin_data`, annars byter `fly deploy` ut maskinen.
 - `fly volumes create` lägger som standard volymen i en annan hårdvaruzon än volymerna med samma namn (`--require-unique-zone`). Saknas en ledig zon, lägg till `--require-unique-zone=false`.
-- Kontrollera sedan sajten med `node tests/smoke.mjs https://statlin-web.fly.dev`, logga in och se att det senaste innehållet finns. `fly volumes list` ska visa den nya volymen som kopplad.
+- Kontrollera sedan sajten med `node tests/smoke.mjs https://statlin-web-v2.fly.dev`, logga in och se att det senaste innehållet finns. `fly volumes list` ska visa den nya volymen som kopplad.
 - När allt fungerar tar du bort den gamla volymen med `fly volumes destroy <gamla-vol-id>`, så att bara en `statlin_data` finns kvar, och skriver in den nya volymens id under [Volymen](#volymen). Kommandot varnar att det inte går att ångra och frågar `Are you sure you want to destroy this volume?` – svara y.
 
 **Öva** återställningen en gång om året, i juni (se [Årshjul](#årshjul)), så att den inte prövas första gången under press. Övningen görs mot en testvolym med ett eget namn, som `fly deploy` aldrig monterar, och en maskin utan `--port`, som inte får någon publik trafik:
@@ -304,14 +314,13 @@ Hela sajten är en Node-process på en enda Fly-maskin, med SQLite-databasen på
 
 Databasen och uppladdningarna ligger på volymen `statlin_data` i `arn`. Fly väljer volym efter namnet i `fly.toml` (`source = "statlin_data"`), inte efter id. Finns det två volymer med samma namn kan en ny maskin – efter `fly machine destroy`, `fly scale count` eller en flytt – få fel volym: sajten startar då som ny med bara grunddata, och nya ändringar hamnar på fel volym.
 
-Läget 2026-11-06 04:45, efter att Fly flyttade maskinen till en annan värd klockan 04:28 (`migrated=true` i `fly machine status`):
+Läget 2026-11-07 enligt `fly volumes list`:
 
 | Volym | Läge |
 | --- | --- |
-| `vol_r7ynjzedo1j521nr` | Kopplad till maskinen, den levande volymen. Fly kopierade hit databasen vid flytten och tog bort `vol_v3g8q8wewx6q3jx4`. |
-| `vol_vdepjkme076p6314` | Okopplad, samma namn. Skapad 04:23, när `vol_491j0dldgmng2x5r` försvann, så troligen Flys kopia av den. |
+| `vol_v3g858nl3d0zwdl4` | Kopplad till maskinen `830d1db7199428`, den levande volymen. Skapad 2026-11-06 med en kopia av den gamla sajtens data. |
 
-Fly byter volymens id vid en flytt. Bekräfta därför läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabellen. Ögonblicksbilderna från före flytten ligger kvar under det gamla id:t: `fly volumes snapshots list vol_v3g8q8wewx6q3jx4`. Finns den okopplade volymen kvar avgör du själv om den ska tas bort med `fly volumes destroy <id>`. Det går inte att ångra, så kontrollera först att den är tom eller gammal, med en maskin utan publik trafik som i övningen ovan. CREATED AT säger inget efter en flytt.
+Fly byter volymens id om maskinen flyttas till en annan värd, som när den gamla sajtens maskin flyttades 2026-11-06 (`migrated=true` i `fly machine status`). Bekräfta därför läget med `fly volumes list` (kolumnen ATTACHED VM) och rätta tabellen. Ögonblicksbilderna från före en flytt ligger kvar under det gamla id:t. Finns det en okopplad volym med samma namn avgör du själv om den ska tas bort med `fly volumes destroy <id>`. Det går inte att ångra, så kontrollera först att den är tom eller gammal, med en maskin utan publik trafik som i övningen ovan. CREATED AT säger inget efter en flytt.
 
 ### STAR-sidan och lunchföreläsningarna
 
@@ -333,7 +342,7 @@ Innan det går live: låt SASU läsa de tre raderna i bandet "Vill ni hålla en 
 
 ### Årshjulet och projektplanerna i adminpanelen
 
-Under *Årshjul* och *Projektplaner* i adminpanelen samlas det som kommer tillbaka varje år, så att nästa års post slipper börja från noll. Alla poster läser och lägger till. Den som la in något, den ansvariga posten och admin ändrar. Hjulet börjar om av sig självt varje år: läget (planerad, klar, hoppas över) sparas per år, och själva punkterna står kvar.
+Under *Årshjul* och *Projektplaner* i adminpanelen samlas det som kommer tillbaka varje år, så att nästa års post slipper börja från noll. Alla poster läser och lägger till. Den som la in något, den ansvariga posten och admin ändrar. Hjulet börjar om av sig självt varje år: läget (planerad, klar, hoppas över) sparas per år, och själva punkterna står kvar. På hösten visas också vårens punkter, hjulet kan visa bara SCB:s punkter, och punkter som borde ha varit klara markeras som försenade.
 
 Före live: inget behöver installeras eller ställas in, och migreringen körs vid start som vanligt. Tryck sedan en gång på *Fyll med förslag* och gå igenom hjulet tillsammans. Månaderna är en gissning, och ansvarig måste skrivas som postens eller utskottets namn för att uppdragen ska hamna rätt. Exempeldata för lokal provning finns i `scripts/demo-postverktyg.ts`. Mallarna för projektplaner är konstanter i `src/lib/projektplan-mallar.ts`.
 
@@ -361,7 +370,7 @@ Att prova lokalt: `DATA_DIR=<samma som servern> npx tsx scripts/demo-fragelada.t
 6. **Länkar**: under *Länkar* (redaktörer) styrs länksidan – slå på *Genväg* för att länken ska visas överst och på startsidan. Tentastatistiken behöver ingen skötsel: den hämtas automatiskt när någon söker på en kurskod.
 7. **Hjälpmedel**: under *Hjälpmedel* lägger du upp en fil eller en länk och väljer program, termin och kategori. Gäller det flera terminer väljer du *Hela programmet*. Allt blir offentligt, så lägg bara upp sådant ni får dela.
 8. **Bilder (grafiskt ansvarig)**: under *Bilder* finns omslagen till alla evenemang och nytt och utskottens loggor – ladda upp en bild så är den sparad. *Galleri* på ett evenemang leder till dess bildgalleri. Översikten visar kommande evenemang som saknar omslag, och ett uppdrag som är kopplat till ett evenemang har knappen *Ladda upp omslag*. Mallar läggs upp under *Dokument* och visas under *Mallar och material* på sidan Grafisk profil.
-9. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och klicka på den röda pennan. Ser du ingen penna, slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. På evenemang och nyheter byter *Byt bilder* och *Byt omslag* bilderna direkt i sidopanelen. Partners ändras i adminpanelen, och panelen har en länk dit.
+9. **Ändra direkt på sajten**: gå till sidan du vill ändra medan du är inloggad och slå på *Redigeringsläge* i listen längst ner. Valet sparas i webbläsaren. Klicka på texten, länken eller bilden, ändra den där den står och tryck *Spara* i listen. Evenemang och nyheter har en röd penna som öppnar formuläret. På evenemang och nyheter byter *Byt bilder* och *Byt omslag* bilderna direkt i sidopanelen. Partners ändras i adminpanelen, och panelen har en länk dit.
 10. **Årshjul och projektplaner**: översikten visar vad som väntar nästa månad och vad som behöver planeras in denna termin. Lägg en punkt på tavlan, eller gör en projektplan av den: välj mall och datum, så räknas stegen ut bakåt. Stegen stannar i planen tills du skickar dem till uppdragstavlan, ett i taget eller alla på en gång. Skriv lärdomar på planen efteråt, så ser nästa års post dem när de gör om samma sak.
 
 Översikten visar evenemang som har varit men saknar bilder och uppdrag till dig. Administratörerna ser också *Att granska*: evenemang som övriga poster har skapat eller ändrat sedan de senast granskades.
@@ -373,7 +382,9 @@ Att prova lokalt: `DATA_DIR=<samma som servern> npx tsx scripts/demo-fragelada.t
 - **sharp** för bildbehandling (WebP i 480/1200/2000 px, rotering efter EXIF, metadata borttagen; originalet sparas i `DATA_DIR/originals`).
 - **Tailwind CSS 4** med egna designtokens (`src/app/globals.css`). Tailwind körs genom Turbopack-laddaren `@tailwindcss/turbopack` (`turbopack.rules` i `next.config.ts`). Lägg ingen `postcss.config` bredvid, för då körs Tailwind två gånger. Laddaren och `tailwindcss` är låsta till samma exakta version, så uppdatera dem tillsammans. Kör sedan `npm run build` och kontrollera att en ny klass finns i `.next/static/**/*.css`. Töm `.next/cache` om CSS:en ser gammal ut.
 - Sessioner i databasen (slumpad token, endast SHA-256-hashen lagras), lösenord med bcrypt, CSRF-skydd via SameSite-cookies och kontroll av ursprung.
-- Typsnitt (Archivo, JetBrains Mono) är självhostade via Fontsource, så inga externa anrop görs. Citat och formler använder systemtypsnittet Georgia.
+- Typsnitt (Archivo, JetBrains Mono och handstilen Mynerve) är självhostade via Fontsource, så inga externa anrop görs. Mynerve laddas först när handskriven text närmar sig skärmen. Citat sätts i systemtypsnittet Georgia, och formelringen runt loggan har ett eget typsnitt, eftersom Georgia saknar hatten över β.
+- Formlerna i rutnätet skrivs i LaTeX. En egen liten tolk (`src/lib/latex.ts`) och en sättare (`src/components/content/formel.ts`) lägger ut dem i Mynerve: bråk, rötter, summor och integraler med gränser, index och exponenter, accenter, matriser, `cases` och parenteser som växer. Tecken som Mynerve saknar ritas som streck (`formel-tecken.ts`). Tolken och typsnittet laddas först när pekaren har rört sig. Planen finns i `docs/plan-formler-anteckningar.md`.
+- Läget sajten öppnas i: skalet är förrenderat och kan inte läsa databasen, så `src/proxy.ts` lägger Admins val i kakan `statlin-tema-standard` när en hel sida hämtas, och skriptet i `<head>` (`src/app/layout.tsx`) läser kakan innan något ritas. Mörkt på båda ger ingen kaka, och besökarens eget val i `localStorage` går före. Se `src/lib/tema.ts`.
 
 ```
 src/
@@ -381,11 +392,13 @@ src/
   app/admin/         adminpanelen (+ _actions/ med server actions)
   app/api/           uppladdning, hälsokontroll och kurskoder till tentastatistiken
   app/media/         serverar uppladdade filer från DATA_DIR
-  components/        UI (brand/, content/, home/, layout/, admin/)
-  lib/               databas, auth, data, markdown, media, datum (Europe/Stockholm), iCal
+  components/        UI (bland annat admin/, brand/, content/, edit-mode/, home/, layout/)
+  lib/               databas, auth, data, innehållsblocken, markdown, LaTeX, media, datum (Europe/Stockholm), iCal
+  proxy.ts           inloggningen till adminsidorna, tentastatistikens adresser och kakan med standardläget
 scripts/             seed, create-admin, create-accounts, docker-entrypoint (startskriptet i Docker-bilden) och lib.mjs,
                      som create-admin och create-accounts delar, med ordlistan för engångslösenord (password-words.json)
 public/brand/        loggor (SVG-varianter, utskottsloggor, nedladdningar)
+docs/                planerna för önskemålen och för formlerna och anteckningarna, och åtgärdsplanen
 ```
 
 ### Loggan
@@ -394,9 +407,9 @@ Sektionsloggan är vektoriserad från originalet i styrdokumentet. Ringen är en
 
 Sajten visar den officiella loggan. På svart bakgrund smälter den svarta ringen ihop med bakgrunden, så loggan får en tunn vit kant: klassen `logo-kant` på bilder och en tunn cirkel i `FloatingLogo` och på overallens rygg. Den inverterade formen finns bara som nedladdning under Grafisk profil.
 
-Startsidans hero har också en formelring (`src/components/brand/formula-ring.tsx`). Formlerna ligger i ett eget lager utanför loggan, så loggan ritas aldrig om. De syns när musen rör sig nära loggan och i ett svep strax efter att sidan laddats och sedan var 4:e minut, och på telefon när man trycker på loggan. Med `prefers-reduced-motion` finns inget svep, och musen över loggan visar hela ringen stilla. Admin väljer glöden under Inställningar → Startsidan, röd (förval) eller vit, medan formlerna alltid är vita. Färgen läses bakom en egen `Suspense`, så loggan ligger kvar i det statiska skalet.
+Startsidans hero har också en formelring (`src/components/brand/formula-ring.tsx`). Formlerna ligger i ett eget lager utanför loggan, så loggan ritas aldrig om. De kommer fram runt loggan när musen är nära, och på telefon när man trycker på loggan. Admin stänger av ringen under *Inställningar* (*Formelringen runt loggan*) eller med knappen vid loggan i redigeringsläget, och då visas bara loggan. Valet läses bakom en egen `Suspense`, så loggan ligger kvar i det statiska skalet och syns direkt i båda fallen.
 
-På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan lättare, medan datorn ser ut som förut. Ritytan i heron ritar ungefär 30 gånger per sekund med högst 1,5× upplösning, och linjens glöd är breda genomskinliga streck i stället för skuggoskärpa. Loggan gungar med CSS-animationer i stället för en JS-loop, och med `prefers-reduced-motion` står den still. Introt är en enda rotation av hela loggan, reflexen är en gradient utan oskärpa, kornet i `noise` är borta, och sidhuvudet och evenemangskorten saknar `backdrop-filter`, så sidhuvudet är helt täckande. Rubriken tonas in tidigare och knapparna syns direkt. Tills Archivo har kommit används Arial eller Roboto, skalade till samma bredd, så att rubriken bryts likadant och heron inte hoppar. Medan texten laddas håller en osynlig kopia av standardtexten platsen. De tre nedersta sektionerna har klassen `below-fold`: på en smal telefonskärm får de `content-visibility: auto` och läggs inte ut förrän de närmar sig skärmen.
+På telefoner och surfplattor, där `(pointer: coarse)` gäller, är sajten lättare. Kornet över de mörka och röda ytorna är borta, eftersom blandningsläget kostar ett eget ritpass, knapparna är 44 px höga och textlänkarna går att träffa med fingret. Tills Archivo har kommit används Arial eller Roboto, skalade till samma bredd, så att rubriken bryts likadant och heron inte hoppar. De nedersta sektionerna på startsidan har klassen `below-fold`: på en smal telefonskärm får de `content-visibility: auto` och läggs inte ut förrän de närmar sig skärmen.
 
 ## Kommandon
 
@@ -405,6 +418,7 @@ På telefoner och surfplattor, där `(pointer: coarse)` gäller, är startsidan 
 | `npm run dev` | Utvecklingsserver |
 | `npm run build` / `npm start` | Produktionsbygge / kör bygget |
 | `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
+| `npm run test:datum` | Enhetstester utan server eller databas (`tests/datum.test.mjs`): datumhanteringen, formulärdelarna i adminpanelen och länkhjälparen |
 | `npm run seed [-- --demo]` | Grunddata och första administratören; med `--demo` även demodata och demokonton – bara lokalt, vägras i produktion |
 | `npm run create-admin -- <e-post> ["Namn"] [--reset \| --make-admin]` | Nytt lösenord för ett befintligt konto med rollen orörd (`--reset`, standard – en felskriven adress avbryter i stället för att skapa ett konto); `--make-admin` skapar en administratör eller gör kontot till administratör |
 | `npm run create-accounts` | Skapa ett konto per post i styrelsen (13 st, se [Konton på sajten](#konton-på-sajten)); hoppar över befintliga |
@@ -422,9 +436,9 @@ Exempelinnehållet (evenemang, nytt, styrelsenamn, e-postadresser på `@statlin.
 
 ## Bilaga: Andra värdar
 
-Produktionen kör på Fly.io. Det här behövs om sajten flyttas till en annan värd med Docker och volym, till exempel Railway:
+V2 kör på Fly.io. Det här behövs om sajten flyttas till en annan värd med Docker och volym, till exempel Railway:
 
-1. Skapa ett projekt från GitHub-repot (gren `Main-Real`). Dockerfilen används automatiskt, och varje merge till `Main-Real` driftsätts.
+1. Skapa ett projekt från GitHub-repot (gren `main`). Dockerfilen används automatiskt, och varje merge till `main` driftsätts.
 2. Lägg till en volym med monteringssökvägen `/data`. Utan den försvinner databasen och alla uppladdningar vid nästa driftsättning. Railway monterar volymen som root, vilket startskriptet `scripts/docker-entrypoint.mjs` rättar, och tillåter inte `VOLUME` i Dockerfile – lägg därför inte till någon.
 3. Sätt variablerna `ADMIN_EMAIL`, `ADMIN_PASSWORD` och `SITE_URL`. Railway skickar tjänstens variabler som byggargument när Dockerfile deklarerar dem, och `SITE_URL` behövs vid bygget (`ARG SITE_URL`).
 4. Spärren mot upprepade inloggningsförsök behöver Railways rubrik med besökarens IP: sätt `CLIENT_IP_HEADER=x-real-ip` (på Fly.io är det `fly-client-ip`, som redan står i `fly.toml`).
