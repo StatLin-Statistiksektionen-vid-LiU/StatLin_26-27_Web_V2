@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, type CSSProperties } from "react";
 import { BoardCard } from "@/components/content/board-card";
 import { EventCard, EventRow } from "@/components/content/event-card";
 import { Markdown } from "@/components/content/markdown";
 import { NewsCard } from "@/components/content/news-card";
+import { UbuKnappar } from "@/components/content/ubu-knappar";
 import { FixedBoxLink } from "@/components/fragelada/box-link";
-import { ArrowLeft, Instagram, Mail, MessageCircle, Star } from "@/components/icons";
+import { DiscordKnapp } from "@/components/estig/discord-knapp";
+import { SpelLogga } from "@/components/estig/spel-logga";
+import { SpelOnskan } from "@/components/estig/spel-onskan";
+import { ArrowLeft, Gamepad, Instagram, Mail, MessageCircle, Star } from "@/components/icons";
 import { WishBox } from "@/components/onskelada/wish-box";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, listBoard } from "@/lib/data/content";
 import { listPastEvents, listUpcomingEvents } from "@/lib/data/events";
 import { listNewsForCommittee } from "@/lib/data/news";
+import { getBlock } from "@/lib/innehall/server";
 import { safeExternalUrl } from "@/lib/utils";
 import { EditModeLink, Editable } from "@/components/edit-mode/editable";
 
@@ -36,21 +41,38 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
   const c = await getCommitteeBySlug(slug);
   if (!c || !c.visible) notFound();
 
-  const [upcoming, past, news, board] = await Promise.all([
+  // UBU har egna knappar bland de andra, som den till kursutvärderingarna. eSTIG har ett eget tema med spel, Discord och spelönskemål.
+  const [upcoming, past, news, board, ubu, estig] = await Promise.all([
     listUpcomingEvents(6, c.id),
     listPastEvents(6, c.id),
     listNewsForCommittee(c.id, 3),
     listBoard(),
+    c.slug === "ubu" ? getBlock("ubu") : null,
+    c.slug === "estig" ? getBlock("estig") : null,
   ]);
   const members = board.filter((b) => b.committee_id === c.id);
   const instagram = safeExternalUrl(c.instagram);
   const wishes = c.wishes_open && c.kind !== "styrelse";
 
-  return (
+  const sida = (
     <>
       <Editable target={{ type: "committee", id: c.id }} label="Redigera utskottet" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <header className="relative overflow-hidden border-b border-line">
-        <div className="grid-paper pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_70%_30%,black,transparent_70%)]" aria-hidden />
+        {estig ? (
+          <>
+            {/* Ett rutnät av pixlar med några tända i eSTIG:s färger. De står i rutorna på alla bredder. */}
+            <div className="grid-paper-fine pointer-events-none absolute inset-0 text-red [mask-image:radial-gradient(ellipse_at_70%_35%,black,transparent_72%)]" aria-hidden />
+            <div className="estig-pixlar" aria-hidden>
+              <span style={pixel("58%", 6, "#2caadf")} />
+              <span style={pixel("63%", 4, "#f15a25")} />
+              <span style={pixel("84%", 8, "#8457a6")} />
+              <span style={pixel("89%", 5, "#f7b042")} />
+              <span style={pixel("93%", 12, "var(--color-red)")} />
+            </div>
+          </>
+        ) : (
+          <div className="grid-millimeter pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_70%_30%,black,transparent_70%)]" aria-hidden />
+        )}
         <div className="container-site relative grid items-center gap-10 pb-12 pt-[calc(var(--header-h)+2.5rem)] md:grid-cols-12 md:pb-16 md:pt-[calc(var(--header-h)+4rem)]">
           <div className="md:col-span-7">
             <Link href="/utskott" className="tryck kicker inline-flex items-center gap-2 text-stone transition-colors hover:text-ink">
@@ -65,14 +87,24 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
                   <Mail size={18} /> {c.email}
                 </a>
               )}
+              {estig && <DiscordKnapp estig={estig} />}
               {(c.slug === "ubu" || c.slug === "amo") && (
                 <FixedBoxLink slug={c.slug} className="btn btn-ghost">
                   <MessageCircle size={18} /> Skriv anonymt
                 </FixedBoxLink>
               )}
+              {ubu && <UbuKnappar ubu={ubu} />}
               {wishes && (
                 <a href="#onskelada" className="btn btn-ghost">
-                  <Star size={18} /> Önska något
+                  {estig ? (
+                    <>
+                      <Gamepad size={18} /> Önska ett spel
+                    </>
+                  ) : (
+                    <>
+                      <Star size={18} /> Önska något
+                    </>
+                  )}
                 </a>
               )}
               {instagram && (
@@ -84,20 +116,26 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
           </div>
           {c.logo_url && (
             <div className="flex justify-center md:col-span-5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={c.logo_url} alt={`${c.short_name}-loggan`} fetchPriority="high" className="w-[min(70vw,24rem)] animate-float" />
+              {estig ? (
+                <SpelLogga src={c.logo_url} alt={`${c.short_name}-loggan`} estig={estig} />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={c.logo_url} alt={`${c.short_name}-loggan`} fetchPriority="high" className="w-[min(70vw,24rem)] animate-float" />
+              )}
             </div>
           )}
         </div>
       </header>
       </Editable>
+      {/* En filmremsa under sidhuvudet på eSTIG:s sida. */}
+      {estig && <div className="filmremsa" aria-hidden />}
 
       <section className="container-site grid gap-14 py-16 md:py-24 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <Markdown source={c.description_md} />
           {wishes && (
             <div className="mt-12">
-              <WishBox slug={c.slug} name={c.short_name} />
+              {estig ? <SpelOnskan slug={c.slug} name={c.short_name} estig={estig} /> : <WishBox slug={c.slug} name={c.short_name} />}
             </div>
           )}
         </div>
@@ -159,4 +197,10 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
       )}
     </>
   );
+  return estig ? <div className="estig-tema">{sida}</div> : sida;
+}
+
+/** En tänd pixel i rutnätet: kolumnen som andel av bredden (avrundad till rutorna i CSS:en), raden och färgen. */
+function pixel(x: string, y: number, farg: string) {
+  return { "--x": x, "--y": y, "--f": farg } as CSSProperties;
 }

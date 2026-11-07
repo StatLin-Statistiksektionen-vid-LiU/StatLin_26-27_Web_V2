@@ -166,11 +166,13 @@ export default async function tavlanSteg({ BASE, page, step, switchAccount }) {
     const menu = taskItem(quick).locator("select");
     await waitForHydration(page, menu);
     await Promise.all([saving(), menu.selectOption("hjalp")]);
+    // Markeringen, inte valet med samma text i statuslistan.
+    const help = () => taskItem(quick).locator("span", { hasText: /^Behöver hjälp$/ });
     await inColumn("Pågår").waitFor();
-    await taskItem(quick).getByText("Behöver hjälp", { exact: true }).waitFor();
+    await help().waitFor();
     await page.reload();
     await inColumn("Pågår").waitFor();
-    await taskItem(quick).getByText("Behöver hjälp", { exact: true }).waitFor();
+    await help().waitFor();
   });
 
   await step("Uppdragstavlan: går det inte att spara står kortet kvar, och det står varför", async () => {

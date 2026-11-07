@@ -198,6 +198,12 @@ export const Check = (p: IconProps) => (
     <path d="m5 12.5 4.5 4.5L19 7.5" />
   </svg>
 );
+export const Undo = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M9 14 4 9l5-5" />
+    <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+  </svg>
+);
 export const Grip = (p: IconProps) => (
   <svg {...base(p)}>
     <circle cx="9" cy="6" r="1" fill="currentColor" />
@@ -320,5 +326,20 @@ export const Linkedin = (p: IconProps) => (
   <svg {...base(p)}>
     <rect x="3" y="3" width="18" height="18" rx="3" />
     <path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" />
+  </svg>
+);
+export const Gamepad = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M7.5 7h9a5 5 0 0 1 4.9 6l-.8 3.7a2.3 2.3 0 0 1-4 1L15 16H9l-1.6 1.7a2.3 2.3 0 0 1-4-1L2.6 13A5 5 0 0 1 7.5 7Z" />
+    <path d="M7.5 10v3.5M5.75 11.75h3.5" />
+    <circle cx="15.5" cy="10.5" r="0.9" fill="currentColor" stroke="none" />
+    <circle cx="17.75" cy="12.75" r="0.9" fill="currentColor" stroke="none" />
+  </svg>
+);
+export const Headset = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
+    <path d="M4 15a2 2 0 0 1 2-2h1.5v5.5H6a2 2 0 0 1-2-2ZM20 15a2 2 0 0 0-2-2h-1.5v5.5H18a2 2 0 0 0 2-2Z" />
+    <path d="M18 18.5c0 1.4-1.6 2.5-3.5 2.5H13" />
   </svg>
 );

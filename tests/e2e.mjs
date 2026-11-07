@@ -260,8 +260,8 @@ async function openDeleteConfirm(page) {
         });
       const inlineTilt = (p) => p.locator(".logo-tilt").evaluate((el) => el.style.transform);
       const ringFilter = (p) => p.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter);
-      // Rutnätets ljus: data-aktiv och pekarens läge som två CSS-variabler, satta av HeroGrid.
-      const gridLight = (p) => p.locator(".hero-rutnat").evaluate((el) => ({ active: el.hasAttribute("data-aktiv"), style: el.style.cssText }));
+      // Rutnätets ljus över hela sidan: data-aktiv på ramen och pekarens läge som två CSS-variabler på ljuset i den, satta av RutnatLjus.
+      const gridLight = (p) => p.locator(".rutnat-ram").evaluate((el) => ({ active: el.hasAttribute("data-aktiv"), style: el.querySelector(".rutnat-ljus").style.cssText }));
       // Introt får inte hålla kvar sina lager på telefonen när det är slut. Slutbilden är densamma utan dem.
       const introIsOver = () => !document.getAnimations().some((a) => ["logo-ring-in", "grid-wipe", "logo-fade", "logo-glow-in", "sig-wipe", "sig-glow"].includes(a.animationName));
       const header = (p) =>
@@ -297,10 +297,10 @@ async function openDeleteConfirm(page) {
       assert.equal(await phone.locator(".logo-formler radialGradient").getAttribute("r"), "0", "gradienten ska inte animeras på telefon");
       // Telefonen lyssnar inte på pekaren i heron, så trycket lämnade inget ljus och inga variabler efter sig i rutnätet.
       assert.deepEqual(await gridLight(phone), { active: false, style: "" }, "rutnätet ska inte lysa upp på telefon");
-      // Listen överst är hel på telefonen, utan oskärpa bakom sig, också när sidan är scrollad. Den har pappersfärgen.
+      // Listen överst är hel på telefonen, utan oskärpa bakom sig, också när sidan är scrollad. Den har pappersfärgen i mörkt läge, som är standard.
       await phone.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
       await phone.waitForTimeout(300);
-      assert.deepEqual(await header(phone), { display: "flex", backdrop: "none", background: "rgb(249, 248, 245)" });
+      assert.deepEqual(await header(phone), { display: "flex", backdrop: "none", background: "rgb(18, 18, 17)" });
       await phone.context().close();
 
       // Heron hoppar inte under laddningen. Loggan ska stå på samma höjd i skalet (utan JS) som med rubriken på plats, både före och efter Archivo.
@@ -360,13 +360,17 @@ async function openDeleteConfirm(page) {
       await desktop.mouse.move(100, 100);
       await desktop.waitForTimeout(500);
       assert.notEqual(await inlineTilt(desktop), tiltBefore, "loggan ska följa musen");
-      // Rutnätet bakom loggan lyser upp kring musen och släcks när musen lämnar heron (här mot sidomenyn).
+      // Rutnätet lyser upp kring musen på hela sidan, också över sidomenyn, och släcks när musen lämnar fönstret.
       const hero = await desktop.locator("section[data-startsida]").boundingBox();
       await desktop.mouse.move(hero.x + 200, hero.y + 200, { steps: 4 });
-      await desktop.waitForFunction(() => document.querySelector(".hero-rutnat").hasAttribute("data-aktiv"), null, { timeout: 5000 });
-      assert.match((await gridLight(desktop)).style, /--mx: \d+px; --my: \d+px;/);
+      await desktop.waitForFunction(() => document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
+      assert.match((await gridLight(desktop)).style, /--x: -?\d+px; --y: -?\d+px;/);
       await desktop.mouse.move(100, 300, { steps: 4 });
-      await desktop.waitForFunction(() => !document.querySelector(".hero-rutnat").hasAttribute("data-aktiv"), null, { timeout: 5000 });
+      await desktop.waitForTimeout(100);
+      assert.equal((await gridLight(desktop)).active, true, "ljuset ska följa med över sidomenyn");
+      // Playwright kan inte flytta musen ut ur fönstret, så händelsen som webbläsaren skickar då skickas här direkt.
+      await desktop.evaluate(() => document.documentElement.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: null })));
+      await desktop.waitForFunction(() => !document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
       // Formlerna har ingen glöd, så ringen har inget filter när den syns.
       await moveOverLogo(desktop);
       await desktop.waitForFunction(ringIsVisible, null, { timeout: 5000 });
@@ -374,9 +378,16 @@ async function openDeleteConfirm(page) {
       // Datorn har sidomenyn i stället för listen överst. I ett smalare fönster kommer listen tillbaka, och med mus har den kvar sin oskärpa.
       assert.equal((await header(desktop)).display, "none");
       assert.equal(await desktop.locator("aside").first().evaluate((el) => getComputedStyle(el).display), "flex");
+      // Oskärpan finns bara när genomskinlighetseffekterna är på i systemet. Windows kan ha dem avstängda, så provet ställer in båda lägena själv.
+      const cdp = await desktop.context().newCDPSession(desktop);
+      const transparency = (value) => cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-transparency", value }] });
+      await transparency("no-preference");
       await desktop.setViewportSize({ width: 900, height: 800 });
       await desktop.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
       await desktop.waitForFunction(() => getComputedStyle(document.querySelector("header")).backdropFilter.includes("blur(24px)"), null, { timeout: 5000 });
+      // Utan genomskinlighet är listen hel och har ingen oskärpa.
+      await transparency("reduce");
+      assert.deepEqual(await header(desktop), { display: "flex", backdrop: "none", background: "rgb(18, 18, 17)" });
       await desktop.context().close();
 
       // Minskad rörelse på dator: musen över loggan visar hela ringen, utan loop och utan glöd.

@@ -1,49 +1,14 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
-import { NAV } from "@/lib/navigation";
+import { getBlock } from "@/lib/innehall/server";
+import { NAV, synligMeny, type NavGroup } from "@/lib/navigation";
 import type { SiteSettings } from "@/lib/types";
 import { ArrowUpRight, Facebook, Instagram, Linkedin, Mail, Rss } from "@/components/icons";
+import { SidfotCitat } from "@/components/content/handskrift";
 import { Editable } from "@/components/edit-mode/editable";
 import { AccentText } from "@/components/ui/accent-text";
 import { FooterSponsors } from "@/components/layout/sponsors";
-
-/** Normalfördelningens täthetsfunktion som dekor, med medelvärdet markerat. Tunna linjer i sidans egen färg. */
-function BellCurve() {
-  const pts: string[] = [];
-  for (let i = 0; i <= 120; i++) {
-    const x = (i / 120) * 8 - 4;
-    const y = Math.exp(-(x * x) / 2);
-    // En decimal även på x: kurvan står två gånger i varje sidas HTML och två gånger i dess RSC-data.
-    pts.push(`${((i / 120) * 1000).toFixed(1)},${(220 - y * 200).toFixed(1)}`);
-  }
-  return (
-    <svg viewBox="0 0 1000 230" className="h-20 w-full text-ink md:h-28" aria-hidden preserveAspectRatio="none">
-      <defs>
-        <linearGradient id="bell-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ff0707" stopOpacity="0.1" />
-          <stop offset="1" stopColor="#ff0707" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <polygon points={`0,220 ${pts.join(" ")} 1000,220`} fill="url(#bell-fill)" />
-      <polyline points={pts.join(" ")} fill="none" stroke="#ff0707" strokeWidth="1.25" vectorEffect="non-scaling-stroke" />
-      {[-3, -2, -1, 0, 1, 2, 3].map((s) => (
-        <line
-          key={s}
-          x1={500 + s * 125}
-          x2={500 + s * 125}
-          y1={s === 0 ? 20 : 214}
-          y2="226"
-          stroke="currentColor"
-          strokeOpacity={s === 0 ? 0.35 : 0.2}
-          strokeDasharray={s === 0 ? "3 5" : undefined}
-          vectorEffect="non-scaling-stroke"
-        />
-      ))}
-      <line x1="0" x2="1000" y1="220" y2="220" stroke="currentColor" strokeOpacity="0.16" vectorEffect="non-scaling-stroke" />
-    </svg>
-  );
-}
 
 /** Sloganen under loggan. *ord* blir röda, och utan text blir det ingen rad. */
 function FooterSlogan({ text }: { text: string }) {
@@ -57,6 +22,10 @@ function FooterSlogan({ text }: { text: string }) {
 
 async function FooterSloganLoaded() {
   return <FooterSlogan text={(await getSettings()).footer_slogan} />;
+}
+
+async function FooterCitat() {
+  return <SidfotCitat handskrift={await getBlock("handskrift")} />;
 }
 
 async function FooterContact() {
@@ -105,17 +74,19 @@ function FooterContactView({ s }: { s: SiteSettings }) {
 }
 
 const linkClass = "text-[0.88rem] text-stone transition-colors hover:text-ink pointer-coarse:inline-block pointer-coarse:py-1.5";
+/** På telefon står gruppens länkar efter varandra och bryts vid kanten, i stället för en lång lista per grupp. Från sm en lista per kolumn. */
+const listClass = "mt-2 flex flex-wrap gap-x-5 sm:mt-4 sm:block sm:space-y-2.5";
 
 /** Länkarna står i samma grupper som i menyn, så att allt finns på samma ställe överallt. Det som inte har en egen grupp står under Genvägar. */
-function FooterLinks() {
-  const groups = NAV.filter((g) => g.children?.length);
-  const loose = NAV.filter((g) => !g.children?.length);
+function FooterLinks({ meny }: { meny: NavGroup[] }) {
+  const groups = meny.filter((g) => g.children?.length);
+  const loose = meny.filter((g) => !g.children?.length);
   const iconLink = `inline-flex items-center gap-1.5 ${linkClass}`;
   return (
-    <nav aria-label="Sidfot" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-4 lg:col-span-8">
+    <nav aria-label="Sidfot" className="grid gap-y-6 sm:grid-cols-4 sm:gap-x-6 sm:gap-y-10">
       <div>
         <p className="kicker text-stone">Genvägar</p>
-        <ul className="mt-4 space-y-2.5">
+        <ul className={listClass}>
           {loose.map((l) => (
             <li key={l.href}>
               <Link href={l.href} className={linkClass}>
@@ -138,7 +109,7 @@ function FooterLinks() {
       {groups.map((g) => (
         <div key={g.label}>
           <p className="kicker text-stone">{g.label}</p>
-          <ul className="mt-4 space-y-2.5">
+          <ul className={listClass}>
             {g.children?.map((l) => (
               <li key={l.href + l.label}>
                 <Link href={l.href} className={linkClass}>
@@ -153,6 +124,11 @@ function FooterLinks() {
   );
 }
 
+/** Samma meny som i sidhuvudet, så som den är sparad. */
+async function SavedFooterLinks() {
+  return <FooterLinks meny={synligMeny(await getBlock("meny"))} />;
+}
+
 export function SiteFooter() {
   return (
     <footer id="sidfot" className="relative border-t border-line">
@@ -160,23 +136,34 @@ export function SiteFooter() {
       <Suspense fallback={null}>
         <FooterSponsors />
       </Suspense>
-      <div className="container-site pt-16 md:pt-20">
-        <div className="grid gap-12 lg:grid-cols-12">
-          <div className="lg:col-span-4">
-            <div className="flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/brand/statlin.svg" alt="" width={32} height={32} loading="lazy" className="size-8" />
-              <span className="font-semibold tracking-[-0.01em]" translate="no">
-                StatLin
-              </span>
-            </div>
-            {/* Pennan gäller sloganen och kontaktuppgifterna. Båda finns också under Inställningar i Admin. */}
-            <Editable target={{ type: "footer" }} label="Redigera sidfoten" className="mt-6">
-              {/* Sloganen står med standardtexten direkt i skalet och byts om den har ändrats. Utan JavaScript står standardtexten kvar. */}
-              <Suspense fallback={<FooterSlogan text={DEFAULT_SETTINGS.footer_slogan} />}>
-                <FooterSloganLoaded />
-              </Suspense>
-              <div className="mt-7">
+      <div className="container-site pt-10 md:pt-16">
+        {/* Standardmenyn står i skalet och byts mot den sparade, som i sidhuvudet. */}
+        <Suspense fallback={<FooterLinks meny={NAV} />}>
+          <SavedFooterLinks />
+        </Suspense>
+
+        <div className="mt-10 md:mt-14">
+          <div className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/brand/statlin.svg" alt="" width={32} height={32} loading="lazy" className="size-8" />
+            <span className="font-semibold tracking-[-0.01em]" translate="no">
+              StatLin
+            </span>
+          </div>
+          {/* Pennan gäller sloganen och kontaktuppgifterna. Båda finns också under Inställningar i Admin. På datorn står de bredvid varandra. */}
+          <Editable target={{ type: "footer" }} label="Redigera sidfoten" className="mt-6">
+            <div className="grid gap-7 lg:grid-cols-2 lg:items-start lg:gap-12">
+              <div>
+                {/* Sloganen står med standardtexten direkt i skalet och byts om den har ändrats. Utan JavaScript står standardtexten kvar. */}
+                <Suspense fallback={<FooterSlogan text={DEFAULT_SETTINGS.footer_slogan} />}>
+                  <FooterSloganLoaded />
+                </Suspense>
+                {/* Ett citat skrivet för hand under sloganen. Det är dolt tills det skrivs, så det behöver ingen platshållare. */}
+                <Suspense fallback={null}>
+                  <FooterCitat />
+                </Suspense>
+              </div>
+              <div>
                 {/* Utan JavaScript ersätts fallbacken aldrig, så där står standardvärdena. De kan skilja sig från det som är sparat i Admin (SB-27). */}
                 <Suspense
                   fallback={
@@ -190,22 +177,8 @@ export function SiteFooter() {
                   <FooterContact />
                 </Suspense>
               </div>
-            </Editable>
-          </div>
-          <FooterLinks />
-        </div>
-
-        <div className="mt-16">
-          <BellCurve />
-          <div className="mt-2 flex justify-between font-mono text-[0.65rem] text-stone-light">
-            <span>−3σ</span>
-            <span>−2σ</span>
-            <span>−σ</span>
-            <span className="text-red-deep">μ</span>
-            <span>σ</span>
-            <span>2σ</span>
-            <span>3σ</span>
-          </div>
+            </div>
+          </Editable>
         </div>
 
         <div className="mt-8 flex flex-col gap-3 border-t border-line py-6 text-[0.8rem] text-stone md:flex-row md:items-center md:justify-between">

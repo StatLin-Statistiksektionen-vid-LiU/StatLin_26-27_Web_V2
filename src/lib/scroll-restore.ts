@@ -90,5 +90,39 @@ export const SCROLL_RESTORE_SCRIPT = `(function () {
     var nav = performance.getEntriesByType("navigation")[0];
     if (nav && (nav.type === "reload" || nav.type === "back_forward")) restore(false);
     addEventListener("popstate", function () { if (location.hash) restore(true); });
+
+    // Ett klick på en länk med #ankare inom sajten. Next 16 scrollar inte alls när ankaret inte finns än, och här strömmas det in efter
+    // skalet. Sidan stod då kvar där förra sidan var, till exempel 1500 px ner, och ScrollToAnchor väntade på en sida högst upp: menylänken
+    // Vad studenterna kan gjorde ingenting om man hade scrollat. Nu frågar ScrollToAnchor här om besökaren bad om ankaret, och scrollar dit
+    // var sidan än står. Avsikten släpps när besökaren själv börjar scrolla eller går i historiken.
+    var asked = null;
+    try { Object.defineProperty(window, "__statlinAnkare", { get: function () { return asked; }, set: function (v) { asked = v; }, configurable: true }); } catch (e) {}
+    // Next behåller tidigare sidor dolda i dokumentet, och där kan samma id finnas en gång till.
+    var visible = function (id) {
+      var all = document.querySelectorAll('[id="' + id.replace(/["\\\\]/g, "\\\\$&") + '"]');
+      for (var i = 0; i < all.length; i++) if (all[i].getClientRects().length) return all[i];
+      return null;
+    };
+    addEventListener("click", function (e) {
+      try {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a || (a.target && a.target !== "_self") || a.hasAttribute("download")) return;
+        var url = new URL(a.getAttribute("href"), location.href);
+        if (url.origin !== location.origin || url.hash.length < 2) return;
+        var id = decodeURIComponent(url.hash.slice(1));
+        asked = { id: id, path: url.pathname + url.search, at: Date.now() };
+        // Samma adress som nu, ankaret inräknat: där scrollar varken Next eller webbläsaren, och Next gör adressen till #kompetens#kompetens.
+        if (url.pathname + url.search + url.hash !== location.pathname + location.search + location.hash) return;
+        var el = visible(id);
+        if (!el) return;
+        e.preventDefault();
+        asked = null;
+        el.scrollIntoView();
+      } catch (err) {}
+    }, true);
+    var drop = function () { asked = null; };
+    ["wheel", "touchstart", "keydown"].forEach(function (t) { addEventListener(t, drop, { capture: true, passive: true }); });
+    addEventListener("popstate", drop);
   } catch (e) {}
 })();`;

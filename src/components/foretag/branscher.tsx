@@ -1,6 +1,10 @@
+"use client";
+
+import { RFalt, RLista, type Falt } from "@/components/edit-mode/redigerbar";
+import { useBlock } from "@/components/edit-mode/utkast";
 import { ArrowRight } from "@/components/icons";
 import { Reveal } from "@/components/ui/reveal";
-import { BRANSCHER } from "@/lib/foretag-kompetens";
+import type { Branscher as BranscherInnehall } from "@/lib/innehall/typer";
 import { cn } from "@/lib/utils";
 
 const RED = "var(--color-red)";
@@ -116,55 +120,128 @@ function Kluster() {
 
 const FIGURER = { prognos: Prognos, urval: Urval, overlevnad: Overlevnad, regression: Regression, natverk: Natverk, kluster: Kluster };
 
+type Bransch = BranscherInnehall["lista"][number];
+
+const FALT: Falt<Bransch>[] = [
+  { nyckel: "namn", etikett: "Branschens namn", max: 60, kravs: true },
+  { nyckel: "text", etikett: "Texten", typ: "lang", max: 400 },
+  {
+    nyckel: "figur",
+    etikett: "Figuren",
+    typ: "val",
+    alternativ: [
+      { varde: "prognos", etikett: "Prognos med osäkerhet" },
+      { varde: "urval", etikett: "Stickprov ur en population" },
+      { varde: "overlevnad", etikett: "Överlevnadskurvor" },
+      { varde: "regression", etikett: "Punkter och en linje" },
+      { varde: "natverk", etikett: "Neuralt nätverk" },
+      { varde: "kluster", etikett: "Tre grupper av punkter" },
+    ],
+  },
+];
+
 /**
  * Branscher där färdigheterna gör nytta direkt. Figurerna är dekor i samma anda som ämnet, inte data. Natt är STAR-inbjudans utseende:
- * genomskinliga bubblor på natthimlen i stället för rutnätet på den ljusa företagssidan.
+ * genomskinliga bubblor på natthimlen i stället för rutnätet på den ljusa företagssidan. Allt utom länken längst ner hör till blocket
+ * branscher och går att ändra i redigeringsläget.
  */
-export function Branscher({ natt = false, cta }: { natt?: boolean; cta: { href: string; label: string; rubrik: string; text: string } }) {
+export function Branscher({ natt = false, innehall, href }: { natt?: boolean; innehall: BranscherInnehall; href: string }) {
+  const { varde: b, aktiv, andra } = useBlock("b:branscher", innehall);
+  const del = natt ? "starKontakt" : "kontakt";
+  const kontakt = b[del];
+  const text = (nyckel: "kicker" | "rubrik" | "ingress", etikett: string, max: number, kravs?: boolean) => (
+    <RFalt
+      aktiv={aktiv}
+      varde={b[nyckel]}
+      onCommit={(t) =>
+        andra((x) => {
+          x[nyckel] = t;
+        })
+      }
+      etikett={etikett}
+      max={max}
+      kravs={kravs}
+    />
+  );
+  const kontaktText = (nyckel: "rubrik" | "text" | "knapp", etikett: string, max: number, kravs?: boolean) => (
+    <RFalt
+      aktiv={aktiv}
+      varde={kontakt[nyckel]}
+      onCommit={(t) =>
+        andra((x) => {
+          x[del][nyckel] = t;
+        })
+      }
+      etikett={etikett}
+      max={max}
+      kravs={kravs}
+    />
+  );
+
   return (
     <section className={cn("py-16 md:py-24", natt && "star-avsnitt relative")}>
       <div className="container-site">
         <Reveal>
-          <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>Branscher</p>
+          {(aktiv || b.kicker) && <p className={cn("kicker", natt ? "text-white/70" : "text-stone")}>{text("kicker", "Raden ovanför", 60)}</p>}
           <h2 className={cn("mt-3 max-w-4xl", natt ? "star-type text-[clamp(1.9rem,5vw,3.5rem)] font-light uppercase leading-[1.05] tracking-[0.06em]" : "display-tight text-3xl md:text-5xl")}>
-            Statistik är ett verktyg, inte en bransch
+            {text("rubrik", "Rubriken", 120, true)}
           </h2>
-          <p className={cn("mt-4 max-w-2xl text-lg leading-relaxed", natt ? "text-white/85" : "text-stone")}>
-            Metoderna är desamma oavsett om datan kommer från kunder, patienter eller sensorer. Därför kommer våra studenter snabbt in i nya områden. Här gör färdigheterna nytta direkt.
-          </p>
+          {(aktiv || b.ingress) && <p className={cn("mt-4 max-w-2xl text-lg leading-relaxed", natt ? "text-white/85" : "text-stone")}>{text("ingress", "Ingressen", 500)}</p>}
         </Reveal>
 
-        <ul className={cn("mt-10", natt ? "grid gap-3 sm:grid-cols-2 lg:grid-cols-3" : "grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3")}>
-          {BRANSCHER.map((b) => {
-            const Figur = FIGURER[b.figur];
-            return (
-              <li key={b.namn} className={cn("min-w-0", natt ? "rounded-2xl border border-white/15 bg-white/[0.04] p-6 md:p-7" : "bg-white p-6 md:p-7")}>
-                <svg
-                  aria-hidden
-                  viewBox="0 0 120 56"
-                  className={cn("h-14 w-auto", natt ? "text-white [--figur-bakgrund:var(--color-star-navy)]" : "text-ink")}
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <Figur />
-                </svg>
-                <h3 className={cn("mt-5 text-xl", natt ? "star-type font-normal" : "display-tight normal-case")}>{b.namn}</h3>
-                <p className={cn("mt-2 leading-relaxed", natt ? "text-white/85" : "text-stone")}>{b.text}</p>
-              </li>
-            );
-          })}
-        </ul>
+        {(aktiv || b.lista.length > 0) && (
+          <RLista
+            aktiv={aktiv}
+            items={b.lista}
+            onChange={(nya) =>
+              andra((x) => {
+                x.lista = nya;
+              })
+            }
+            etikett="bransch"
+            className={cn(
+              "mt-10 grid sm:grid-cols-2 lg:grid-cols-3",
+              // Rutnätet har hårfina linjer mellan rutorna. I redigeringsläget står ramen och handtaget innanför rutan, där de syns.
+              natt ? "gap-3" : "redigerbar-inne gap-px overflow-hidden rounded-xl border border-line bg-line",
+            )}
+            itemClassName={cn(
+              "min-w-0 p-6 md:p-7",
+              natt ? "rounded-2xl border border-white/15 bg-white/[0.04]" : "bg-white",
+            )}
+            falt={FALT}
+            ny={(): Bransch => ({ namn: "", text: "", figur: "regression" })}
+            max={12}
+            render={(rad) => {
+              const Figur = FIGURER[rad.figur] ?? Regression;
+              return (
+                <>
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 120 56"
+                    className={cn("h-14 w-auto", natt ? "text-white [--figur-bakgrund:var(--color-star-navy)]" : "text-ink")}
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <Figur />
+                  </svg>
+                  <h3 className={cn("mt-5 text-xl", natt ? "star-type font-normal" : "display-tight normal-case")}>{rad.namn}</h3>
+                  {rad.text && <p className={cn("mt-2 leading-relaxed", natt ? "text-white/85" : "text-stone")}>{rad.text}</p>}
+                </>
+              );
+            }}
+          />
+        )}
 
         <div className="mt-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
-            <p className={natt ? "star-type text-2xl font-light md:text-3xl" : "display-tight text-2xl md:text-3xl"}>{cta.rubrik}</p>
-            <p className={cn("mt-2 max-w-xl", natt ? "text-white/85" : "text-stone")}>{cta.text}</p>
+            {(aktiv || kontakt.rubrik) && <p className={natt ? "star-type text-2xl font-light md:text-3xl" : "display-tight text-2xl md:text-3xl"}>{kontaktText("rubrik", "Rubriken", 120)}</p>}
+            {(aktiv || kontakt.text) && <p className={cn("mt-2 max-w-xl", natt ? "text-white/85" : "text-stone")}>{kontaktText("text", "Texten", 300)}</p>}
           </div>
-          <a href={cta.href} className={cn("btn shrink-0", natt ? "btn-red" : "btn-ink")}>
-            {cta.label} <ArrowRight size={18} />
+          <a href={href} className={cn("btn shrink-0", natt ? "btn-red" : "btn-ink")}>
+            {kontaktText("knapp", "Knappens text", 40, true)} <ArrowRight size={18} />
           </a>
         </div>
       </div>

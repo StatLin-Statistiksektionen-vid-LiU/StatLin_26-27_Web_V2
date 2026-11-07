@@ -9,7 +9,11 @@ import type { SessionUser } from "@/lib/types";
  * Behörigheten speglar permissions.ts; servern kontrollerar alltid igen när något hämtas eller sparas.
  */
 
-export type EditUser = Pick<SessionUser, "id" | "name" | "post" | "role" | "committee_id" | "committee_name" | "design">;
+/**
+ * naringsliv: kontot får ändra det som hör till näringslivet, som Vad studenterna kan. ubu: kontot får ändra UBU:s knappar.
+ * estig: kontot får ändra det som är eget för eSTIG:s sida. Servern räknar ut alla tre, se admin-bar-loader.tsx.
+ */
+export type EditUser = Pick<SessionUser, "id" | "name" | "post" | "role" | "committee_id" | "committee_name" | "design"> & { naringsliv?: boolean; ubu?: boolean; estig?: boolean };
 
 export type EditTarget =
   | { type: "page"; slug: string }

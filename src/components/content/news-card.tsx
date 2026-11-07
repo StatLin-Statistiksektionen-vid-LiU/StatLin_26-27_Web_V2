@@ -18,7 +18,8 @@ export function NewsCard({ item, featured, className }: { item: NewsItem; featur
       <div
         className={cn(
           "relative overflow-hidden rounded-xl border border-line",
-          featured ? "aspect-[16/10] md:aspect-auto md:w-[58%]" : "aspect-[16/10]",
+          // Ett foto fyller kortets höjd bredvid texten. Det ritade omslaget behåller en form där diagrammet syns ordentligt.
+          featured ? cn("aspect-[16/10] md:w-[58%]", item.cover ? "md:aspect-auto" : "md:aspect-[2/1]") : "aspect-[16/10]",
         )}
       >
         {item.cover ? (
@@ -31,6 +32,7 @@ export function NewsCard({ item, featured, className }: { item: NewsItem; featur
         ) : (
           <CoverArt
             seed={item.slug}
+            title={item.title}
             accent={item.committee?.accent}
             logo={item.committee?.logo_url}
             className="h-full w-full transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.04]"

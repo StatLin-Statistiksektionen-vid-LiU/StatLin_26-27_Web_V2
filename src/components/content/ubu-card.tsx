@@ -4,7 +4,10 @@ import { FixedBoxLink } from "@/components/fragelada/box-link";
 import { Mail, MessageCircle } from "@/components/icons";
 import { readDb } from "@/lib/data/db";
 import { findOpenBox } from "@/lib/data/fragelada";
+import { UBU } from "@/lib/innehall/block/ubu";
+import { getBlock } from "@/lib/innehall/server";
 import type { Committee } from "@/lib/types";
+import { UbuKnappar } from "./ubu-knappar";
 
 async function UbuBoxOpen({ children, otherwise }: { children: ReactNode; otherwise: ReactNode }) {
   return findOpenBox(await readDb(), { slug: "ubu" }) ? children : otherwise;
@@ -17,6 +20,11 @@ export function IfUbuBoxOpen({ children, otherwise }: { children: ReactNode; oth
       <UbuBoxOpen otherwise={otherwise}>{children}</UbuBoxOpen>
     </Suspense>
   );
+}
+
+/** UBU:s egna knappar läses ur databasen. Tills de har kommit står standardknapparna där. */
+async function UbuKortKnappar() {
+  return <UbuKnappar ubu={await getBlock("ubu")} liten />;
 }
 
 /** Utbildningsutskottets kontaktkort i sidokolumnen på Kandidat och Master. */
@@ -46,6 +54,9 @@ export function UbuCard({ ubu }: { ubu: Committee }) {
         <FixedBoxLink slug="ubu" className="btn btn-light btn-sm">
           <MessageCircle size={15} /> Skriv anonymt
         </FixedBoxLink>
+        <Suspense fallback={<UbuKnappar ubu={UBU.standard()} liten />}>
+          <UbuKortKnappar />
+        </Suspense>
         <Link href={`/utskott/${ubu.slug}`} className="btn btn-ghost-dark btn-sm">
           Om {ubu.short_name}
         </Link>

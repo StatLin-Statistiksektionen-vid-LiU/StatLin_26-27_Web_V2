@@ -207,7 +207,8 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     const upcoming = await cards.count();
     assert.ok(upcoming > 6, `seeden ska ha fler än sex kommande för att testet ska säga något, är ${upcoming}`);
     await site.goto(BASE);
-    await site.locator('dt:has-text("Kommande evenemang") + dd').filter({ hasText: new RegExp(`^${upcoming}$`) }).waitFor();
+    // Siffrorna i heron är en lista med talet först på varje rad. Talet räknas upp, så raden väntas in tills det har stannat på rätt värde.
+    await site.locator("section[data-startsida] li", { hasText: "Kommande evenemang" }).locator("span.display").filter({ hasText: new RegExp(`^${upcoming}$`) }).waitFor();
   });
 
   await step("SB-22: strukturerad data har tidszon, bara datum vid heldag, och sektionens adress och beskrivningen som reserv", async () => {

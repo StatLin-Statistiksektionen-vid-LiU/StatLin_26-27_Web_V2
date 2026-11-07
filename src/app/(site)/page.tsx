@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
-import { HomeSections, HomeShortcuts } from "@/components/home/home-sections";
+import { HomeSections } from "@/components/home/home-sections";
 import { HomeSkeleton } from "@/components/ui/skeletons";
 import { SITE_ALTERNATES } from "@/lib/site-metadata";
 
@@ -13,9 +13,8 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      {/* Under heron kommer genvägarna och sedan sektionen. Tidslinjen med evenemang ligger i evenemangsdelen längre ner, så att sidan inte börjar med kalendern. */}
+      {/* Heron har texten om sektionen och siffrorna. Under den kommer kalendern, genvägarna, utskotten, nytt och korten. */}
       <Suspense fallback={<HomeSkeleton />}>
-        <HomeShortcuts />
         <HomeSections />
       </Suspense>
     </>

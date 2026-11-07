@@ -1,9 +1,11 @@
 import { programFacts } from "@/lib/links";
 import type { Committee } from "@/lib/types";
 
-type NavItem = { href: string; label: string; description?: string };
-export type NavGroup = { label: string; href: string; children?: NavItem[] };
+/** hidden: dold i redigeringsläget. Länken finns kvar i menyns innehåll men visas inte (src/lib/innehall/block/meny.ts). */
+export type NavItem = { href: string; label: string; description?: string; hidden?: boolean };
+export type NavGroup = { label: string; href: string; hidden?: boolean; children?: NavItem[] };
 
+/** Standardmenyn. Det som ändras i redigeringsläget sparas som blocket meny och läses med getMeny i src/lib/innehall/server.ts. */
 export const NAV: NavGroup[] = [
   { label: "Evenemang", href: "/evenemang" },
   { label: "Nytt", href: "/nyheter" },
@@ -81,4 +83,12 @@ export function languageSwitch(pathname: string | null) {
 export function committeeHref(committee: Pick<Committee, "slug" | "kind" | "visible">): string | null {
   if (committee.kind === "styrelse") return "/sektionen/styrelsen";
   return committee.visible ? `/utskott/${committee.slug}` : null;
+}
+
+/** Menyn som den visas: utan dolda grupper och länkar. En grupp vars länkar alla är dolda blir en vanlig länk. */
+export function synligMeny(meny: NavGroup[]): NavGroup[] {
+  return meny
+    .filter((g) => !g.hidden)
+    .map((g) => (g.children ? { ...g, children: g.children.filter((c) => !c.hidden) } : g))
+    .map((g) => (g.children && g.children.length === 0 ? { label: g.label, href: g.href } : g));
 }

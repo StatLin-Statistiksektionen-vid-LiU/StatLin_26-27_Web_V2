@@ -14,10 +14,10 @@ export function SectionHeading({
   className,
 }: {
   index?: string;
-  kicker: string;
+  kicker: ReactNode;
   title: ReactNode;
   href?: string;
-  linkLabel?: string;
+  linkLabel?: ReactNode;
   dark?: boolean;
   className?: string;
 }) {

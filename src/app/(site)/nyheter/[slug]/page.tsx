@@ -43,12 +43,12 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
     <article>
       <Editable target={{ type: "news", id: item.id, committeeId: item.committee_id }} label="Redigera nyheten" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <header className="relative overflow-hidden border-b border-line">
-        <div className="grid-paper pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
-        <div className="container-prose relative pb-12 pt-[calc(var(--header-h)+2.5rem)] md:pb-14 md:pt-[calc(var(--header-h)+4rem)]">
+        <div className="grid-millimeter pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
+        <div className="container-prose relative pb-8 pt-[calc(var(--header-h)+1.5rem)] md:pb-10 md:pt-[calc(var(--header-h)+2.5rem)]">
           <Link href="/nyheter" className="tryck kicker inline-flex items-center gap-2 text-stone transition-colors hover:text-ink">
             <ArrowLeft size={14} /> Allt nytt
           </Link>
-          <p className="kicker mt-8 flex flex-wrap items-center gap-3 text-stone [animation:fade-up_0.8s_var(--ease-out-expo)_backwards]">
+          <p className="kicker mt-6 flex flex-wrap items-center gap-3 text-stone [animation:fade-up_0.8s_var(--ease-out-expo)_backwards]">
             <span className="size-1.5 rounded-full bg-red" aria-hidden />
             <time dateTime={item.published_at}>{newsDate(item)}</time>
             {item.committee && (
@@ -70,10 +70,10 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
             </h1>
           </div>
           {item.excerpt && (
-            <p className="mt-6 text-[1.1rem] leading-relaxed text-stone [animation:fade-up_0.9s_0.12s_var(--ease-out-expo)_backwards] md:text-xl">{item.excerpt}</p>
+            <p className="mt-4 text-[1.1rem] leading-relaxed text-stone [animation:fade-up_0.9s_0.12s_var(--ease-out-expo)_backwards] md:text-xl">{item.excerpt}</p>
           )}
           {item.author_name && (
-            <p className="mt-8 text-sm text-stone">
+            <p className="mt-5 text-sm text-stone">
               Av <span className="font-medium text-ink">{item.author_name}</span>
               {item.author_post && <>, {item.author_post}</>}
             </p>
@@ -85,18 +85,18 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
       </header>
       </Editable>
       {item.cover && (
-        <div className="container-site pt-10 [animation:fade-up_1s_0.18s_var(--ease-out-expo)_backwards]">
+        <div className="container-site pt-7 [animation:fade-up_1s_0.18s_var(--ease-out-expo)_backwards]">
           <SmartImage image={item.cover} priority sizes="(min-width: 1280px) 1100px, 100vw" className="aspect-[21/9] w-full rounded-2xl border border-line" alt="" />
         </div>
       )}
-      <div className="container-prose py-14 md:py-20">
+      <div className="container-prose py-8 md:py-12">
         <Markdown source={item.body_md} />
       </div>
       {more.length > 0 && (
-        <section className="border-t border-line bg-paper-2/40 py-16 md:py-20">
+        <section className="border-t border-line bg-paper-2/40 py-10 md:py-14">
           <div className="container-site">
             <h2 className="kicker text-stone">Mer nytt</h2>
-            <div className="mt-8 grid gap-10 md:grid-cols-3">
+            <div className="mt-6 grid gap-10 md:grid-cols-3">
               {more.map((n) => (
                 <NewsCard key={n.id} item={n} />
               ))}

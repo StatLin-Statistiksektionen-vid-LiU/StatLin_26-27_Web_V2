@@ -152,9 +152,30 @@ export function BoardMemberForm({
 
 /* Inställningarna i sektioner. saveSettings sparar bara fälten som finns i formuläret. */
 
+/** Det på startsidan som inte är text: formelringen runt loggan och tidslinjens färger. */
+function HomeLookFields({ s }: { s: SiteSettings }) {
+  return (
+    <>
+      <Field label="Formelringen runt loggan" name="hero_formulas" hint="Formlerna som kommer fram runt loggan när musen är nära. På telefon kommer de fram när man trycker på loggan.">
+        <Select name="hero_formulas" defaultValue={s.hero_formulas}>
+          <option value="pa">På</option>
+          <option value="av">Av, bara loggan</option>
+        </Select>
+      </Field>
+      <Field label="Tidslinjens färger" name="band_color" hint="Tidslinjen med kommande evenemang, direkt under heron.">
+        <Select name="band_color" defaultValue={s.band_color}>
+          <option value="vit">Vitt med röd linje</option>
+          <option value="rod">Rött med vit text</option>
+          <option value="natt">Natthimmel som på STAR</option>
+        </Select>
+      </Field>
+    </>
+  );
+}
+
 export function HomeTextsSection({ s, className }: { s: SiteSettings; className?: string }) {
   return (
-    <FormSection title="Startsidan" description="Skriv *ord* med stjärnor för att göra dem röda, och tryck Enter för en ny rad." className={className}>
+    <FormSection title="Startsidan" description="Skriv *ord* med stjärnor för att göra dem röda och _ord_ med understreck för att skriva dem för hand (_*ord*_ blir röd handstil). Tryck Enter för en ny rad." className={className}>
       <Field label="Liten rad ovanför" name="hero_kicker">
         <TextInput name="hero_kicker" defaultValue={s.hero_kicker} maxLength={80} />
       </Field>
@@ -164,22 +185,10 @@ export function HomeTextsSection({ s, className }: { s: SiteSettings; className?
       <Field label="Underrubrik" name="hero_text">
         <TextArea name="hero_text" defaultValue={s.hero_text} rows={2} maxLength={300} />
       </Field>
-      <Field label="Om sektionen" name="home_intro" required hint="Den stora texten under ”01 Om sektionen”.">
+      <Field label="Om sektionen" name="home_intro" required hint="Texten under heron, vid siffrorna.">
         <TextArea name="home_intro" defaultValue={s.home_intro} rows={3} maxLength={400} required />
       </Field>
-      <Field label="Bandets färger" name="band_color" hint="Tidslinjen med kommande evenemang i startsidans evenemangsdel.">
-        <Select name="band_color" defaultValue={s.band_color}>
-          <option value="vit">Vitt med röd linje</option>
-          <option value="rod">Rött med vit text</option>
-          <option value="natt">Natthimmel som på STAR</option>
-        </Select>
-      </Field>
-      <Field label="Formelringen runt loggan" name="hero_formulas" hint="Formlerna som kommer fram runt loggan när musen är nära. På telefon kommer de fram när man trycker på loggan.">
-        <Select name="hero_formulas" defaultValue={s.hero_formulas}>
-          <option value="pa">På</option>
-          <option value="av">Av, bara loggan</option>
-        </Select>
-      </Field>
+      <HomeLookFields s={s} />
     </FormSection>
   );
 }
@@ -266,7 +275,7 @@ export function TaglineSection({ s }: { s: SiteSettings }) {
 /** En grupp av sajtens fasta texter, se site-texts.ts. Fältet visar det som står på sajten nu, och ett tomt fält ger standardtexten. */
 export function SiteTextsSection({ group, s, className, title }: { group: SiteTextGroup; s: SiteSettings; className?: string; title?: string }) {
   return (
-    <FormSection title={title ?? SITE_TEXT_GROUPS[group]} description="Skriv *ord* med stjärnor i rubriker och texter för att göra dem röda. Ett tomt fält ger tillbaka standardtexten." className={className}>
+    <FormSection title={title ?? SITE_TEXT_GROUPS[group]} description="Skriv *ord* med stjärnor i rubriker och texter för att göra dem röda, och _ord_ med understreck för att skriva dem för hand (_*ord*_ blir röd handstil). Ett tomt fält ger tillbaka standardtexten." className={className}>
       {textsIn(group).map((key) => {
         const t = textDef(key);
         return (
@@ -279,12 +288,13 @@ export function SiteTextsSection({ group, s, className, title }: { group: SiteTe
   );
 }
 
-/** Startsidans texter, för pennan på heron och "Om sektionen": rubriken, texten om sektionen, knapparna och siffrorna. */
+/** Knappen vid loggan i redigeringsläget. Startsidans texter ändras där de står, så här finns bara resten. */
 export function HomeTextsForm({ s, onSaved }: { s: SiteSettings; onSaved?: () => void }) {
   return (
     <ActionForm action={saveSettings} onSuccess={onSaved}>
-      <HomeTextsSection s={s} />
-      <SiteTextsSection group="start-om" s={s} title="Om sektionen, knapparna och siffrorna" />
+      <FormSection title="Loggan och tidslinjen" description="Texterna på startsidan ändrar du genom att klicka på dem.">
+        <HomeLookFields s={s} />
+      </FormSection>
     </ActionForm>
   );
 }

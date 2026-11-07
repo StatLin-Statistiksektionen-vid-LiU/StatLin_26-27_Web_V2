@@ -64,7 +64,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await p.getByRole("heading", { name: wanted }).waitFor();
   };
 
-  await step("Startsidans band: genvägarna ligger ovanför, vitt är förval och färgen väljs under Inställningar", async () => {
+  await step("Startsidans band: kalendern kommer direkt efter heron och före genvägarna, vitt är förval och färgen väljs under Inställningar", async () => {
     await switchAccount(page, ADMIN);
     const { page: p, context } = await visit();
     const bandColor = async () => {
@@ -86,7 +86,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.equal(await bandColor(), "vit");
     const row = p.locator('section[aria-labelledby="genvagar-start"]');
     await row.waitFor();
-    assert.ok(await row.evaluate((el) => Boolean(el.compareDocumentPosition(document.querySelector(".tidsaxel[data-farg]")) & Node.DOCUMENT_POSITION_FOLLOWING)), "Genvägarna ska ligga före bandet");
+    assert.ok(await row.evaluate((el) => Boolean(el.compareDocumentPosition(document.querySelector(".tidsaxel[data-farg]")) & Node.DOCUMENT_POSITION_PRECEDING)), "Bandet ska ligga före genvägarna");
     await choose("natt");
     assert.equal(await bandColor(), "natt");
     await choose("rod");
@@ -148,8 +148,11 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
   await step("STAR-sidan är begriplig utan företag: tomt läge, datum från evenemanget och inget externt", async () => {
     const { page: p, context } = await visit();
     const external = [];
+    // Samma värd räknas som egen, också över https: lokalt gör upgrade-insecure-requests i CSP:n om förhämtningen av /admin, som
+    // omdirigeras till inloggningen, till https. På den riktiga sajten är det samma adress.
+    const host = new URL(BASE).host;
     p.on("request", (r) => {
-      if (!r.url().startsWith(BASE) && !r.url().startsWith("data:")) external.push(r.url());
+      if (!r.url().startsWith("data:") && new URL(r.url()).host !== host) external.push(r.url());
     });
     await p.goto(`${BASE}/star`);
     await p.getByRole("heading", { name: "STAR", exact: true }).waitFor();

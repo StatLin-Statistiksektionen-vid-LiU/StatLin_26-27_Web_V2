@@ -11,6 +11,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { ScrollToAnchor } from "@/components/ui/scroll-to-anchor";
 import { HeroSkeleton } from "@/components/ui/skeletons";
 import { getCommitteeBySlug, getSettings, listPartners } from "@/lib/data/content";
+import { getBlock } from "@/lib/innehall/server";
 import { getStarEvent } from "@/lib/data/events";
 import { mailtoWithSubject, starIsLive } from "@/lib/naringsliv";
 import { STAR_COPY } from "@/lib/seed-content";
@@ -32,7 +33,13 @@ export default function CompaniesPage() {
 }
 
 async function Companies() {
-  const [partners, sasu, settings] = await Promise.all([listPartners({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings()]);
+  const [partners, sasu, settings, kompetens, branscher] = await Promise.all([
+    listPartners({ activeOnly: true }),
+    getCommitteeBySlug("sasu"),
+    getSettings(),
+    getBlock("kompetens"),
+    getBlock("branscher"),
+  ]);
   const star = await getStarEvent(Number(settings.star_event_id) || null);
   const contact = sasu?.email || settings.contact_email;
 
@@ -42,16 +49,9 @@ async function Companies() {
       kicker="Näringsliv"
       beforeBody={
         <>
-          <StudenternasKompetens />
+          <StudenternasKompetens innehall={kompetens} />
           <ScrollToAnchor id="kompetens" />
-          <Branscher
-            cta={{
-              href: `mailto:${contact}?subject=${encodeURIComponent("Vi söker studenter")}`,
-              label: "Kontakta SASU",
-              rubrik: "Har ni en fråga som behöver en statistiker?",
-              text: "Exjobb, sommarjobb eller ett case. Berätta vad ni vill lösa, så hjälper SASU er att nå rätt studenter.",
-            }}
-          />
+          <Branscher innehall={branscher} href={`mailto:${contact}?subject=${encodeURIComponent("Vi söker studenter")}`} />
         </>
       }
       aside={
@@ -93,8 +93,9 @@ async function Companies() {
             </div>
           </Reveal>
           <Reveal delay={150} className="flex justify-center md:col-span-5">
+            {/* Med måtten har bilden sin höjd innan den laddats, så att avsnitten nedanför inte flyttas efter en scroll till #lunchforelasning. */}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/utskott/star.webp" alt="STAR-loggan" className="w-[min(70vw,22rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.5)] pointer-coarse:filter-none" />
+            <img src="/brand/utskott/star.webp" alt="STAR-loggan" width={360} height={360} className="h-auto w-[min(70vw,22rem)] animate-float drop-shadow-[0_40px_60px_rgba(0,0,0,0.5)] pointer-coarse:filter-none" />
           </Reveal>
         </div>
       </section>

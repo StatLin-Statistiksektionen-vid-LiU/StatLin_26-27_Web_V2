@@ -23,6 +23,11 @@ export type Fardighet = {
   lagen: `${KompetensLage}${KompetensLage}${KompetensLage}${KompetensLage}`;
 };
 
+/** Stegen har fasta id:n i den här ordningen. Programmen pekar ut sitt steg med id:t. */
+export const NIVA_ID = ["ar1", "ar2", "kandidat", "master"] as const;
+export type NivaId = (typeof NIVA_ID)[number];
+
+/** Standardinnehållet. Det som ändras i redigeringsläget sparas som blocket kompetens (src/lib/innehall/block/kompetens.ts). */
 export const NIVAER: KompetensNiva[] = [
   {
     id: "ar1",
@@ -66,7 +71,7 @@ export const NIVAER: KompetensNiva[] = [
 export const FORSTA_NIVA = 3;
 
 /** De två programmen, som företagen möter dem. niva pekar på steget i NIVAER som visar vad programmets studenter kan. */
-export const PROGRAM: { niva: string; typ: string; namn: string; roll: string; text: string; nyckelord: string[] }[] = [
+export const PROGRAM: { niva: NivaId; typ: string; namn: string; roll: string; text: string; nyckelord: string[] }[] = [
   {
     niva: "kandidat",
     typ: "Kandidatprogram, 3 år",

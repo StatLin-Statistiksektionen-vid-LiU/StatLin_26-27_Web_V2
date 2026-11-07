@@ -23,13 +23,19 @@ export default async function meddelandeSteg({ BASE, browser, page, step, switch
     await page.getByRole("button", { name: "Spara", exact: true }).click();
     await page.getByText("Inställningarna är sparade.").waitFor();
   };
+  /** Scrollar direkt, utan mjuk scrollning, så att heroens nederkant står på andelen `del` av skärmens höjd. */
+  const heroBottomAt = (p, del) =>
+    p.evaluate((del) => {
+      const hero = document.querySelector("section[data-startsida]");
+      window.scrollTo({ top: hero.getBoundingClientRect().bottom + window.scrollY - window.innerHeight * del, behavior: "instant" });
+    }, del);
   /** Sidan är klar när React har tagit över sidfoten, och då räknas meddelandets väntan därifrån. */
   const openAsVisitor = async (p, url) => {
     await p.goto(`${BASE}${url}`);
     await waitForHydration(p, p.locator("footer a").first());
   };
 
-  await step("Stjärnor i startsidans texter och i sidfoten blir röda ord, och själva stjärnorna syns inte", async () => {
+  await step("Stjärnor i startsidans texter och i sidfoten blir framhävda ord, och själva stjärnorna syns inte", async () => {
     await switchAccount(page, ADMIN);
     await openSettings();
     for (const name of FIELDS) original[name] = await page.locator(`#${name}`).inputValue();
@@ -46,8 +52,9 @@ export default async function meddelandeSteg({ BASE, browser, page, step, switch
     const sentence = p.locator("p", { hasText: "Sittningar och pubar." });
     await sentence.waitFor();
     assert.equal(await sentence.innerText(), "Sittningar och pubar. Drivet av studenter.");
-    assert.equal(await sentence.locator(".text-red").innerText(), "Drivet av studenter.");
-    await p.locator(".text-red", { hasText: /^Linköping$/ }).first().waitFor({ state: "attached" });
+    // I heron framhävs orden i bläckets färg mot den grå texten. Bara rubriken har röda ord.
+    assert.equal(await sentence.locator(".text-ink").innerText(), "Drivet av studenter.");
+    await p.locator(".text-ink", { hasText: /^Linköping$/ }).first().waitFor({ state: "attached" });
 
     const footer = await p.locator("footer").innerText();
     assert.ok(footer.includes("Du som läser Statistics and Machine Learning vid LiU"), "sloganen ska stå utan stjärnor i sidfoten");
@@ -66,7 +73,12 @@ export default async function meddelandeSteg({ BASE, browser, page, step, switch
       await p.waitForTimeout(PILL_DELAY);
       assert.equal(await pill.count(), 0, "meddelandet får inte ligga över heron");
 
-      await p.evaluate(() => window.scrollTo(0, window.innerHeight));
+      // Heron är längre på telefonen, med texten om sektionen och siffrorna. Så länge den når ner till skärmens nederkant väntar meddelandet.
+      await heroBottomAt(p, 0.97);
+      await p.waitForTimeout(400);
+      assert.equal(await pill.count(), 0, "meddelandet får inte ligga över slutet av heron");
+
+      await heroBottomAt(p, 0.5);
       await pill.waitFor();
 
       // Tillbaka upp: knapparna ska gå att nå igen, utan något ovanpå.

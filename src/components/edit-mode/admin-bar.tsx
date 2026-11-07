@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { bubbleStore, cornerAfterKey, CORNERS, useBubble, type Corner } from "./bubble-store";
 import { EditDrawer } from "./edit-drawer";
 import { EditGuide } from "./edit-guide";
+import { Redigeringslist } from "./redigeringslist";
 import { editStore, useEditState, type EditUser } from "./store";
 
 /**
@@ -22,10 +23,10 @@ export function AdminBar({ user }: { user: EditUser }) {
 
   // Objektet är nytt varje gång servern renderar om sidan (en sparning, en förnyad kaka). Effekten nollar panelen, så den ska
   // bara köras när uppgifterna faktiskt ändrats: annars stängdes panelen mitt i arbetet (SB-30).
-  const { id, name, post, role, committee_id: committeeId, committee_name: committeeName, design } = user;
+  const { id, name, post, role, committee_id: committeeId, committee_name: committeeName, design, naringsliv, ubu, estig } = user;
   const stable = useMemo(
-    () => ({ id, name, post, role, committee_id: committeeId, committee_name: committeeName, design }),
-    [id, name, post, role, committeeId, committeeName, design],
+    () => ({ id, name, post, role, committee_id: committeeId, committee_name: committeeName, design, naringsliv, ubu, estig }),
+    [id, name, post, role, committeeId, committeeName, design, naringsliv, ubu, estig],
   );
   useEffect(() => {
     editStore.setUser(stable);
@@ -105,7 +106,8 @@ export function AdminBar({ user }: { user: EditUser }) {
         data-corner={corner}
         className={cn(
           "fixed z-[70] flex max-w-[calc(100vw-2rem)] gap-2 print:hidden",
-          top ? "top-[calc(var(--header-h)+0.75rem)] flex-col-reverse" : "bottom-[max(1rem,env(safe-area-inset-bottom))] flex-col",
+          // --redigeringslist är listens höjd längst ner när den syns, så att bubblan står ovanför den.
+          top ? "top-[calc(var(--header-h)+0.75rem)] flex-col-reverse" : "bottom-[calc(max(1rem,env(safe-area-inset-bottom))+var(--redigeringslist,0px))] flex-col",
           // --sidebar-w är sidomenyns bredd på datorn och 0 annars, så att bubblan inte lägger sig över menyn.
           left ? "left-[calc(var(--sidebar-w)+1rem)] items-start" : "right-4 items-end",
         )}
@@ -206,6 +208,7 @@ export function AdminBar({ user }: { user: EditUser }) {
           </Tip>
         </div>
       </div>
+      <Redigeringslist />
       <EditDrawer />
       <EditGuide user={user} helpRef={helpRef} />
     </>

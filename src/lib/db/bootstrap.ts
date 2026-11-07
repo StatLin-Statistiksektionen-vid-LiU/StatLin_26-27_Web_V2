@@ -53,10 +53,11 @@ export function bootstrap(db: Database.Database) {
   db.transaction(() => {
     seedOnce(db, "committees", () => {
       const insertCommittee = db.prepare(
-        `INSERT INTO committees (slug, name, short_name, kind, logo_url, accent, email, tagline, description_md, sort_order)
-         VALUES (@slug, @name, @short_name, @kind, @logo_url, @accent, @email, @tagline, @description_md, @sort_order)`,
+        `INSERT INTO committees (slug, name, short_name, kind, logo_url, accent, email, tagline, description_md, sort_order, wishes_open)
+         VALUES (@slug, @name, @short_name, @kind, @logo_url, @accent, @email, @tagline, @description_md, @sort_order, @wishes_open)`,
       );
-      SEED_COMMITTEES.forEach((c, i) => insertCommittee.run({ ...c, sort_order: i * 10 }));
+      // eSTIG:s sida tar emot spelönskemål från början. Migreringssteg 19 gör samma sak i en befintlig databas.
+      SEED_COMMITTEES.forEach((c, i) => insertCommittee.run({ ...c, sort_order: i * 10, wishes_open: c.slug === "estig" ? 1 : 0 }));
     });
 
     seedOnce(db, "board_members", () => {

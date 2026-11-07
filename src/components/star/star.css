@@ -32,6 +32,10 @@
 .star-sida {
   position: relative;
   isolation: isolate;
+  /* Himlen är ett fönster hög och kan stanna kvar överst ända tills sidans slut har passerat, så den sticker då ut över sidfoten.
+     Det som sticker ut klipps här. Clip och inte hidden: hidden gör sidan till en egen scrollyta, och då stannar varken himlen
+     eller avsnittsmenyn kvar överst. */
+  overflow: clip;
   background-image: none;
 }
 /* Inget ska glöda på STAR. Knappen är röd nog ändå. */

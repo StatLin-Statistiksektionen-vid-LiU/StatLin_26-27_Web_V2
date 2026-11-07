@@ -26,13 +26,17 @@ export const metadata: Metadata = {
   alternates: SITE_ALTERNATES,
 };
 
+// Mörkt läge är standard, se THEME_SCRIPT.
 export const viewport: Viewport = {
-  themeColor: "#f9f8f5",
-  colorScheme: "light",
+  themeColor: "#121211",
+  colorScheme: "dark",
 };
 
-/** Sätter det sparade temat innan något ritas, så att ett mörkt val inte blinkar ljust. Se theme-toggle.tsx. */
-const THEME_SCRIPT = "try{var t=localStorage.getItem('statlin-tema');if(t==='mork'){document.documentElement.dataset.tema=t;var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content','#121211')}}catch(e){}";
+/**
+ * Sätter temat innan något ritas, så att sidan inte blinkar i fel läge. Mörkt är standard: bara ett sparat ljust val ger ljust läge,
+ * och ett tidigare sparat mörkt val ("mork") ger mörkt som förut. Se theme-toggle.tsx.
+ */
+const THEME_SCRIPT = "var t;try{t=localStorage.getItem('statlin-tema')}catch(e){}if(t==='ljust'){var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content','#f9f8f5')}else document.documentElement.dataset.tema='mork'";
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   // Typsnitt hämtas alltid med CORS, så utan crossOrigin skulle webbläsaren inte använda filen och hämta den en gång till. Se fonts.ts.

@@ -106,7 +106,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
             {event.cover ? (
               <SmartImage image={event.cover} priority sizes="(min-width: 1280px) 1100px, 100vw" className="h-full w-full" alt="" />
             ) : (
-              <CoverArt seed={event.slug} accent={event.committee?.accent} className="h-full w-full" />
+              <CoverArt seed={event.slug} title={event.title} accent={event.committee?.accent} className="h-full w-full" />
             )}
           </div>
         </div>

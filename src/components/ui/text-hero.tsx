@@ -1,9 +1,10 @@
 import { Suspense, type ReactNode } from "react";
+import { Anteckning } from "@/components/content/anteckning";
 import { Editable } from "@/components/edit-mode/editable";
 import { AccentText, stripAccent } from "@/components/ui/accent-text";
 import { PageHero } from "@/components/ui/page-hero";
 import { getSettings } from "@/lib/data/content";
-import { SITE_TEXT_DEFAULTS, siteText, type HeroGroup, type SiteTextKey } from "@/lib/site-texts";
+import { anteckningText, SITE_TEXT_DEFAULTS, siteText, type HeroGroup, type SiteTextKey } from "@/lib/site-texts";
 
 type Props = {
   group: HeroGroup;
@@ -35,8 +36,10 @@ async function HeroLoaded(props: Props) {
 function HeroView({ group, accentClassName = "text-red", children, texts }: Props & { texts: Record<SiteTextKey, string> }) {
   const text = (key: SiteTextKey) => siteText(texts, key);
   const title = text(`text_${group}_rubrik`);
+  const anteckning = anteckningText(texts, `text_${group}_anteckning`);
   return (
     <PageHero
+      note={anteckning ? <Anteckning text={anteckning} mal="h1" /> : undefined}
       kicker={stripAccent(text(`text_${group}_kicker`))}
       title={<AccentText text={title} accentClassName={accentClassName} />}
       fitTitle={stripAccent(title)}

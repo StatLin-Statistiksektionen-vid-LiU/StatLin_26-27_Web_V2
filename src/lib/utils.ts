@@ -81,12 +81,29 @@ export function safeExternalUrl(url: string): string | null {
  * långa svenska sammansättningar ("Mottagningsgasque") inte bryts mitt i ordet. Rubriken ska ligga i en behållare med
  * klassen @container: storleken följer då spaltens bredd, som till skillnad från skärmen slutar växa vid sidans maxbredd.
  * charWidth = teckenbredd i em för rubriker i andra stilar än "display". Utan den räknas ordet bokstav för bokstav.
+ * enRad = en rubrik med flera ord som bara är lite för lång för raden krymper så att den står på en rad. Annars kan den brytas med
+ * Archivo men inte med den något smalare reservfonten, och då hoppar sidan när Archivo kommer.
  */
-export function fitHeading(text: string, opts: { maxRem: number; maxVw: number; charWidth?: number }) {
-  const widest = Math.max(4 * DISPLAY_AVERAGE, ...text.split(/[\s\u00ad-]+/).map((word) => wordWidth(word, opts.charWidth)));
+export function fitHeading(text: string, opts: { maxRem: number; maxVw: number; charWidth?: number; enRad?: boolean }) {
+  const words = text.split(/[\s\u00ad-]+/).filter(Boolean);
+  const widest = Math.max(4 * DISPLAY_AVERAGE, ...words.map((word) => wordWidth(word, opts.charWidth)));
   // 3 % marginal för reservfonten och för att webbläsaren avrundar. cqi är spaltens bredd, så det gäller på alla skärmar.
   const cqi = 100 / (widest * 1.03);
-  return { fontSize: `clamp(1.1rem, min(${opts.maxVw}vw, ${cqi.toFixed(2)}cqi), ${opts.maxRem}rem)` };
+  const size = `clamp(1.1rem, min(${opts.maxVw}vw, ${cqi.toFixed(2)}cqi), ${opts.maxRem}rem)`;
+  if (!opts.enRad || words.length < 2) return { fontSize: size };
+  // Hela raden med 5 % marginal, eftersom reservfonten är upp till 2,5 % bredare än Archivo för vissa ord.
+  const line = lineWidth(text, opts.charWidth) * 1.05;
+  // Är rubriken högst 15 % för lång för raden får den storleken som gör att den ryms på en rad. Är den längre bryts den som förut.
+  // Det andra ledet väljer: skillnaden mellan rubrikens bredd och 115 % av raden, gånger ett stort tal och begränsad till mellan 0
+  // och storleken. Det blir 0 när rubriken ska stå på en rad och hela storleken när den ska brytas.
+  const lang = `clamp(0px, (${size} * ${line.toFixed(3)} - 115cqi) * 1000, ${size})`;
+  return { fontSize: `max(min(${size}, ${(100 / line).toFixed(2)}cqi), ${lang})` };
+}
+
+/** Hela rubrikens bredd i em på en rad, med mellanslagen. */
+function lineWidth(text: string, charWidth?: number) {
+  const words = text.replace(/\u00ad/g, "").trim().split(/\s+/);
+  return words.reduce((sum, word) => sum + wordWidth(word, charWidth), 0) + (words.length - 1) * (charWidth ?? DISPLAY_SPACE);
 }
 
 /** Bokstävernas bredd i em i rubrikstilen "display" (Archivo 125 %, vikt 800, versaler), uppmätt. */
@@ -95,6 +112,8 @@ const DISPLAY_WIDTHS: Record<string, number> = {
   P: 0.84, Q: 0.99, R: 0.91, S: 0.85, T: 0.83, U: 0.95, V: 0.88, W: 1.19, X: 0.92, Y: 0.9, Z: 0.84, Å: 0.91, Ä: 0.91, Ö: 0.99,
 };
 const DISPLAY_AVERAGE = 0.9;
+/** Mellanslaget i samma stil, uppmätt till 0,284 em. */
+const DISPLAY_SPACE = 0.29;
 
 function wordWidth(word: string, charWidth?: number) {
   if (charWidth) return word.length * charWidth;

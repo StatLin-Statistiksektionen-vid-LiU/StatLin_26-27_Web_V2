@@ -52,6 +52,7 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
           ) : (
             <CoverArt
               seed={event.slug}
+              title={event.title}
               accent={event.committee?.accent}
               logo={event.committee?.logo_url}
               className="h-full w-full transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.03]"

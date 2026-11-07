@@ -11,7 +11,10 @@ export function PageHero({
   aside,
   className,
   fitTitle,
+  note,
 }: {
+  /** En anteckning för hand som pekar på rubriken (Anteckning), lagd över hela huvudet. */
+  note?: ReactNode;
   kicker: string;
   title: ReactNode;
   /**
@@ -27,7 +30,10 @@ export function PageHero({
   className?: string;
 }) {
   return (
-    <section className={cn("relative border-b border-line", className)}>
+    <section className={cn("relative isolate border-b border-line", className)}>
+      {/* Millimeterpapperet, som kring loggan på startsidan. Bakom innehållet, men framför sidans ljus kring pekaren. */}
+      <div aria-hidden className="sidhuvud-rutnat grid-millimeter pointer-events-none absolute inset-0 -z-10 text-ink" />
+      {note}
       <div className="container-site relative grid items-end gap-10 pb-12 pt-[calc(var(--header-h)+3rem)] md:grid-cols-12 md:pb-14 md:pt-[calc(var(--header-h)+4.5rem)]">
         <div className={cn(aside ? "md:col-span-8" : "md:col-span-10")}>
           <p className="kicker flex items-center gap-2.5 text-stone">
@@ -54,8 +60,9 @@ export function PageHero({
 function titleSizes(text: string): CSSProperties {
   return {
     // Versalerna mäts med tabellen i fitHeading. Största storleken är lugnare än i förra versionen, eftersom sidomenyn tar plats.
-    "--title-sm": fitHeading(text, { maxRem: 3.6, maxVw: 11 }).fontSize,
-    "--title-md": fitHeading(text, { maxRem: 4.8, maxVw: 6.2 }).fontSize,
+    // En kort rubrik som nästan ryms på en rad står på en rad, så att den inte bryts olika med reservfonten och Archivo.
+    "--title-sm": fitHeading(text, { maxRem: 3.6, maxVw: 11, enRad: true }).fontSize,
+    "--title-md": fitHeading(text, { maxRem: 4.8, maxVw: 6.2, enRad: true }).fontSize,
   } as CSSProperties;
 }
 

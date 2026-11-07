@@ -349,10 +349,10 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
       const tagline = site.page.locator("footer p", { hasText: "Sektionen för dig" });
       await tagline.waitFor();
       assert.equal(await tagline.innerText(), "Sektionen för dig som läser Statistics vid LiU.");
-      // I den nya sidfoten är ordet framhävt i bläckets färg mot den grå texten, inte längre i rött.
+      // I den nya sidfoten är ordet framhävt i bläckets färg mot den grå texten, inte längre i rött. Mörkt läge är standard, så bläcket är ljust.
       const red = tagline.getByText("Statistics", { exact: true });
-      assert.equal(await red.evaluate((el) => getComputedStyle(el).color), "rgb(20, 20, 19)");
-      assert.notEqual(await tagline.evaluate((el) => getComputedStyle(el).color), "rgb(20, 20, 19)", "ordet ska synas mot texten runt det");
+      assert.equal(await red.evaluate((el) => getComputedStyle(el).color), "rgb(236, 235, 230)");
+      assert.notEqual(await tagline.evaluate((el) => getComputedStyle(el).color), "rgb(236, 235, 230)", "ordet ska synas mot texten runt det");
       await site.context.close();
     } finally {
       await setTagline(original);

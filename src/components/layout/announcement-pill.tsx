@@ -23,13 +23,15 @@ export function AnnouncementPill({ text, href }: { text: string; href: string | 
     return () => clearTimeout(t);
   }, [key]);
 
-  // På startsidan fyller heron första skärmen, med knapparna där meddelandet ligger. Det väntar därför tills heron har lämnat skärmens nederkant.
+  // På startsidan fyller heron, med texten om sektionen och siffrorna, första skärmen och mer på telefon. Meddelandet väntar därför tills
+  // heron inte längre når ner i skärmens nedersta del, där meddelandet ligger. Hela heron bevakas, inte en linje i den, så att också
+  // ett hopp förbi den på en gång räknas: den går då från att nå ner dit till att inte göra det.
   useEffect(() => {
     if (pathname !== "/") return;
-    const botten = document.querySelector("[data-hero-botten]");
-    if (!botten) return;
+    const hero = document.querySelector("[data-hero-yta]");
+    if (!hero) return;
     const io = new IntersectionObserver(([entry]) => setOverHeron(entry.isIntersecting), { rootMargin: "-88% 0px 0px 0px" });
-    io.observe(botten);
+    io.observe(hero);
     return () => {
       io.disconnect();
       setOverHeron(true);

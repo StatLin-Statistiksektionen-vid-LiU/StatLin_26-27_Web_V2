@@ -12,10 +12,10 @@ import { listLinks } from "@/lib/data/links";
 import { listNews } from "@/lib/data/news";
 import { listResources } from "@/lib/data/resources";
 import { formatDate, todayLocal } from "@/lib/dates";
-import { BRANSCHER, FARDIGHETER } from "@/lib/foretag-kompetens";
+import { getBlock } from "@/lib/innehall/server";
 import { categoryLabel, isExternalUrl } from "@/lib/links";
 import { starIsLive } from "@/lib/naringsliv";
-import { committeeHref, NAV, PAGE_PATHS } from "@/lib/navigation";
+import { committeeHref, PAGE_PATHS, synligMeny } from "@/lib/navigation";
 import { RESOURCE_CATEGORIES, RESOURCE_PROGRAMS } from "@/lib/resources";
 import type { SearchEntry } from "@/lib/search";
 import { DOCUMENT_CATEGORIES } from "@/lib/types";
@@ -64,7 +64,7 @@ const EXTRA_PAGES: { href: string; title: string; meta: string }[] = [
  * hjälpmedel, partner och vad studenterna kan. Bara det som är publicerat och syns på sajten kommer med.
  */
 export async function buildSearchIndex(): Promise<SearchEntry[]> {
-  const [settings, pages, events, news, committees, board, documents, links, resources, partners] = await Promise.all([
+  const [settings, pages, events, news, committees, board, documents, links, resources, partners, kompetens, branscher, meny] = await Promise.all([
     getSettings(),
     listPages(),
     listAllPublishedEvents(),
@@ -75,6 +75,9 @@ export async function buildSearchIndex(): Promise<SearchEntry[]> {
     listLinks({ activeOnly: true }),
     listResources(),
     listPartners({ activeOnly: true }),
+    getBlock("kompetens"),
+    getBlock("branscher"),
+    getBlock("meny"),
   ]);
   const starLive = starIsLive(settings);
   const entries: SearchEntry[] = [];
@@ -91,7 +94,7 @@ export async function buildSearchIndex(): Promise<SearchEntry[]> {
     seen.add(href);
     entries.push({ href, kind: "sida", title, meta, keywords: PAGE_KEYWORDS[href], text: pageText.get(href), boost: 5 });
   };
-  for (const group of NAV) {
+  for (const group of synligMeny(meny)) {
     if (!group.children) addPage(group.href, group.label);
     for (const child of group.children ?? []) addPage(child.href, child.label, child.description);
   }
@@ -189,12 +192,13 @@ export async function buildSearchIndex(): Promise<SearchEntry[]> {
     entries.push({ href: "/foretag", kind: "foretag", title: p.name, meta: p.tier === "huvudpartner" ? "Huvudsponsor" : "Sponsor", text: p.description });
   }
 
-  for (const group of FARDIGHETER) {
-    for (const skill of group.rader) {
-      entries.push({ href: "/foretag#kompetens", kind: "foretag", title: skill.namn, meta: `Vad studenterna kan · ${group.grupp}` });
+  // Vad studenterna kan, som det står på /foretag just nu.
+  for (const group of kompetens.grupper) {
+    for (const skill of group.fardigheter) {
+      entries.push({ href: "/foretag#kompetens", kind: "foretag", title: skill.namn, meta: `${kompetens.fardigheterRubrik} · ${group.namn}` });
     }
   }
-  for (const b of BRANSCHER) {
+  for (const b of branscher.lista) {
     entries.push({ href: "/foretag#kompetens", kind: "foretag", title: b.namn, meta: "Branscher där studenterna passar", text: b.text });
   }
 

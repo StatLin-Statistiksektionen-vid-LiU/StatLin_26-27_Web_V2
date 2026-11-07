@@ -1,7 +1,8 @@
 /*
  * Sajtens fasta texter som inte hör till en sida i Admin: rubrikerna på startsidan och huvudena på listsidorna.
  * Standardtexten står här. Det som skrivs med pennan i redigeringsläget sparas som en vanlig inställning, och ett tomt
- * fält ger tillbaka standardtexten. Skriv *ord* med stjärnor för att göra dem röda där texten är en rubrik eller en ingress.
+ * fält ger tillbaka standardtexten. Skriv *ord* med stjärnor för att göra dem röda där texten är en rubrik eller en ingress, och
+ * _ord_ med understreck för att skriva dem för hand (_*ord*_ med rödpenna). Anteckningarna för hand med pil tas bort med ett -.
  */
 
 /** Grupperna är det en penna öppnar, med rubriken i panelen. */
@@ -18,6 +19,7 @@ export const SITE_TEXT_GROUPS = {
   dokument: "Dokument: sidhuvudet",
   tentastatistik: "Tentastatistik: sidhuvudet",
   styrelsen: "Styrelsen: sidhuvudet",
+  om: "Om StatLin: sidhuvudet",
 } as const;
 
 export type SiteTextGroup = keyof typeof SITE_TEXT_GROUPS;
@@ -34,13 +36,20 @@ function hero<G extends HeroGroup>(group: G, kicker: string, title: string, lead
   } as unknown as Record<`text_${G}_kicker` | `text_${G}_rubrik` | `text_${G}_ingress`, TextDef>;
 }
 
+/** En anteckning för hand med en pil till slutet av sidhuvudets rubrik (Anteckning i anteckning.tsx). */
+function anteckningDef<G extends HeroGroup>(group: G, text: string) {
+  return {
+    [`text_${group}_anteckning`]: { group, label: "Anteckning för hand vid rubriken, - tar bort den, *text* blir röd", default: text, max: 40 },
+  } as unknown as Record<`text_${G}_anteckning`, TextDef>;
+}
+
 const START = {
   text_start_om_kicker: { group: "start-om", label: "Liten rad ovanför texten om sektionen", default: "Om sektionen", max: 60 },
-  text_start_om_knapp: { group: "start-om", label: "Första knappen", default: "Om StatLin", max: 40 },
-  text_start_om_knapp2: { group: "start-om", label: "Andra knappen", default: "Möt styrelsen", max: 40 },
   text_start_siffra_utskott: { group: "start-om", label: "Siffrorna: utskotten", default: "Utskott & grupper", max: 40 },
   text_start_siffra_styrelsen: { group: "start-om", label: "Siffrorna: styrelsen", default: "Poster i styrelsen", max: 40 },
+  text_start_siffra_styrelsen_not: { group: "start-om", label: "Siffrorna: raden under styrelsen", default: "väljs varje år", max: 60 },
   text_start_siffra_evenemang: { group: "start-om", label: "Siffrorna: evenemangen", default: "Kommande evenemang", max: 40 },
+  text_start_siffra_evenemang_not: { group: "start-om", label: "Siffrorna: raden under evenemangen", default: "just nu i kalendern", max: 60 },
   text_start_siffra_program: { group: "start-om", label: "Siffrorna: programmen", default: "Program", max: 40 },
 
   text_start_evenemang_kicker: { group: "start-evenemang", label: "Liten rad ovanför", default: "Kalender", max: 60 },
@@ -53,7 +62,7 @@ const START = {
   text_start_utskott_rubrik: { group: "start-utskott", label: "Rubrik", default: "Hitta ditt *sammanhang*", max: 80 },
   text_start_utskott_lank: { group: "start-utskott", label: "Länken till alla utskott", default: "Alla utskott", max: 40 },
   text_start_engagera_rubrik: { group: "start-utskott", label: "Rutan sist: rubrik", default: "Engagera dig", max: 40 },
-  text_start_engagera_text: { group: "start-utskott", label: "Rutan sist: text", default: "Alla utskott söker folk, ingen erfarenhet krävs.", max: 160, long: true },
+  text_start_engagera_text: { group: "start-utskott", label: "Rutan sist: text", default: "Alla utskott söker folk, _*ingen erfarenhet krävs.*_", max: 160, long: true },
 
   text_start_nytt_kicker: { group: "start-nytt", label: "Liten rad ovanför", default: "Från sektionen", max: 60 },
   text_start_nytt_rubrik: { group: "start-nytt", label: "Rubrik", default: "Senaste *nytt*", max: 80 },
@@ -78,21 +87,24 @@ const START = {
 
 export const SITE_TEXTS = {
   ...START,
-  ...hero("evenemang", "Kalender", "Evene*mang*", "Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så missar du inget."),
+  ...hero("evenemang", "Kalender", "Evene*mang*", "Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så _missar du inget._"),
   ...hero("nyheter", "Från sektionen", "Senaste *nytt*", "Information från styrelsen och utskotten, från sittningsanmälningar till beslut på sektionsmötet."),
+  ...anteckningDef("nyheter", "(färskt ur pressen)"),
   ...hero(
     "utskott",
     "Sektionen / Utskott",
     "Utsk*ott*",
-    "Utskotten är hjärtat i sektionen. Varje utskott har sin egen logga, alla byggda på samma baslogotyp men med sin egen bakgrundsgrafik.",
+    "_Utskotten är hjärtat i sektionen._ Varje utskott har sin egen logga, alla byggda på samma baslogotyp men med sin egen bakgrundsgrafik.",
   ),
   ...hero("galleri", "Sektionen / Galleri", "Galle*ri*", "Bilder från sittningar, pubar, idrott och allt annat. Uppladdade av sektionens poster."),
+  ...anteckningDef("galleri", "*(bevis på att P(kul) = 1)*"),
   ...hero("dokument", "Sektionen / Dokument", "Doku*ment*", "Stadgar, reglemente, mötesprotokoll och styrdokument. Allt som styr sektionen, samlat på ett ställe."),
+  ...anteckningDef("dokument", "(spännande läsning, lovar)"),
   ...hero(
     "tentastatistik",
     "Studenter / Tentastatistik",
     "Tenta*statistik*",
-    "Hur brukar tentan gå? Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle.",
+    "_Hur brukar tentan gå?_ Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle.",
   ),
   ...hero(
     "styrelsen",
@@ -100,6 +112,9 @@ export const SITE_TEXTS = {
     "Styrel*sen*",
     "Styrelsen väljs på sektionsmötet och leder sektionen under ett verksamhetsår. Hör av dig direkt till rätt post.",
   ),
+  ...anteckningDef("styrelsen", "(vi bits inte)"),
+  // Ändras där den står, i redigeringsläget på Om StatLin.
+  text_om_anteckning: { group: "om", label: "Anteckningen för hand som pekar på StatLin i rubriken, - tar bort den, *text* blir röd", default: "(topp 5 sektion)", max: 40 } satisfies TextDef,
 };
 
 export type SiteTextKey = keyof typeof SITE_TEXTS;
@@ -122,4 +137,11 @@ export function textDef(key: SiteTextKey): TextDef {
 /** Den sparade texten, eller standardtexten när fältet är tomt. */
 export function siteText(s: Record<SiteTextKey, string>, key: SiteTextKey): string {
   return s[key]?.trim() || SITE_TEXTS[key].default;
+}
+
+/** En anteckning för hand: den sparade texten eller standardtexten, och ingen alls när någon har skrivit - eller nyckeln inte finns. */
+export function anteckningText(s: Record<SiteTextKey, string>, key: string): string {
+  if (!Object.hasOwn(SITE_TEXTS, key)) return "";
+  const v = siteText(s, key as SiteTextKey).trim();
+  return v === "-" ? "" : v;
 }

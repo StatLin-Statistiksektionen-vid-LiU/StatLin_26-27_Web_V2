@@ -516,6 +516,22 @@ Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg s
   );
   CREATE INDEX meeting_items_meeting ON meeting_items(meeting_id, status, sort_order);
   `,
+  /* 19: eSTIG:s sida tar emot spelönskemål i önskelådan, så den slås på för eSTIG. Utskottet kan stänga den igen. */ `
+  UPDATE committees SET wishes_open = 1 WHERE slug = 'estig';
+  `,
+  /* 20: Fem standardtexter fick en bit _för hand_ (accent-text.tsx). Sparade texter som är exakt den gamla standardtexten får den
+     nya, så att de syns på sajten. Texter som någon har ändrat står kvar. */ `
+  UPDATE settings SET value = 'Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet.' || char(10) || '_Drivet av studenter, för studenter._'
+    WHERE key = 'hero_text' AND value = 'Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet. Drivet av studenter, för studenter.';
+  UPDATE settings SET value = '_Utskotten är hjärtat i sektionen._ Varje utskott har sin egen logga, alla byggda på samma baslogotyp men med sin egen bakgrundsgrafik.'
+    WHERE key = 'text_utskott_ingress' AND value = 'Utskotten är hjärtat i sektionen. Varje utskott har sin egen logga, alla byggda på samma baslogotyp men med sin egen bakgrundsgrafik.';
+  UPDATE settings SET value = 'Alla utskott söker folk, _*ingen erfarenhet krävs.*_'
+    WHERE key = 'text_start_engagera_text' AND value = 'Alla utskott söker folk, ingen erfarenhet krävs.';
+  UPDATE settings SET value = 'Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så _missar du inget._'
+    WHERE key = 'text_evenemang_ingress' AND value = 'Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så missar du inget.';
+  UPDATE settings SET value = '_Hur brukar tentan gå?_ Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle.'
+    WHERE key = 'text_tentastatistik_ingress' AND value = 'Hur brukar tentan gå? Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle.';
+  `,
 ];
 
 export function migrate(db: Database.Database) {

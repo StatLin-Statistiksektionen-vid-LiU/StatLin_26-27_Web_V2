@@ -20,7 +20,7 @@ import { editStore, targetQuery, UNSAVED, useEditState, type EditTarget } from "
 
 const TITLES: Record<EditTarget["type"], string> = {
   page: "Sidans text",
-  home: "Startsidans texter",
+  home: "Startsidan: loggan och tidslinjen",
   footer: "Sidfot och meddelande",
   contact: "Kontaktuppgifter",
   texts: "Texter på sajten",

@@ -2,47 +2,25 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useEffect, useRef, useState, useSyncExternalStore, type ComponentType, type MouseEvent, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react";
 import { isPlainClick, openSearch, preloadSearch } from "@/components/search/open-search";
-import { languageSwitch, NAV, type NavGroup } from "@/lib/navigation";
+import { languageSwitch } from "@/lib/navigation";
 import { FOCUS_SEARCH_EVENT } from "@/lib/search-prefetch";
 import { closeWhenWider, useFocusLayer } from "@/lib/use-focus-layer";
-import {
-  BookOpen,
-  Calendar,
-  ChevronDown,
-  Close,
-  Globe,
-  Handshake,
-  Home,
-  Key,
-  Mail,
-  Menu,
-  Newspaper,
-  Search,
-  Users,
-} from "@/components/icons";
+import { Close, Globe, Key, Menu, Search } from "@/components/icons";
+import { MenyKontext } from "@/components/layout/meny-trad";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { cn } from "@/lib/utils";
-
-type IconType = ComponentType<{ size?: number; className?: string }>;
-
-/** Ikonen framför varje rad i menyn. */
-const ICONS: Record<string, IconType> = {
-  Evenemang: Calendar,
-  Nytt: Newspaper,
-  Sektionen: Users,
-  Studenter: BookOpen,
-  Företag: Handshake,
-  Kontakt: Mail,
-};
 
 /**
  * Sidomenyn på datorn och listen överst på telefonen. Namnet är kvar från tiden då menyn låg i ett sidhuvud.
  * Grupperna är details, så att de går att fälla ut även utan JavaScript; den grupp man står i är utfälld.
  */
-/** Sponsorerna hämtas på servern (MenuSponsors) och skickas hit färdiga, en gång för sidomenyn och en gång för telefonens meny. */
-type Sponsors = { sidebar: ReactNode; menu: ReactNode };
+/**
+ * Sponsorerna och menyn hämtas på servern och skickas hit färdiga, en gång för sidomenyn och en gång för telefonens meny.
+ * Menyn står med standardmenyn i skalet och byts mot den sparade när den kommer (se (site)/layout.tsx).
+ */
+type Delar = { sidebar: ReactNode; menu: ReactNode };
 
 const noSubscription = () => () => {};
 
@@ -52,7 +30,7 @@ const noSubscription = () => () => {};
  * först, och React väntar minst 300 ms mellan två visningar, så sidans eget innehåll kom 300 ms senare än det behövde.
  * Sökvägen läses därför först efter hydreringen, av PathWatcher, som också säger till vid varje sidbyte.
  */
-export function SiteHeader({ sponsors }: { sponsors?: Sponsors }) {
+export function SiteHeader({ sponsors, meny }: { sponsors?: Delar; meny?: Delar }) {
   const [pathname, setPathname] = useState<string | null>(null);
   const hydrated = useSyncExternalStore(noSubscription, () => true, () => false);
   return (
@@ -62,7 +40,7 @@ export function SiteHeader({ sponsors }: { sponsors?: Sponsors }) {
           <PathWatcher onChange={setPathname} />
         </Suspense>
       )}
-      <HeaderView pathname={pathname} sponsors={sponsors} />
+      <HeaderView pathname={pathname} sponsors={sponsors} meny={meny} />
     </>
   );
 }
@@ -73,8 +51,10 @@ function PathWatcher({ onChange }: { onChange: (pathname: string) => void }) {
   return null;
 }
 
-function HeaderView({ pathname, sponsors }: { pathname: string | null; sponsors?: Sponsors }) {
+function HeaderView({ pathname, sponsors, meny }: { pathname: string | null; sponsors?: Delar; meny?: Delar }) {
   const [open, setOpen] = useState(false);
+  const sidomeny = useMemo(() => ({ pathname }), [pathname]);
+  const mobilmeny = useMemo(() => ({ pathname, onNavigate: () => setOpen(false) }), [pathname]);
   const barRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -97,10 +77,11 @@ function HeaderView({ pathname, sponsors }: { pathname: string | null; sponsors?
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Listen ligger ovanpå menyn och har stängknappen, så den hör till lagret. Resten av sidan blir inert.
+  // Listen ligger ovanpå menyn och har stängknappen, så den hör till lagret. Resten av sidan blir inert, utom
+  // redigeringslägets list och ruta: menyn går att ändra i, och då ska Spara och rutans fält fungera.
   useFocusLayer({
     active: open,
-    layers: () => [barRef.current, menuRef.current],
+    layers: () => [barRef.current, menuRef.current, ...document.querySelectorAll<HTMLElement>(".redigeringslist, .redigerbar-ruta")],
     initial: () => toggleRef.current,
     returnTo: () => toggleRef.current,
   });
@@ -175,7 +156,7 @@ function HeaderView({ pathname, sponsors }: { pathname: string | null; sponsors?
           </Link>
         </div>
         <nav aria-label="Huvudmeny" className="mt-3 flex-1 overflow-y-auto overscroll-contain px-3 pb-6">
-          <NavTree pathname={pathname} size="sm" />
+          <MenyKontext.Provider value={sidomeny}>{meny?.sidebar}</MenyKontext.Provider>
         </nav>
         {sponsors?.sidebar}
         <div className="flex items-center gap-1 border-t border-line px-3 py-2.5 text-[0.8rem] text-stone">
@@ -236,7 +217,7 @@ function HeaderView({ pathname, sponsors }: { pathname: string | null; sponsors?
         )}
       >
         <nav aria-label="Mobilmeny" className="px-3 pb-12 pt-3">
-          <NavTree pathname={pathname} size="lg" onNavigate={() => setOpen(false)} />
+          <MenyKontext.Provider value={mobilmeny}>{meny?.menu}</MenyKontext.Provider>
           <div className="mt-6 grid grid-cols-2 gap-2 border-t border-line px-1 pt-6 text-[0.9rem]">
             {languageLinks("btn btn-ghost")}
             <ThemeToggle withLabel className="btn btn-ghost" />
@@ -269,75 +250,5 @@ function Brand({ subtitle }: { subtitle?: boolean }) {
         {subtitle && <span className="block text-[0.72rem] text-stone">Statistiksektionen i Linköping</span>}
       </span>
     </Link>
-  );
-}
-
-/** Menyns träd. sm är datorns sidomeny, lg telefonens meny med större rader för fingret. */
-function NavTree({ pathname, size, onNavigate }: { pathname: string | null; size: "sm" | "lg"; onNavigate?: () => void }) {
-  const active = (href: string) =>
-    pathname !== null && (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
-  // Undersidor med ankare (/foretag#kompetens) ska inte markeras som sidan själv.
-  const exact = (href: string) => !href.includes("#") && active(href);
-  const groupActive = (g: NavGroup) => active(g.href) || !!g.children?.some((c) => exact(c.href));
-
-  const row = cn(
-    "flex w-full items-center gap-2.5 rounded-md px-2.5 transition-colors",
-    size === "sm" ? "h-8 text-[0.875rem] pointer-coarse:h-10" : "h-11 text-[1rem]",
-  );
-  const rowState = (on: boolean) => (on ? "bg-ink/[0.06] font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink");
-  const iconSize = size === "sm" ? 16 : 18;
-
-  const linkRow = (href: string, label: string, Icon: IconType) => {
-    const on = active(href);
-    return (
-      <Link href={href} aria-current={pathname === href ? "page" : undefined} onClick={onNavigate} className={cn(row, rowState(on))}>
-        <Icon size={iconSize} className={on ? "text-red" : undefined} />
-        {label}
-      </Link>
-    );
-  };
-
-  return (
-    <ul className="space-y-0.5">
-      <li>{linkRow("/", "Start", Home)}</li>
-      {NAV.map((item) => {
-        const Icon = ICONS[item.label] ?? Users;
-        if (!item.children) return <li key={item.href}>{linkRow(item.href, item.label, Icon)}</li>;
-        const on = groupActive(item);
-        return (
-          <li key={item.href}>
-            <details className="meny-grupp" open={on || undefined}>
-              <summary className={cn(row, "cursor-pointer select-none", on ? "font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink")}>
-                <Icon size={iconSize} className={on ? "text-red" : undefined} />
-                {item.label}
-                <ChevronDown size={14} className="meny-pil ml-auto opacity-60 transition-transform duration-200" />
-              </summary>
-              <ul className={cn("mb-1.5 mt-0.5 space-y-0.5 border-l border-line", size === "sm" ? "ml-[1.15rem] pl-2" : "ml-[1.35rem] pl-2.5")}>
-                {item.children.map((c) => {
-                  const here = exact(c.href);
-                  return (
-                    <li key={c.href + c.label}>
-                      <Link
-                        href={c.href}
-                        aria-current={pathname === c.href ? "page" : undefined}
-                        onClick={onNavigate}
-                        className={cn(
-                          "relative flex items-center rounded-md px-2.5 transition-colors",
-                          size === "sm" ? "h-7 text-[0.84rem] pointer-coarse:h-10" : "h-10 text-[0.95rem]",
-                          here ? "bg-ink/[0.06] font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink",
-                        )}
-                      >
-                        {here && <span aria-hidden className={cn("absolute top-1/2 h-4 w-px -translate-y-1/2 bg-red", size === "sm" ? "-left-[0.55rem]" : "-left-[0.7rem]")} />}
-                        {c.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
-            </details>
-          </li>
-        );
-      })}
-    </ul>
   );
 }

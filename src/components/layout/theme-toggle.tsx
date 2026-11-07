@@ -24,8 +24,8 @@ function apply(dark: boolean) {
   else delete root.dataset.tema;
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? THEME_COLORS.mork : THEME_COLORS.ljust);
   try {
-    if (dark) localStorage.setItem(KEY, "mork");
-    else localStorage.removeItem(KEY);
+    // Båda valen sparas, så att besökarens val står kvar även om standardläget ändras.
+    localStorage.setItem(KEY, dark ? "mork" : "ljust");
   } catch {
     /* lagring blockerad: läget gäller tills sidan laddas om */
   }
@@ -33,11 +33,12 @@ function apply(dark: boolean) {
 }
 
 /**
- * Byter mellan ljust och mörkt läge. Ljust är standard, ett mörkt val sparas i webbläsaren.
+ * Byter mellan ljust och mörkt läge. Mörkt är standard, och valet sparas i webbläsaren.
  * Där webbläsaren kan View Transitions sprider sig det nya läget som en cirkel från knappen; annars byts det direkt.
  */
 export function ThemeToggle({ className, withLabel }: { className?: string; withLabel?: boolean }) {
-  const dark = useSyncExternalStore(subscribe, isDark, () => false);
+  // Servern ritar knappen för standardläget, mörkt. Har besökaren valt ljust byts ikonen efter hydreringen.
+  const dark = useSyncExternalStore(subscribe, isDark, () => true);
   const toggle = (e: MouseEvent<HTMLButtonElement>) => {
     const next = !isDark();
     const root = document.documentElement;

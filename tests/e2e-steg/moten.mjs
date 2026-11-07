@@ -28,6 +28,8 @@ export default async function motenSteg({ BASE, page, step, switchAccount }) {
     await submit.click();
     await page.waitForURL(/\/admin\/moten\/\d+\?ny=1/);
     id = page.url().match(/moten\/(\d+)/)[1];
+    // Adressen byts innan sidan har kommit, så dagordningen väntas in innan den läses.
+    await page.locator('section[aria-labelledby="dagordning"]:visible ol > li').first().waitFor();
     const titles = await agenda(page);
     assert.equal(titles[0], "Mötets öppnande");
     assert.equal(titles.at(-1), "Mötets avslutande");

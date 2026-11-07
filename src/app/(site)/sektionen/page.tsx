@@ -8,7 +8,9 @@ import { PageHero } from "@/components/ui/page-hero";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { HeroSkeleton, PageSkeleton } from "@/components/ui/skeletons";
-import { getPage, listBoard, listCommittees } from "@/lib/data/content";
+import { Anteckning } from "@/components/content/anteckning";
+import { getPage, getSettings, listBoard, listCommittees } from "@/lib/data/content";
+import { anteckningText } from "@/lib/site-texts";
 import { programFacts, PROGRAMS } from "@/lib/links";
 import { Editable } from "@/components/edit-mode/editable";
 import { AccentText, stripAccent } from "@/components/ui/accent-text";
@@ -34,14 +36,17 @@ export default function AboutPage() {
 }
 
 async function AboutContent() {
-  const [page, board, committees] = await Promise.all([getPage("om"), listBoard(), listCommittees({ visibleOnly: true })]);
+  const [page, board, committees, settings] = await Promise.all([getPage("om"), listBoard(), listCommittees({ visibleOnly: true }), getSettings()]);
   const utskott = committees.filter((c) => c.kind !== "styrelse");
   const title = page?.title.trim() || "Om *StatLin*";
+  const anteckning = anteckningText(settings, "text_om_anteckning");
 
   return (
     <>
       <Editable target={{ type: "page", slug: "om" }} label="Redigera sidan" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
       <PageHero
+        // Anteckningen står i den tomma ytan ovanför rubriken och pekar på StatLin. Ändras där den står i redigeringsläget.
+        note={anteckning ? <Anteckning text={anteckning} mal="h1" ord="statlin" id="s:text_om_anteckning" placeringar={["over-snett", "over", "over-hoger", "hoger"]} /> : undefined}
         kicker="Sektionen"
         title={<AccentText text={title} accentClassName="text-red" />}
         fitTitle={stripAccent(title)}

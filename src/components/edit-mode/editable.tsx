@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Edit, Image as ImageIcon, Plus } from "@/components/icons";
+import { Edit, Image as ImageIcon, Plus, Settings } from "@/components/icons";
 import { cn } from "@/lib/utils";
 import { canEditTarget, editStore, useEditState, type EditTarget } from "./store";
 
@@ -85,10 +85,21 @@ export function EditModeLink({
   );
 }
 
-/** En knapp som bara visas i redigeringsläget och öppnar sidopanelen, utan ram runt något – t.ex. "Byt bilder". */
-export function EditModeButton({ target, children, className }: { target: EditTarget; children: ReactNode; className?: string }) {
+/** En knapp som bara visas i redigeringsläget och öppnar sidopanelen, utan ram runt något, t.ex. "Byt bilder". */
+export function EditModeButton({
+  target,
+  children,
+  className,
+  icon = "bild",
+}: {
+  target: EditTarget;
+  children: ReactNode;
+  className?: string;
+  icon?: "bild" | "installningar";
+}) {
   const { user, editing } = useEditState();
   if (!editing || !user || !canEditTarget(user, target)) return null;
+  const Icon = icon === "bild" ? ImageIcon : Settings;
   return (
     <button
       type="button"
@@ -98,7 +109,7 @@ export function EditModeButton({ target, children, className }: { target: EditTa
         className,
       )}
     >
-      <ImageIcon size={14} /> {children}
+      <Icon size={14} /> {children}
     </button>
   );
 }

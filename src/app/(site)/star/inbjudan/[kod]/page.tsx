@@ -11,6 +11,7 @@ import "@/components/star/star.css";
 import { getCommitteeBySlug, getSettings } from "@/lib/data/content";
 import { getStarEvent } from "@/lib/data/events";
 import { getStarInviteCode, listStarCompanies } from "@/lib/data/naringsliv";
+import { getBlock } from "@/lib/innehall/server";
 import { mailtoWithSubject, starIsLive } from "@/lib/naringsliv";
 import { SITE_OG } from "@/lib/site-metadata";
 import { STAR_COPY } from "@/lib/seed-content";
@@ -76,7 +77,7 @@ export default async function StarInvitation(props: PageProps<"/star/inbjudan/[k
   const [{ kod }, sp, code] = await Promise.all([props.params, props.searchParams, getStarInviteCode()]);
   if (!code || kod !== code) notFound();
 
-  const [sasu, settings] = await Promise.all([getCommitteeBySlug("sasu"), getSettings()]);
+  const [sasu, settings, kompetens, branscher] = await Promise.all([getCommitteeBySlug("sasu"), getSettings(), getBlock("kompetens"), getBlock("branscher")]);
   const [event, companies] = await Promise.all([getStarEvent(Number(settings.star_event_id) || null), starIsLive(settings) ? listStarCompanies({ activeOnly: true }) : []]);
   const contact = sasu?.email || settings.contact_email;
   const tack = sp.tack === "1" || sp.tack === "mote" ? sp.tack : null;
@@ -107,12 +108,9 @@ export default async function StarInvitation(props: PageProps<"/star/inbjudan/[k
         </div>
       </StarHero>
 
-      <StudenternasKompetens natt />
+      <StudenternasKompetens natt innehall={kompetens} />
 
-      <Branscher
-        natt
-        cta={{ href: "#anmal", label: "Anmäl intresse", rubrik: "Känner ni igen er?", text: "Några rader räcker, så hör SASU av sig och berättar hur ni kan vara med." }}
-      />
+      <Branscher natt innehall={branscher} href="#anmal" />
 
       <section className="star-avsnitt relative py-16 md:py-24">
         <div className="container-site">

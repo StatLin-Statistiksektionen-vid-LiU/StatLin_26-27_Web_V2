@@ -22,7 +22,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   footer_slogan: "Allt blir mer *signifikant* tillsammans.",
   hero_kicker: "Statistiksektionen i Linköping",
   hero_title: "Sektionen för *statistik*, dataanalys och maskininlärning vid LiU",
-  hero_text: "Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet. Drivet av studenter, för studenter.",
+  hero_text: "Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet.\n_Drivet av studenter, för studenter._",
   hero_ring_color: "red",
   hero_formulas: "pa",
   band_color: "vit",
@@ -52,7 +52,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
 /** Läses en gång per rendering, hur många komponenter som än frågar: startsidan frågar sju gånger. Utanför en rendering läses den på nytt. */
 export const getSettings = cache(async (): Promise<SiteSettings> => {
   const db = await readDb();
-  const rows = db.prepare("SELECT key, value FROM settings").all() as { key: string; value: string }[];
+  const rows = db.prepare("SELECT key, value FROM settings WHERE key NOT LIKE 'innehall:%'").all() as { key: string; value: string }[];
   const s = { ...DEFAULT_SETTINGS };
   for (const r of rows) if (r.key in s) (s as Record<string, string>)[r.key] = r.value;
   return s;
