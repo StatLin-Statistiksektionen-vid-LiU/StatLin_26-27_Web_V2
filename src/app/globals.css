@@ -163,6 +163,18 @@
       transition-delay: 0s !important;
       scroll-behavior: auto !important;
     }
+    /*
+     * Formlerna i rutnätet skrivs ändå fram (RutnatLjus): det är bara bläck som syns fram, inget som rör sig. Måste stå här, i
+     * samma lager, eftersom !important i ett tidigare lager vinner över allt utanför det.
+     */
+    .handskrift.rutnat-formel[data-skriv="skriver"] .hs-ord {
+      animation-duration: calc(var(--t) * 1ms) !important;
+      animation-delay: calc(var(--d) * 1ms) !important;
+    }
+    .handskrift.rutnat-formel[data-skriv="skriver"] .hs-ritning path {
+      animation-duration: calc(var(--rt, 500) * 1ms) !important;
+      animation-delay: calc(var(--rd, 0) * 1ms) !important;
+    }
   }
 }
 
@@ -1064,6 +1076,39 @@ html:not(.js) .handskrift {
 }
 .rutnat-formel-rod {
   color: var(--color-red-deep);
+}
+/*
+ * En formel i LaTeX för hand (FormelVy i formel-vy.tsx). Orden och strecken har sina lägen i em från formel.ts, och orden har
+ * radhöjd 1 så att baslinjen ligger där den räknats.
+ */
+.formel {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  white-space: nowrap;
+}
+.formel > * {
+  position: absolute;
+}
+.formel > .hs-ord {
+  white-space: pre;
+}
+.formel-block {
+  display: block;
+}
+.f-rod {
+  color: var(--color-red-deep);
+}
+.f-bf {
+  -webkit-text-stroke: 0.03em currentColor;
+}
+.f-bb {
+  text-shadow: 0.06em 0 currentColor;
+}
+.formel-rad {
+  display: inline-block;
+  line-height: 1;
+  padding: 0.2em 0;
 }
 @keyframes rutnat-in {
   from {
@@ -2384,6 +2429,19 @@ html:has(#admin-bar[data-corner^="bottom"]) footer {
   gap: 0.8rem;
   padding: 0.3rem 1rem 0.9rem;
 }
+/* Det man skriver, som det blir: formeln i rutnätet (formel-lista.tsx). */
+.redigerbar-forhand {
+  display: grid;
+  justify-items: start;
+  gap: 0.45rem;
+  margin: 0 1rem 0.9rem;
+  padding: 0.8rem 0.9rem;
+  overflow-x: auto;
+  border: 1px dashed var(--color-line);
+  border-radius: 0.6rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
 .redigerbar-falt {
   display: grid;
   min-width: 0;
@@ -2654,7 +2712,7 @@ body {
 }
 
 /* ---------- Mörkt läge ---------- */
-/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 44) */
+/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 45) */
 
 /*
  * Utan genomskinlighetseffekter syns ingen oskärpa bakom något. Ytor av frostat glas (sidhuvudet på telefon, etiketter på bilder,

@@ -1,9 +1,10 @@
 "use client";
 
-import { useSyncExternalStore, type CSSProperties } from "react";
+import { lazy, Suspense, useEffect, useSyncExternalStore, type CSSProperties } from "react";
 import { forbered, Orden, useSkrivning } from "@/components/content/skrivning";
 import { RFalt, RLista, type Falt } from "@/components/edit-mode/redigerbar";
 import { useBlock } from "@/components/edit-mode/utkast";
+import { satFormler } from "@/components/layout/formel-kalla";
 import type { Handskrift } from "@/lib/innehall/typer";
 
 /*
@@ -120,6 +121,8 @@ function citatLangd(citat: Citat) {
 }
 
 /** Ett slumptal per sidladdning, taget första gången det behövs i webbläsaren. Servern och hydreringen får 0, sedan byter React. */
+const FormelLista = lazy(() => import("./formel-lista"));
+
 let slump: number | undefined;
 const taSlump = () => (slump ??= Math.random());
 const prenumerera = () => () => {};
@@ -127,10 +130,11 @@ const prenumerera = () => () => {};
 /**
  * Citatet i sidfoten, ett av dem slumpvis vid varje besök. Det väljs först när sidan har laddats, medan citatet ännu är dolt,
  * så att det inte byts framför ögonen på någon. I redigeringsläget står alla citat i en lista, där de ändras, läggs till och
- * byter ordning.
+ * byter ordning, och under dem formlerna som skrivs i rutnätet. Sidfoten lämnar formlerna till rutnätet (formel-kalla.ts).
  */
 export function SidfotCitat({ handskrift }: { handskrift: Handskrift }) {
   const { varde, aktiv, andra } = useBlock("b:handskrift", handskrift);
+  useEffect(() => satFormler(varde.formler), [varde.formler]);
   const alla = varde.citat.filter((c) => c.text.trim());
   // Väljs en gång per sidladdning. Sidfoten ligger kvar när man byter sida, och citatet med den.
   const tal = useSyncExternalStore(prenumerera, taSlump, () => 0);
@@ -166,6 +170,16 @@ export function SidfotCitat({ handskrift }: { handskrift: Handskrift }) {
             )
           }
         />
+        <Suspense fallback={null}>
+          <FormelLista
+            formler={varde.formler}
+            onChange={(nya) =>
+              andra((h) => {
+                h.formler = nya;
+              })
+            }
+          />
+        </Suspense>
       </div>
     );
   }

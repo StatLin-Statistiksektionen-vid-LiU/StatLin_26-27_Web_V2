@@ -1,32 +1,13 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { forbered, Orden } from "@/components/content/skrivning";
+import type { Ritad } from "@/components/content/formel";
+import { FormelVy } from "@/components/content/formel-vy";
+import { lasFormler, type RutnatFormel } from "./formel-kalla";
 
 /** Ljusets radie i pixlar. Rutan som lyser är dubbelt så bred, se .rutnat-ljus i globals.css. */
 const R = 200;
 
-/**
- * Formlerna som skrivs på papperet där pekaren lyser. Bara tecken som Mynerve har: _ ger index och ^ exponent (tolka i
- * skrivning.tsx), och mellanslagen delar formeln i det som skrivs i ett drag.
- */
-const FORMLER = [
-  "σ^2 = E[(X − μ)^2]",
-  "x̄ = Σ x_i / n",
-  "s^2 = Σ(x_i − x̄)^2 / (n − 1)",
-  "z = (x − μ) / σ",
-  "P(A|B) = P(B|A) P(A) / P(B)",
-  "ŷ = β_0 + β_1 x",
-  "X ~ N(μ, σ^2)",
-  "Var(X) = E[X^2] − E[X]^2",
-  "r = Cov(X, Y) / σ_X σ_Y",
-  "x̄ ± 1,96 · SE",
-  "H_0 : μ = μ_0",
-  "p < 0,05",
-  "R^2 = 1 − SS_{res} / SS_{tot}",
-  "E[X] = Σ x · p(x)",
-  "L(θ) = Π f(x_i | θ)",
-];
 /** Så långt pekaren ska ha rört sig, och så länge sedan förra formeln, innan nästa skrivs. Högst två finns samtidigt. */
 const STRACKA = 800;
 const MELLANRUM = 2500;
@@ -38,10 +19,7 @@ const TONAS = 1500;
 const STORLEK = 24;
 const STEG = 16;
 const SOK = 24;
-/** Var tredje formel skrivs med rödpenna, de andra med bläck. */
-const ROD_VAR = 3;
-
-type Formel = { id: number; text: string; x: number; y: number; vrid: number; rod: boolean };
+type Formel = { id: number; ritad: Ritad; x: number; y: number; vrid: number; rod: boolean };
 
 /** Det som inte är tomt papper: text, länkar, knappar, bilder och sådant som har en egen yta. */
 const HINDER = "a, button, input, textarea, select, label, img, svg, video, canvas, iframe, p, h1, h2, h3, h4, h5, h6, li, dt, dd, td, th, blockquote, figure, pre, nav, dialog, [role=dialog]";
@@ -71,8 +49,9 @@ function linjeGenom(e: Element, ruta: Ruta) {
  * stilla på sidan och sammanfaller med heroens rutnät, bara den lilla rutan målas om, och den följer med sidan när den scrollas.
  * Då och då skrivs en formel för hand på papperet under pekaren. Den hamnar mitt i den tomma ytan mellan innehållet, aldrig tätt
  * intill text eller i ett hörn av fönstret, och syns bara i ljuset: går pekaren vidare försvinner den, och efter en stund tonas den bort.
- * Bara med mus: CSS:en döljer ramen på pekskärmar. Med reducerad rörelse följer ljuset pekaren utan att tonas in och ut, och
- * formlerna står där direkt i stället för att skrivas fram.
+ * Formlerna står i LaTeX i blocket Handskriften (formel-kalla.ts) och läggs ut av formel.ts, som laddas först när pekaren har rört sig.
+ * Bara med mus: CSS:en döljer ramen på pekskärmar. Med reducerad rörelse följer ljuset pekaren utan att tonas in och ut, men formlerna
+ * skrivs ändå fram, eftersom det bara är bläck som syns fram och inget som rör sig.
  */
 export function RutnatLjus() {
   const ref = useRef<HTMLDivElement>(null);
@@ -99,10 +78,12 @@ export function RutnatLjus() {
     let stracka = 0;
     let senast = performance.now();
     let provad = 0;
-    let nasta = Math.floor(Math.random() * FORMLER.length);
+    let nasta = Math.floor(Math.random() * 1000);
     let id = 0;
     let typsnitt: "inget" | "laddar" | "klart" = "inget";
-    let matare: CanvasRenderingContext2D | null = null;
+    let motor: typeof import("@/components/content/formel") | null = null;
+    // Formlerna som redan lagts ut, efter sin LaTeX.
+    const ritade = new Map<string, Ritad>();
     let sida = location.pathname;
     const platser = new Map<number, { x: number; y: number }>();
 
@@ -169,30 +150,26 @@ export function RutnatLjus() {
       const nu = performance.now();
       if (stracka < STRACKA || nu - senast < MELLANRUM || nu - provad < 200) return;
       provad = nu;
-      // Typsnittet hämtas först när pekaren har rört sig en bit, och bara med mus.
-      if (typsnitt !== "klart") {
+      // Formlerna och typsnittet hämtas först när pekaren har rört sig en bit, och bara med mus.
+      if (typsnitt !== "klart" || !motor) {
         if (typsnitt === "inget") {
           typsnitt = "laddar";
-          document.fonts.load(`${STORLEK}px "Mynerve"`, FORMLER.join(" ")).then(
-            () => (typsnitt = "klart"),
-            () => (typsnitt = "inget"),
-          );
+          import("@/components/content/formel")
+            .then((m) => m.laddaTypsnitt().then(() => (motor = m)))
+            .then(
+              () => (typsnitt = "klart"),
+              () => (typsnitt = "inget"),
+            );
         }
         return;
       }
-      if (platser.size >= SAMTIDIGT) return;
+      const alla = lasFormler();
+      if (!alla.length || platser.size >= SAMTIDIGT) return;
       const o = matOrigo();
       const sx = px + window.scrollX - o.x;
       const sy = py + window.scrollY - o.y;
       // Inte ovanpå en formel som redan står där.
       for (const p of platser.values()) if (Math.hypot(p.x - sx, p.y - sy) < 360) return;
-
-      const text = FORMLER[nasta];
-      matare ??= document.createElement("canvas").getContext("2d");
-      if (!matare) return;
-      matare.font = `${STORLEK}px Mynerve`;
-      const bredd = Math.ceil(matare.measureText(text.replace(/[_^{}]/g, "")).width) + 8;
-      const hojd = Math.round(STORLEK * 1.35);
 
       // Den tomma ytan kring pekaren, vågrätt och lodrätt, i ytan som lyser. Dess och fönstrets kanter räknas som innehåll, så att
       // formeln inte hamnar i ett hörn.
@@ -211,11 +188,27 @@ export function RutnatLjus() {
       while (r + SOK < hoger && r - px < 420 && tomt(r + SOK, py)) r += SOK;
       while (t - SOK > topp && py - t < 220 && tomt(px, t - SOK)) t -= SOK;
       while (b + SOK < botten && b - py < 220 && tomt(px, b + SOK)) b += SOK;
-      if (r - l < bredd + 72 || b - t < hojd + 48) return;
+      // Nästa formel i ordningen som ryms i ytan, med 4 px runt om för bläck som går utanför tecknen. En som är för stor här hoppas
+      // över den här gången, så att en lång formel inte stoppar de andra.
+      let valt: RutnatFormel | null = null;
+      let ritad: Ritad | null = null;
+      let bredd = 0;
+      let hojd = 0;
+      for (let i = 0; i < alla.length && !valt; i++) {
+        const f = alla[(nasta + i) % alla.length];
+        let rf = ritade.get(f.tex);
+        if (!rf) ritade.set(f.tex, (rf = motor.ritaFormel(f.tex)));
+        const w = Math.ceil(rf.ruta.w * STORLEK) + 8;
+        const h = Math.ceil((rf.ruta.h + rf.ruta.d) * STORLEK) + 8;
+        if (r - l < w + 72 || b - t < h + 36) continue;
+        [valt, ritad, bredd, hojd] = [f, rf, w, h];
+        nasta += i;
+      }
+      if (!valt || !ritad) return;
       // Mitt i den tomma ytan, men så nära pekaren att formeln skrivs i ljuset.
       const klamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
       const cx = klamp(klamp((l + r) / 2, px - 110, px + 110), l + bredd / 2 + 36, r - bredd / 2 - 36);
-      const cy = klamp(klamp((t + b) / 2, py - 50, py + 50), t + hojd / 2 + 24, b - hojd / 2 - 24);
+      const cy = klamp(klamp((t + b) / 2, py - 50, py + 50), t + hojd / 2 + 18, b - hojd / 2 - 18);
       const x = cx - bredd / 2;
       const y = cy - hojd / 2;
       // Hela rutan med marginal ska vara tom, inte bara korset genom pekaren.
@@ -229,18 +222,19 @@ export function RutnatLjus() {
       for (const el of traffade) for (let e: Element | null = el; e && e !== stopp && !runt.has(e); e = e.parentElement) runt.add(e);
       for (const e of runt) if (linjeGenom(e, ruta)) return;
 
-      // Baslinjen hamnar på en linje i rutnätet. Med radhöjd 1 ligger baslinjen 0,775 em under rutans överkant (Mynerves höjd och djup).
-      const baslinje = Math.round((y + hojd * 0.72 + window.scrollY - o.y) / STEG) * STEG;
+      // Baslinjen hamnar på en linje i rutnätet, och formelns överkant ligger h em över den.
+      const ovan = ritad.ruta.h * STORLEK;
+      const baslinje = Math.round((y + 4 + ovan + window.scrollY - o.y) / STEG) * STEG;
       const formel: Formel = {
         id: ++id,
-        text,
-        x: Math.round(x + window.scrollX - o.x),
-        y: baslinje - Math.round(STORLEK * 0.775),
+        ritad,
+        x: Math.round(x + 4 + window.scrollX - o.x),
+        y: Math.round(baslinje - ovan),
         vrid: Math.round((Math.random() * 3 - 2) * 10) / 10,
-        rod: id % ROD_VAR === 0,
+        rod: !!valt.rod,
       };
       platser.set(formel.id, { x: formel.x + bredd / 2, y: formel.y + hojd / 2 });
-      nasta = (nasta + 1) % FORMLER.length;
+      nasta++;
       stracka = 0;
       senast = nu;
       setFormler((f) => [...f, formel]);
@@ -330,10 +324,13 @@ export function RutnatLjus() {
   );
 }
 
-/** En formel som skrivs fram, står kvar en stund och tonas bort. Med reducerad rörelse står den där direkt och tonas bara bort. */
+/**
+ * En formel som skrivs fram, står kvar en stund och tonas bort. Den skrivs fram även med reducerad rörelse: där släpper CSS:en
+ * igenom just de här animationerna (globals.css), och toningen görs med JavaScript.
+ */
 function SkrivenFormel({ formel, klar }: { formel: Formel; klar: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { ord, slut } = forbered(formel.text, 0, 55, 110);
+  const { ruta, slut } = formel.ritad;
   const klarRef = useRef(klar);
   useLayoutEffect(() => {
     klarRef.current = klar;
@@ -342,23 +339,18 @@ function SkrivenFormel({ formel, klar }: { formel: Formel; klar: () => void }) {
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const lugn = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    el.dataset.skriv = lugn ? "klar" : "skriver";
+    el.dataset.skriv = "skriver";
     let tona: Animation | undefined;
     const borta = () => {
       el.parentElement?.dispatchEvent(new CustomEvent("formel-borta", { detail: formel.id }));
       klarRef.current();
     };
     const timers = [
-      window.setTimeout(() => (el.dataset.skriv = "klar"), lugn ? 0 : slut + 150),
-      window.setTimeout(
-        () => {
-          // Med JavaScript, så att det tonas också med reducerad rörelse, där CSS-animationerna är avstängda.
-          tona = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: TONAS, easing: "ease-in", fill: "forwards" });
-          tona.finished.then(borta, () => {});
-        },
-        (lugn ? 0 : slut) + KVAR,
-      ),
+      window.setTimeout(() => (el.dataset.skriv = "klar"), slut + 150),
+      window.setTimeout(() => {
+        tona = el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: TONAS, easing: "ease-in", fill: "forwards" });
+        tona.finished.then(borta, () => {});
+      }, slut + KVAR),
     ];
     return () => {
       for (const t of timers) clearTimeout(t);
@@ -370,9 +362,20 @@ function SkrivenFormel({ formel, klar }: { formel: Formel; klar: () => void }) {
     <div
       ref={ref}
       className={formel.rod ? "handskrift rutnat-formel rutnat-formel-rod" : "handskrift rutnat-formel"}
-      style={{ left: formel.x, top: formel.y, "--fl": `${formel.x}px`, "--ft": `${formel.y}px`, "--vrid": `${formel.vrid}deg`, fontSize: STORLEK } as CSSProperties}
+      style={
+        {
+          left: formel.x,
+          top: formel.y,
+          "--fl": `${formel.x}px`,
+          "--ft": `${formel.y}px`,
+          "--vrid": `${formel.vrid}deg`,
+          // Formeln vrids kring baslinjens vänstra ände.
+          transformOrigin: `0 ${Math.round((ruta.h / Math.max(ruta.h + ruta.d, 0.01)) * 100)}%`,
+          fontSize: STORLEK,
+        } as CSSProperties
+      }
     >
-      <Orden ord={ord} />
+      <FormelVy ruta={ruta} className="formel-block" />
     </div>
   );
 }

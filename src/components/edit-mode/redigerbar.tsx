@@ -101,6 +101,8 @@ export type ListaProps<T> = {
   efter?: ReactNode;
   /** Extra knappar i rutan för en rad, t.ex. flytta till en annan grupp. */
   verktyg?: (item: T, index: number, stang: () => void) => ReactNode;
+  /** Visas i rutan under fälten och följer det man skriver, som formeln i rutnätet. */
+  forhandsvisning?: (utkast: T) => ReactNode;
 };
 
 export function ListaVy<T>({ items, render, as: As = "ul", className, itemAs: ItemAs = "li", itemClassName, itemProps, nyckel, efter }: ListaProps<T>) {
