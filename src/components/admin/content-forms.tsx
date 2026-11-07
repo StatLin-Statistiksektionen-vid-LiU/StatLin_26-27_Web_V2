@@ -258,6 +258,26 @@ export function EducationCommitteeSection({ s, committees }: { s: SiteSettings; 
   );
 }
 
+/** Läget sajten öppnas i, för datorn och telefonen var för sig. Se src/lib/tema.ts. */
+export function ThemeSection({ s }: { s: SiteSettings }) {
+  return (
+    <FormSection title="Mörkt eller ljust läge" description="Läget sajten öppnas i för besökare som inte själva har valt. Den som har tryckt på knappen för läget behåller sitt eget val.">
+      <Field label="På datorn" name="tema_dator" hint="När sidomenyn syns till vänster, på skärmar som är minst 1024 pixlar breda.">
+        <Select name="tema_dator" defaultValue={s.tema_dator}>
+          <option value="mork">Mörkt</option>
+          <option value="ljust">Ljust</option>
+        </Select>
+      </Field>
+      <Field label="På telefonen" name="tema_telefon" hint="När menyn öppnas med knappen upptill, alltså på telefoner och smalare skärmar.">
+        <Select name="tema_telefon" defaultValue={s.tema_telefon}>
+          <option value="mork">Mörkt</option>
+          <option value="ljust">Ljust</option>
+        </Select>
+      </Field>
+    </FormSection>
+  );
+}
+
 /** Sidfotens två texter: den stora sloganen under loggan och beskrivningen under den. */
 export function TaglineSection({ s }: { s: SiteSettings }) {
   return (

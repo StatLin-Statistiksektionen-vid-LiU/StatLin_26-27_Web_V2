@@ -26,6 +26,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   hero_ring_color: "red",
   hero_formulas: "pa",
   band_color: "vit",
+  tema_dator: "mork",
+  tema_telefon: "mork",
   home_intro: "Vi är statistikstudenternas sektion i Linköping. Här möts *gemenskap*, *utbildning* och vägen ut i *arbetslivet*.",
   announcement: "",
   announcement_url: "",

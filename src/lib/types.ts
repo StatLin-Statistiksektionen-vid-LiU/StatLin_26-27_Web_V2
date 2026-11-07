@@ -304,6 +304,9 @@ export interface SiteSettings extends Record<SiteTextKey, string> {
   /** Formelringen runt loggan på startsidan, på eller av. */
   hero_formulas: "pa" | "av";
   band_color: "vit" | "rod" | "natt";
+  /** Läget sajten öppnas i på datorn och på telefonen, för besökare som inte själva valt. Se src/lib/tema.ts. */
+  tema_dator: "mork" | "ljust";
+  tema_telefon: "mork" | "ljust";
   home_intro: string;
   announcement: string;
   announcement_url: string;

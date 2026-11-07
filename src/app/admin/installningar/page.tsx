@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { saveSettings } from "@/app/admin/_actions/content";
 import { ActionForm } from "@/components/admin/action-form";
-import { AnnouncementSection, ContactSection, EducationCommitteeSection, HomeTextsSection, SiteTextsSection, SocialSection, TaglineSection } from "@/components/admin/content-forms";
+import { AnnouncementSection, ContactSection, EducationCommitteeSection, HomeTextsSection, SiteTextsSection, SocialSection, TaglineSection, ThemeSection } from "@/components/admin/content-forms";
 import { AdminHeader } from "@/components/admin/ui";
 import { canManageSettings } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
@@ -25,7 +25,7 @@ async function Settings() {
   const [s, committees] = await Promise.all([getSettings(), listCommittees()]);
   return (
     <>
-      <AdminHeader title="Inställningar" description="Startsidans texter, kontaktuppgifter och länkar som visas i sidfoten och på kontaktsidan." />
+      <AdminHeader title="Inställningar" description="Startsidans texter, kontaktuppgifter och länkar som visas i sidfoten och på kontaktsidan, och läget sajten öppnas i." />
       <ActionForm action={saveSettings}>
         <div className="grid gap-6 lg:grid-cols-2">
           <HomeTextsSection s={s} className="lg:col-span-2" />
@@ -34,6 +34,7 @@ async function Settings() {
           <AnnouncementSection s={s} />
           <TaglineSection s={s} />
           <EducationCommitteeSection s={s} committees={committees} />
+          <ThemeSection s={s} />
         </div>
       </ActionForm>
       {/* Samma fält som pennorna i redigeringsläget öppnar, se site-texts.ts. Ett eget formulär, så att listan inte blir en del av det ovan. */}

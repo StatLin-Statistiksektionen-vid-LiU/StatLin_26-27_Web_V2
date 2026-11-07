@@ -422,6 +422,8 @@ const settingsSchema = z.object({
   hero_ring_color: z.enum(["red", "white"], "Välj röd eller vit."),
   hero_formulas: z.enum(["pa", "av"], "Välj på eller av."),
   band_color: z.enum(["vit", "rod", "natt"], "Välj en av färgerna."),
+  tema_dator: z.enum(["mork", "ljust"], "Välj mörkt eller ljust."),
+  tema_telefon: z.enum(["mork", "ljust"], "Välj mörkt eller ljust."),
   home_intro: zRequired(400, "Texten"),
   announcement: zText(200),
   announcement_url: zUrl,

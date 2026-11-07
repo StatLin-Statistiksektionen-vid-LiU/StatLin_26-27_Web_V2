@@ -33,11 +33,11 @@ function apply(dark: boolean) {
 }
 
 /**
- * Byter mellan ljust och mörkt läge. Mörkt är standard, och valet sparas i webbläsaren.
+ * Byter mellan ljust och mörkt läge, och valet sparas i webbläsaren. Den som inte valt får standardläget från Admin, se src/lib/tema.ts.
  * Där webbläsaren kan View Transitions sprider sig det nya läget som en cirkel från knappen; annars byts det direkt.
  */
 export function ThemeToggle({ className, withLabel }: { className?: string; withLabel?: boolean }) {
-  // Servern ritar knappen för standardläget, mörkt. Har besökaren valt ljust byts ikonen efter hydreringen.
+  // Servern ritar knappen för mörkt läge. Är sidan ljus byts ikonen efter hydreringen.
   const dark = useSyncExternalStore(subscribe, isDark, () => true);
   const toggle = (e: MouseEvent<HTMLButtonElement>) => {
     const next = !isDark();
