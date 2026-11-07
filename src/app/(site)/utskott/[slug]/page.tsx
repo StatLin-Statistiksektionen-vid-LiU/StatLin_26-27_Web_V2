@@ -57,7 +57,7 @@ async function Committee({ params }: { params: PageProps<"/utskott/[slug]">["par
   const sida = (
     <>
       <Editable target={{ type: "committee", id: c.id }} label="Redigera utskottet" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
-      <header className="relative overflow-hidden border-b border-line">
+      <header data-ljus className="relative overflow-hidden border-b border-line">
         {estig ? (
           <>
             {/* Ett rutnät av pixlar med några tända i eSTIG:s färger. De står i rutorna på alla bredder. */}

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 /**
  * Millimeterpapper bakom startsidans hero, tonat mot kanterna. På en dator med mus lyser rutnätet upp i rött i en cirkel kring
  * pekaren. Läget skrivs som två CSS-variabler en gång per bildruta; masken i .hero-rutnat-ljus gör resten.
- * På sajtens sidor sköter RutnatLjus ljuset över hela sidan, och heron där har ljus={false}. Inloggningen har sitt eget ljus.
+ * På sajtens sidor sköter RutnatLjus ljuset i heron och sidhuvudena, och heron där har ljus={false}. Inloggningen har sitt eget ljus.
  */
 export function HeroGrid({ className, ljus = true }: { className?: string; ljus?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);

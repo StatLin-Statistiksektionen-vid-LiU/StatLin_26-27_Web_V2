@@ -42,7 +42,7 @@ async function Article({ params }: { params: PageProps<"/nyheter/[slug]">["param
   return (
     <article>
       <Editable target={{ type: "news", id: item.id, committeeId: item.committee_id }} label="Redigera nyheten" inset penClassName="top-[calc(var(--header-h)+1rem)] right-4">
-      <header className="relative overflow-hidden border-b border-line">
+      <header data-ljus className="relative overflow-hidden border-b border-line">
         <div className="grid-millimeter pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
         <div className="container-prose relative pb-8 pt-[calc(var(--header-h)+1.5rem)] md:pb-10 md:pt-[calc(var(--header-h)+2.5rem)]">
           <Link href="/nyheter" className="tryck kicker inline-flex items-center gap-2 text-stone transition-colors hover:text-ink">

@@ -887,8 +887,9 @@ html:not(.js) .meny-knapp {
   opacity: 1;
 }
 /*
- * Ljuset över hela sidan (RutnatLjus). Ramen täcker sidan och sidfoten till höger om sidomenyn, bakom innehållet, och klipper ljuset
- * vid kanterna. Ljuset är en ruta på 400 px som flyttas med translate; rutnätet i den förskjuts lika mycket tillbaka, så att linjerna
+ * Ljuset kring pekaren (RutnatLjus). Ramen täcker sidan och sidfoten till höger om sidomenyn, bakom innehållet, men ljuset tänds bara
+ * över ytor med data-ljus (heron och sidhuvudena), och skriptet klipper ramen vid ytans kanter med clip-path.
+ * Ljuset är en ruta på 400 px som flyttas med translate; rutnätet i den förskjuts lika mycket tillbaka, så att linjerna
  * ligger stilla på sidan i linje med heroens rutnät. Samma styrka och storlek som heroens ljus på inloggningen.
  */
 .rutnat-ram {

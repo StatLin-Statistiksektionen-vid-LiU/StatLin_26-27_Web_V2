@@ -260,7 +260,7 @@ async function openDeleteConfirm(page) {
         });
       const inlineTilt = (p) => p.locator(".logo-tilt").evaluate((el) => el.style.transform);
       const ringFilter = (p) => p.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter);
-      // Rutnätets ljus över hela sidan: data-aktiv på ramen och pekarens läge som två CSS-variabler på ljuset i den, satta av RutnatLjus.
+      // Rutnätets ljus i heron och sidhuvudena: data-aktiv på ramen och pekarens läge som två CSS-variabler på ljuset i den, satta av RutnatLjus.
       const gridLight = (p) => p.locator(".rutnat-ram").evaluate((el) => ({ active: el.hasAttribute("data-aktiv"), style: el.querySelector(".rutnat-ljus").style.cssText }));
       // Introt får inte hålla kvar sina lager på telefonen när det är slut. Slutbilden är densamma utan dem.
       const introIsOver = () => !document.getAnimations().some((a) => ["logo-ring-in", "grid-wipe", "logo-fade", "logo-glow-in", "sig-wipe", "sig-glow"].includes(a.animationName));
@@ -360,14 +360,16 @@ async function openDeleteConfirm(page) {
       await desktop.mouse.move(100, 100);
       await desktop.waitForTimeout(500);
       assert.notEqual(await inlineTilt(desktop), tiltBefore, "loggan ska följa musen");
-      // Rutnätet lyser upp kring musen på hela sidan, också över sidomenyn, och släcks när musen lämnar fönstret.
+      // Rutnätet lyser upp kring musen i heron och sidhuvudena (data-ljus) men inte över resten av sidan, och släcks när musen lämnar fönstret.
       const hero = await desktop.locator("section[data-startsida]").boundingBox();
       await desktop.mouse.move(hero.x + 200, hero.y + 200, { steps: 4 });
       await desktop.waitForFunction(() => document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
       assert.match((await gridLight(desktop)).style, /--x: -?\d+px; --y: -?\d+px;/);
+      assert.match(await desktop.locator(".rutnat-ram").evaluate((el) => el.style.clipPath), /^polygon\(/, "ljuset ska klippas vid heronens kanter");
       await desktop.mouse.move(100, 300, { steps: 4 });
-      await desktop.waitForTimeout(100);
-      assert.equal((await gridLight(desktop)).active, true, "ljuset ska följa med över sidomenyn");
+      await desktop.waitForFunction(() => !document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
+      await desktop.mouse.move(hero.x + 240, hero.y + 220, { steps: 4 });
+      await desktop.waitForFunction(() => document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
       // Playwright kan inte flytta musen ut ur fönstret, så händelsen som webbläsaren skickar då skickas här direkt.
       await desktop.evaluate(() => document.documentElement.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: null })));
       await desktop.waitForFunction(() => !document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });

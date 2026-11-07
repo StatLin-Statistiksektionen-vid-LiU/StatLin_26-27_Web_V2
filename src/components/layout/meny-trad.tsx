@@ -67,6 +67,10 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
   // Undersidor med ankare (/foretag#kompetens) ska inte markeras som sidan själv.
   const exact = (href: string) => !href.includes("#") && active(href);
   const groupActive = (g: NavGroup) => active(g.href) || !!g.children?.some((c) => exact(c.href));
+  // Bara den undersida som passar sökvägen bäst markeras, så att Om StatLin (/sektionen) inte lyser bredvid Styrelsen på /sektionen/styrelsen.
+  const basta = grupper
+    .flatMap((g) => g.children ?? [])
+    .reduce<string | null>((b, c) => (exact(c.href) && (b === null || c.href.length > b.length) ? c.href : b), null);
 
   const row = cn(
     "flex w-full items-center gap-2.5 rounded-md px-2.5 transition-colors",
@@ -86,7 +90,7 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
   };
 
   const barn = (c: NavItem) => {
-    const here = exact(c.href);
+    const here = c.href === basta;
     return (
       <Link
         href={c.href}

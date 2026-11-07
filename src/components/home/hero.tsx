@@ -152,9 +152,9 @@ function HeroOmVy({ s, start, siffror, plats }: { s: SiteSettings; start: Start;
 export function Hero() {
   return (
     // data-hero-yta: meddelandet från Inställningar väntar tills heron inte längre når ner i skärmens nedre del, se AnnouncementPill.
-    <section data-startsida data-hero-yta className="hero relative isolate border-b border-line">
+    <section data-startsida data-hero-yta data-ljus className="hero relative isolate border-b border-line">
       <IntroOnce />
-      {/* Ljuset kring pekaren kommer från RutnatLjus i layouten, som lyser över hela sidan och ligger i linje med det här rutnätet. */}
+      {/* Ljuset kring pekaren kommer från RutnatLjus i layouten, som lyser här och i sidhuvudena (data-ljus) och ligger i linje med det här rutnätet. */}
       <HeroGrid ljus={false} />
       <div className="container-site relative grid items-center gap-7 pb-8 pt-[calc(var(--header-h)+1.75rem)] md:pb-10 md:pt-[calc(var(--header-h)+2.75rem)] lg:grid-cols-12 lg:gap-10">
         <div className="min-w-0 lg:col-span-7">

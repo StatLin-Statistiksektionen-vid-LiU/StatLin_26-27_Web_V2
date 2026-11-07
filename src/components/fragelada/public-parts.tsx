@@ -4,7 +4,7 @@ import Link from "next/link";
 /** Sidhuvudet är lågt och avslutas med en tunn linje, så att koden syns utan att man scrollar på telefonen. */
 export function FrageladaHeader() {
   return (
-    <header className="relative overflow-hidden border-b border-line">
+    <header data-ljus className="relative overflow-hidden border-b border-line">
       <div className="grid-millimeter pointer-events-none absolute inset-0 text-ink [mask-image:radial-gradient(ellipse_at_top,black,transparent_70%)]" aria-hidden />
       <div className="container-site relative pb-7 pt-[calc(var(--header-h)+1.5rem)] md:pb-10 md:pt-[calc(var(--header-h)+3rem)]">
         <p className="kicker flex items-center gap-2.5 text-stone">

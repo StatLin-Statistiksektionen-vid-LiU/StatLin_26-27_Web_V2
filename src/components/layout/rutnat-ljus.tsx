@@ -64,7 +64,8 @@ function linjeGenom(e: Element, ruta: Ruta) {
 }
 
 /**
- * Rutnätet lyser upp i rött kring muspekaren på hela sidan, som om sidan står på millimeterpapper.
+ * Rutnätet lyser upp i rött kring muspekaren där sidan har millimeterpapper: heron på startsidan och sidhuvudena, som har data-ljus.
+ * Utanför dem lyser inget, och ljuset klipps vid ytans kanter, som vid hårlinjen under sidhuvudet.
  * Ramen täcker sidan och sidfoten och ligger bakom allt innehåll, så ljuset syns på det tomma papperet men inte genom kort med egen bakgrund.
  * Ljuset är en liten ruta som flyttas med translate, och rutnätet i den förskjuts lika mycket åt andra hållet. Linjerna ligger därför
  * stilla på sidan och sammanfaller med heroens rutnät, bara den lilla rutan målas om, och den följer med sidan när den scrollas.
@@ -90,6 +91,10 @@ export function RutnatLjus() {
     let px = 0;
     let py = 0;
     let aktiv = false;
+    // Pekaren är i fönstret, elementet under den efter senaste rörelsen (null efter en scroll) och ytan som ljuset är klippt efter.
+    let inne = false;
+    let mal: EventTarget | null = null;
+    let klippt: HTMLElement | null = null;
     // Formlerna: hur långt pekaren rört sig sedan förra, när den skrevs, vilken som står på tur och var de står.
     let stracka = 0;
     let senast = performance.now();
@@ -135,7 +140,32 @@ export function RutnatLjus() {
       return s;
     };
 
-    const skrivFormel = () => {
+    /** Ytan med millimeterpapper under pekaren, eller null. */
+    const ytaUnder = () => {
+      const el = mal instanceof Element ? mal : document.elementFromPoint(px, py);
+      mal = null;
+      return el?.closest<HTMLElement>("[data-ljus]") ?? null;
+    };
+    /** Klipper ljuset och formlerna vid ytans kanter. Räknat från ramens övre vänstra hörn, så att det står still när sidan växer nedåt. */
+    const klipp = (yta: HTMLElement) => {
+      const r = ram.getBoundingClientRect();
+      const q = yta.getBoundingClientRect();
+      const v = Math.round(q.left - r.left);
+      const t = Math.round(q.top - r.top);
+      const h = Math.round(q.right - r.left);
+      const b = Math.round(q.bottom - r.top);
+      ram.style.clipPath = `polygon(${v}px ${t}px, ${h}px ${t}px, ${h}px ${b}px, ${v}px ${b}px)`;
+      klippt = yta;
+    };
+    /** Släcker ljuset. Klippet står kvar medan det tonas ut och mäts om nästa gång pekaren kommer in i en yta. */
+    const slack = () => {
+      klippt = null;
+      if (!aktiv) return;
+      aktiv = false;
+      delete ram.dataset.aktiv;
+    };
+
+    const skrivFormel = (yta: HTMLElement) => {
       const nu = performance.now();
       if (stracka < STRACKA || nu - senast < MELLANRUM || nu - provad < 200) return;
       provad = nu;
@@ -164,12 +194,14 @@ export function RutnatLjus() {
       const bredd = Math.ceil(matare.measureText(text.replace(/[_^{}]/g, "")).width) + 8;
       const hojd = Math.round(STORLEK * 1.35);
 
-      // Den tomma ytan kring pekaren, vågrätt och lodrätt. Fönstrets kanter räknas som innehåll, så att formeln inte hamnar i ett hörn.
+      // Den tomma ytan kring pekaren, vågrätt och lodrätt, i ytan som lyser. Dess och fönstrets kanter räknas som innehåll, så att
+      // formeln inte hamnar i ett hörn.
       svar.clear();
-      const vanster = ram.getBoundingClientRect().left + 48;
-      const hoger = window.innerWidth - 48;
-      const topp = 56;
-      const botten = window.innerHeight - 56;
+      const q = yta.getBoundingClientRect();
+      const vanster = Math.max(ram.getBoundingClientRect().left, q.left) + 48;
+      const hoger = Math.min(window.innerWidth, q.right) - 48;
+      const topp = Math.max(56, q.top + 24);
+      const botten = Math.min(window.innerHeight - 56, q.bottom - 24);
       if (px < vanster || px > hoger || py < topp || py > botten || !tomt(px, py)) return;
       let l = px;
       let r = px;
@@ -220,9 +252,14 @@ export function RutnatLjus() {
       if (location.pathname !== sida) {
         sida = location.pathname;
         origo = null;
+        klippt = null;
         platser.clear();
         setFormler((f) => (f.length ? [] : f));
       }
+      // Bara där sidan har millimeterpapper.
+      const yta = inne ? ytaUnder() : null;
+      if (!yta) return slack();
+      if (klippt !== yta) klipp(yta);
       const o = matOrigo();
       const x = Math.round(px + window.scrollX - o.x);
       const y = Math.round(py + window.scrollY - o.y);
@@ -235,7 +272,7 @@ export function RutnatLjus() {
         aktiv = true;
         ram.dataset.aktiv = "";
       }
-      skrivFormel();
+      skrivFormel(yta);
     };
     const begar = () => {
       if (!raf) raf = requestAnimationFrame(rita);
@@ -245,19 +282,25 @@ export function RutnatLjus() {
       if (aktiv) stracka += Math.hypot(e.clientX - px, e.clientY - py);
       px = e.clientX;
       py = e.clientY;
+      mal = e.target;
+      inne = true;
       begar();
     };
-    // Scrollar man med hjulet står pekaren still i fönstret medan sidan rör sig, så ljuset flyttas med.
+    // Scrollar man med hjulet står pekaren still i fönstret medan sidan rör sig, så ljuset flyttas med, och tänds eller släcks
+    // när en yta med millimeterpapper kommer in under pekaren eller lämnar den.
     const onScroll = () => {
-      if (aktiv) begar();
+      if (inne) begar();
     };
     // Pekaren lämnade fönstret.
     const onOut = (e: PointerEvent) => {
       if (e.relatedTarget) return;
-      aktiv = false;
-      delete ram.dataset.aktiv;
+      inne = false;
+      slack();
     };
-    const onResize = () => (origo = null);
+    const onResize = () => {
+      origo = null;
+      klippt = null;
+    };
     // En formel som tonats bort lämnar platsen fri.
     const onBorta = (e: Event) => platser.delete((e as CustomEvent<number>).detail);
 
