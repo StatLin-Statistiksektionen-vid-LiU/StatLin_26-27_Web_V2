@@ -53,7 +53,10 @@ function startsida(request: NextRequest): NextResponse {
     return NextResponse.next();
   }
   if (!vag) return NextResponse.next();
-  const url = request.nextUrl.clone();
+  // Adressen byggs från request.url, som omdirigeringarna nedan och Nexts egna exempel. Servern får inte startas med värden
+  // 127.0.0.1 (next start -H 127.0.0.1): Next skriver då om värden till localhost här, ser sedan den nya adressen som en annan värd
+  // och hämtar sidan över nätet från sig själv, vilket ger fel 500 bakom en proxy med https. Docker-bilden kör HOSTNAME=0.0.0.0.
+  const url = new URL(request.url);
   url.pathname = vag;
   return NextResponse.rewrite(url);
 }
