@@ -40,8 +40,8 @@ function svar(request: NextRequest): NextResponse {
 }
 
 /**
- * Startsidan visar heron som valts i redigeringsläget, se src/lib/hero-val.ts. Dagens hero är sidan själv. Förslagen ligger på
- * /hero/1 till /hero/3 och visas här utan att adressen ändras. Det gäller alla anrop till startsidan, också sidbyten i klienten
+ * Startsidan visar heron som valts i redigeringsläget, och förslag 1 om inget är valt, se src/lib/hero-val.ts. Dagens hero är
+ * sidan själv. Förslagen ligger på /hero/1 till /hero/3 och visas här utan att adressen ändras. Det gäller alla anrop till startsidan, också sidbyten i klienten
  * och server actions, så att servern och webbläsaren är överens om vilken sida som visas. Går databasen inte att läsa visas dagens.
  */
 function startsida(request: NextRequest): NextResponse {

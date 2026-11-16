@@ -5,7 +5,10 @@ import { START_METADATA } from "@/lib/site-metadata";
 
 export const metadata: Metadata = START_METADATA;
 
-/** Startsidan med dagens hero. Har ett av förslagen valts i redigeringsläget visar proxyn i stället /hero/1 till /hero/3 här. */
+/**
+ * Startsidan med dagens hero. Den visas när Dagens är vald i redigeringsläget. Annars visar proxyn det valda förslaget här, från
+ * /hero/1 till /hero/3, och förslag 1 om inget är valt (src/lib/hero-val.ts).
+ */
 export default function HomePage() {
   return <Startsida hero={<Hero />} val="nu" />;
 }
