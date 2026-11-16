@@ -70,6 +70,20 @@ function placeOnAgenda(meetingId: number, itemId: number) {
   })();
 }
 
+/**
+ * Lägger tillbaka en struken punkt ur mallen eller från ordföranden där den stod. Den har kvar sin plats i ordningen, och annars
+ * hamnade en punkt som ströks av misstag, som Mötets öppnande, före Övriga frågor och fick flyttas upp ett steg i taget.
+ */
+function restoreOnAgenda(meetingId: number, itemId: number) {
+  const db = getDb();
+  const sort = db.prepare("UPDATE meeting_items SET sort_order = ? WHERE id = ?");
+  db.transaction(() => {
+    db.prepare("UPDATE meeting_items SET status = 'agenda' WHERE id = ?").run(itemId);
+    const rows = db.prepare("SELECT id FROM meeting_items WHERE meeting_id = ? AND status = 'agenda' ORDER BY sort_order, id").all(meetingId) as { id: number }[];
+    rows.forEach((r, i) => sort.run((i + 1) * 10, r.id));
+  })();
+}
+
 /* ---------- Mötena ---------- */
 
 export async function createMeeting(_prev: FormState, fd: FormData): Promise<FormState> {
@@ -150,6 +164,26 @@ export async function proposeItem(_prev: FormState, fd: FormData): Promise<FormS
   return { ok: true, message: chair ? "Punkten står nu på dagordningen." : "Tack! Förslaget väntar på ordförandens beslut." };
 }
 
+/**
+ * Rättar en punkt eller ett förslag: rubriken och beskrivningen. Platsen på dagordningen och statusen står kvar. Ordföranden rättar
+ * alla, och den som föreslog en punkt rättar sin egen så länge ordföranden inte har bestämt något, som med att dra tillbaka den.
+ */
+export async function updateItem(_prev: FormState, fd: FormData): Promise<FormState> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  const id = idOf(fd.get("id"));
+  const item = id ? itemRow(id) : undefined;
+  if (!id || !item) return { error: "Punkten finns inte längre. Ladda om sidan." };
+  if (!canManageMeetings(user) && !(item.proposed_by === user.id && item.status === "proposed")) return forbidden("Bara ordföranden kan ändra punkterna på dagordningen.");
+  const parsed = itemSchema.omit({ meeting_id: true }).safeParse(formObject(fd));
+  if (!parsed.success) return invalid(parsed.error);
+  const { title, description } = parsed.data;
+  getDb().prepare("UPDATE meeting_items SET title = ?, description = ? WHERE id = ?").run(title, description, id);
+  audit(user.id, "update", "meeting_item", id, title);
+  revalidateMeetings();
+  return { ok: true };
+}
+
 /** Ordförandens knappar: ta med (agenda), avslå eller stryk (declined). En struken punkt kan läggas tillbaka. */
 export async function decideItem(fd: FormData): Promise<FormState> {
   const user = await actionUser();
@@ -160,7 +194,10 @@ export async function decideItem(fd: FormData): Promise<FormState> {
   if (!id || !item) return { error: "Punkten finns inte längre. Ladda om sidan." };
   const decision = fd.get("decision");
   if (decision === "agenda") {
-    if (item.status !== "agenda") placeOnAgenda(item.meeting_id, id);
+    // Utan förslagsställare stod punkten på dagordningen innan den ströks. Ett förslag kan ha avslagits utan att någonsin stå där,
+    // så det hamnar före Övriga frågor, som när det tas med.
+    if (item.status === "declined" && item.proposed_by === null) restoreOnAgenda(item.meeting_id, id);
+    else if (item.status !== "agenda") placeOnAgenda(item.meeting_id, id);
   } else if (decision === "declined") {
     getDb().prepare("UPDATE meeting_items SET status = 'declined' WHERE id = ?").run(id);
   } else {

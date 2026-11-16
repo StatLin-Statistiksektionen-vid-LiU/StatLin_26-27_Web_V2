@@ -46,7 +46,7 @@ export function BoxForm({ box, suggestedCode }: { box?: Box; suggestedCode?: str
     <ActionForm action={saveBox} version={box?.updated_at} submitLabel={box ? "Spara" : "Skapa låda"} stickyFooter={false} className="max-w-2xl space-y-5">
       {box && <input type="hidden" name="id" value={box.id} />}
       <Field label="Titel" name="title" required hint="Syns för den som skriver, till exempel kursens namn.">
-        <TextInput name="title" maxLength={80} defaultValue={box?.title} required />
+        <TextInput name="title" maxLength={80} defaultValue={box?.title} required autoFocus={!box} />
       </Field>
       <Field label="Beskrivning" name="description" hint="Valfri. Vad vill du ha frågor om?">
         <TextArea name="description" maxLength={300} defaultValue={box?.description} />

@@ -102,7 +102,7 @@ function Switch({ open }: { open: boolean }) {
           {open
             ? "Besökare kan skriva till öppna lådor, och länkarna till UBU:s och AMO:s lådor syns på sajten."
             : "Besökare ser att frågelådan öppnar snart, inga länkar syns och inskick nekas."}{" "}
-          Slå inte på förrän någon har bekräftat vem som är AMO och att posten läser sin låda (U-04).
+          Slå inte på förrän någon har bekräftat vem som är AMO och att posten läser sin låda.
         </p>
       </div>
       <form action={setFrageladaOpen} className="shrink-0">

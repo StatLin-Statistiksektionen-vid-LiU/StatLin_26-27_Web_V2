@@ -27,8 +27,9 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
   const wheelCount = async (on = page) => Number((await on.getByRole("status").filter({ hasText: /punkt/ }).first().textContent()).match(/\d+/)[0]);
   const fillButton = (on) => on.getByRole("button", { name: "Fyll med förslag" });
   const row = (title, on = page) => on.getByRole("article").filter({ has: on.getByRole("heading", { name: title }) });
+  // Hela året. Utan månad i adressen öppnar hjulet på den innevarande månaden.
   const openWheel = async (on = page) => {
-    await on.goto(`${BASE}/admin/arshjul`);
+    await on.goto(`${BASE}/admin/arshjul?manad=alla`);
     await on.getByRole("status").filter({ hasText: /punkt/ }).first().waitFor();
   };
 
@@ -105,9 +106,12 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     await page.getByRole("heading", { name: "Sektionsmöte på våren" }).waitFor();
     assert.equal(await page.getByRole("heading", { name: "Julsittning", exact: true }).count(), 0);
     await page.getByRole("link", { name: "Visa hela året" }).click();
-    await page.waitForURL(/\/admin\/arshjul$/);
-    // Skräp i adressen ger hela året i stället för ett fel.
+    await page.waitForURL(/\/admin\/arshjul\?manad=alla$/);
+    // Skräp i adressen ger det vanliga, den innevarande månaden i år, i stället för ett fel.
     await page.goto(`${BASE}/admin/arshjul?manad=13&ar=1999`);
+    await page.getByText(new RegExp(`punkt(er)? i [a-zåäö]+ ${thisYear}`)).waitFor();
+    assert.equal(await page.locator('svg a[aria-current="true"]').getAttribute("aria-label").then((l) => /innevarande månad/.test(l)), true, "den innevarande månaden ska vara vald");
+    await openWheel();
     // På hösten visar hjulet hösten och våren efter nyår, och vårens månader får nästa års årtal.
     await page.getByText(new RegExp(`under (hösten )?${thisYear}`)).waitFor();
     if (thisMonth >= 7) await page.getByRole("heading", { name: `Januari ${thisYear + 1}` }).waitFor();
@@ -356,7 +360,7 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     assert.equal(await page.getByRole("link", { name: `Ändra ${nextTitle}` }).count(), 0);
     // I december gäller nästa månad nästa år, och då står året på knappen i stället för i år.
     assert.equal(await row(nextTitle).getByRole("button", { name: /^Klar (i år|\d{4})$/ }).count(), 0);
-    await page.goto(`${BASE}/admin/arshjul`);
+    await openWheel();
     assert.equal(await page.locator('a[aria-label="Ändra Julsittning"]').count(), 1, "SCB är ansvarigt för julsittningen");
     await page.goto(`${BASE}/admin/arshjul/${adminItem}`);
     await page.waitForURL(/\/admin\/arshjul$/);
@@ -382,7 +386,7 @@ export default async function postverktygSteg({ BASE, browser, page, step, switc
     assert.equal(await row(nextTitle).getByRole("button", { name: "Lägg på tavlan" }).count(), 1, "punkten får inte ha blivit klar");
 
     // Bara SCB visar det utskottet är ansvarigt för och det det själv har lagt in, inte andras punkter.
-    await page.goto(`${BASE}/admin/arshjul?vara=1`);
+    await page.goto(`${BASE}/admin/arshjul?vara=1&manad=alla`);
     await row(ownTitle).waitFor();
     assert.equal(await row(nextTitle).count(), 0, "filtret ska dölja andras punkter");
     assert.equal(await page.locator('a[aria-label="Ändra Julsittning"]').count(), 1, "julsittningen är SCB:s");

@@ -225,9 +225,8 @@ async function openDeleteConfirm(page) {
     });
 
     await step("Telefonen får de enklare effekterna och datorn behåller sina", async () => {
-      // Heron har inte längre någon ritad bakgrundsgraf (DataField, en canvas) och inget korn. Bakom loggan ligger ett rutnät i ren CSS (HeroGrid),
-      // så kontrollerna av ritytan är borttagna. I stället kollas att rutnätets ljus bara följer en mus och att telefonen inte skriver något i det.
-      // Kornet finns kvar på det röda kortet längre ner på startsidan, och där kollas det i stället.
+      // Loggan står stilla i heron, inskriven i rutnätet (HeroGrid), utan gungning, lutning och reflex. Kornet finns på det röda
+      // kortet längre ner på startsidan.
       const open = async (options) => {
         const context = await browser.newContext({ deviceScaleFactor: 3, ...options });
         const p = await context.newPage();
@@ -246,11 +245,9 @@ async function openDeleteConfirm(page) {
           const title = getComputedStyle(document.querySelector("h1").closest('[class*="fade-up"]'));
           const buttons = getComputedStyle(document.querySelector("section[data-startsida] a.btn-ink").closest('[class*="fade-up"]'));
           return {
-            sway: css(".logo-tilt").animationName,
             intro: css('.floating-logo svg[role="img"]').animationName,
             signature: css(".logo-signature").animationName,
             mask: css(".floating-logo svg g[mask]").maskImage === "none" ? "none" : "url",
-            reflex: css(".floating-logo .animate-float-shadow").filter,
             grain: grain.content === "none" ? "none" : grain.mixBlendMode,
             title: `${title.animationDelay} ${title.animationDuration}`,
             buttons: `${buttons.animationName} ${buttons.animationDelay}`,
@@ -258,10 +255,7 @@ async function openDeleteConfirm(page) {
             titleFont: css("h1").fontFamily.includes("Archivo Reserv"),
           };
         });
-      const inlineTilt = (p) => p.locator(".logo-tilt").evaluate((el) => el.style.transform);
       const ringFilter = (p) => p.locator(".logo-formler").evaluate((el) => getComputedStyle(el).filter);
-      // Rutnätets ljus i heron och sidhuvudena: data-aktiv på ramen och pekarens läge som två CSS-variabler på ljuset i den, satta av RutnatLjus.
-      const gridLight = (p) => p.locator(".rutnat-ram").evaluate((el) => ({ active: el.hasAttribute("data-aktiv"), style: el.querySelector(".rutnat-ljus").style.cssText }));
       // Introt får inte hålla kvar sina lager på telefonen när det är slut. Slutbilden är densamma utan dem.
       const introIsOver = () => !document.getAnimations().some((a) => ["logo-ring-in", "grid-wipe", "logo-fade", "logo-glow-in", "sig-wipe", "sig-glow"].includes(a.animationName));
       const header = (p) =>
@@ -273,18 +267,15 @@ async function openDeleteConfirm(page) {
       const mobile = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
       const phone = await open(mobile);
       assert.deepEqual(await effects(phone), {
-        sway: "logo-sway-y, logo-sway-x",
         intro: "logo-ring-in",
         signature: "none",
         mask: "none",
-        reflex: "none",
         grain: "none",
         title: "0.08s 0.9s",
         buttons: "fade-up 0.16s",
         sections: "auto",
         titleFont: true,
       });
-      assert.equal(await inlineTilt(phone), "", "ingen loop i JS ska vrida loggan på telefon");
       await phone.waitForFunction(introIsOver, null, { timeout: 15000 });
       // Ringen kommer fram som helhet först när man trycker på loggan. Den ritas aldrig om och har ingen glöd.
       const ringShown = () => document.querySelector(".logo-formler").hasAttribute("data-shown");
@@ -295,8 +286,6 @@ async function openDeleteConfirm(page) {
       await phone.waitForFunction(() => getComputedStyle(document.querySelector(".logo-formler")).opacity === "1", null, { timeout: 5000 });
       assert.equal(await ringFilter(phone), "none", "formlerna ska inte ha någon glöd");
       assert.equal(await phone.locator(".logo-formler radialGradient").getAttribute("r"), "0", "gradienten ska inte animeras på telefon");
-      // Telefonen lyssnar inte på pekaren i heron, så trycket lämnade inget ljus och inga variabler efter sig i rutnätet.
-      assert.deepEqual(await gridLight(phone), { active: false, style: "" }, "rutnätet ska inte lysa upp på telefon");
       // Listen överst är hel på telefonen, utan oskärpa bakom sig, också när sidan är scrollad. Den har pappersfärgen i mörkt läge, som är standard.
       await phone.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
       await phone.waitForTimeout(300);
@@ -321,13 +310,9 @@ async function openDeleteConfirm(page) {
         assert.ok(Math.max(...tops) - Math.min(...tops) <= 1, `loggan hoppar vid ${width} px: ${tops.join(", ")}`);
       }
 
-      // Telefon med minskad rörelse: ingen gungning, ingen loop och ingenting i loggan som rör sig.
+      // Telefon med minskad rörelse: ingenting i loggan rör sig.
       const stillPhone = await open({ ...mobile, reducedMotion: "reduce" });
-      const stillEffects = await effects(stillPhone);
-      assert.equal(stillEffects.sway, "none");
-      assert.equal(await inlineTilt(stillPhone), "");
       await stillPhone.waitForTimeout(1000);
-      assert.equal(await inlineTilt(stillPhone), "");
       const moving = await stillPhone.evaluate(() =>
         document
           .getAnimations()
@@ -335,7 +320,6 @@ async function openDeleteConfirm(page) {
           .map((a) => a.animationName || a.transitionProperty),
       );
       assert.deepEqual(moving, [], "loggan ska stå still");
-      assert.deepEqual(await gridLight(stillPhone), { active: false, style: "" });
       await stillPhone.context().close();
 
       // Sektionernas gissade höjder gäller en smal skärm. En surfplatta lägger ut allt direkt.
@@ -345,34 +329,19 @@ async function openDeleteConfirm(page) {
 
       const desktop = await open({ viewport: { width: 1440, height: 900 } });
       assert.deepEqual(await effects(desktop), {
-        sway: "none",
         intro: "none",
         signature: "sig-glow",
         mask: "url",
-        reflex: "blur(14px)",
         grain: "overlay",
         title: "0.08s 0.9s",
         buttons: "fade-up 0.16s",
         sections: "visible",
         titleFont: false,
       });
-      const tiltBefore = await inlineTilt(desktop);
-      await desktop.mouse.move(100, 100);
-      await desktop.waitForTimeout(500);
-      assert.notEqual(await inlineTilt(desktop), tiltBefore, "loggan ska följa musen");
-      // Rutnätet lyser upp kring musen i heron och sidhuvudena (data-ljus) men inte över resten av sidan, och släcks när musen lämnar fönstret.
+      // I heron är musen en punkt i stickprovet (HeroFit): där den drar i kurvan är pekaren ett hårkors.
       const hero = await desktop.locator("section[data-startsida]").boundingBox();
       await desktop.mouse.move(hero.x + 200, hero.y + 200, { steps: 4 });
-      await desktop.waitForFunction(() => document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
-      assert.match((await gridLight(desktop)).style, /--x: -?\d+px; --y: -?\d+px;/);
-      assert.match(await desktop.locator(".rutnat-ram").evaluate((el) => el.style.clipPath), /^polygon\(/, "ljuset ska klippas vid heronens kanter");
-      await desktop.mouse.move(100, 300, { steps: 4 });
-      await desktop.waitForFunction(() => !document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
-      await desktop.mouse.move(hero.x + 240, hero.y + 220, { steps: 4 });
-      await desktop.waitForFunction(() => document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
-      // Playwright kan inte flytta musen ut ur fönstret, så händelsen som webbläsaren skickar då skickas här direkt.
-      await desktop.evaluate(() => document.documentElement.dispatchEvent(new PointerEvent("pointerout", { bubbles: true, pointerType: "mouse", relatedTarget: null })));
-      await desktop.waitForFunction(() => !document.querySelector(".rutnat-ram").hasAttribute("data-aktiv"), null, { timeout: 5000 });
+      await desktop.waitForFunction(() => document.querySelector("section[data-startsida]").style.cursor === "crosshair", null, { timeout: 5000 });
       // Formlerna har ingen glöd, så ringen har inget filter när den syns.
       await moveOverLogo(desktop);
       await desktop.waitForFunction(ringIsVisible, null, { timeout: 5000 });
@@ -623,7 +592,8 @@ async function openDeleteConfirm(page) {
 
     await step("Inloggning som redaktör (info)", async () => {
       await login(page, "info@statlin.se", "lokal-demo-2026");
-      await page.getByText("Hej Namn").waitFor();
+      // Översikten hälsar efter klockan (God morgon, Hej, God kväll), med förnamnet skrivet för hand.
+      await page.locator("h1", { hasText: "Namn" }).waitFor();
       await page.screenshot({ path: `${SHOTS}/admin-dashboard.png` });
     });
 
@@ -739,7 +709,8 @@ async function openDeleteConfirm(page) {
 
     await step("Utskottets översikt har genvägar och sparar utkast", async () => {
       await page.goto(`${BASE}/admin`);
-      await page.getByRole("heading", { name: "SCB", exact: true }).waitFor();
+      // Översikten hälsar med förnamnet, och utskottet står på raden ovanför.
+      await page.locator("main header").getByText(/SCB/).first().waitFor();
       await page.screenshot({ path: `${SHOTS}/admin-committee-dashboard.png`, fullPage: true });
       await Promise.all([page.waitForURL(/\/admin\/evenemang\/ny/), page.getByRole("link", { name: /Nytt evenemang/ }).click()]);
       await page.fill('input[name="title"]', "Utkast från utskottet");

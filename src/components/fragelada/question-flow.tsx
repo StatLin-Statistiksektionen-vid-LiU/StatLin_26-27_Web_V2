@@ -25,16 +25,19 @@ export function QuestionFlow({
   const [sent, setSent] = useState(false);
   // Kom man hit med en färdig låda (länk eller fast låda) ska tangentbordet inte fällas upp av sig självt.
   const [focusNote, setFocusNote] = useState(false);
+  // Koden och felet från länken gäller bara första låset. Väljer man "Fel låda?" efteråt ska det inte stå ett gammalt fel där.
+  const [fromLink, setFromLink] = useState(true);
   const fixed = !!box?.slug;
 
   if (!box) {
     return (
       <CodeLock
-        initialCode={initialCode}
-        initialError={initialError}
+        initialCode={fromLink ? initialCode : ""}
+        initialError={fromLink ? initialError : undefined}
         fixedBoxes={fixedBoxes}
         onOpened={(b) => {
           setFocusNote(true);
+          setFromLink(false);
           setBox(b);
         }}
       />

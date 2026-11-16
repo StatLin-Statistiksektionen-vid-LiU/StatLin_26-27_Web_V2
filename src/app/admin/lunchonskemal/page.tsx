@@ -106,7 +106,8 @@ function WishCard({ wish, tab, events }: { wish: LectureWish; tab: string; event
   return (
     <li className="rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">
+        {/* basis-72: utan en egen bredd får texten bara det knapparna lämnar, och på en telefon blev det ett tecken per rad. */}
+        <div className="min-w-0 flex-1 basis-72">
           <p className="text-lg font-semibold [overflow-wrap:anywhere]">{wish.title}</p>
           {wish.comment && <p className="mt-1 text-[0.95rem] text-stone [overflow-wrap:anywhere]">{wish.comment}</p>}
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone">

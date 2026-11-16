@@ -5,7 +5,7 @@ import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
 import { publishButtons } from "./publish-buttons";
 import { isoToLocalInput } from "@/lib/dates";
-import type { Committee, NewsItem, SessionUser } from "@/lib/types";
+import { committeeLabel, type Committee, type NewsItem, type SessionUser } from "@/lib/types";
 import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 export function NewsForm({
@@ -53,11 +53,12 @@ export function NewsForm({
           </FormSection>
           <FormSection title="Avsändare">
             {locked ? (
-              <FixedCommittee label="Utskott" name={own ? `${own.short_name}: ${own.name}` : "Ditt utskott"} hint="Nyheten visas med er logga och på er utskottssida." />
+              <FixedCommittee label="Utskott" name={own ? committeeLabel(own) : "Ditt utskott"} hint="Nyheten visas med er logga och på er utskottssida." />
             ) : (
               <>
                 <Field label="Utskott" name="committee_id">
-                  <Select name="committee_id" defaultValue={String(item?.committee_id ?? user.committee_id ?? "")}>
+                  {/* Kontots utskott föreslås bara för en ny nyhet. En sparad nyhet från hela sektionen hade annars bytt avsändare vid nästa sparning. */}
+                  <Select name="committee_id" defaultValue={String(item ? (item.committee_id ?? "") : (user.committee_id ?? ""))}>
                     <option value="">Hela sektionen</option>
                     {committees.map((c) => (
                       <option key={c.id} value={c.id}>

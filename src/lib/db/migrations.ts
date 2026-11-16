@@ -532,6 +532,53 @@ Hör av er till vår näringslivsansvariga i SASU så tar vi fram ett upplägg s
   UPDATE settings SET value = '_Hur brukar tentan gå?_ Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle.'
     WHERE key = 'text_tentastatistik_ingress' AND value = 'Hur brukar tentan gå? Sök på kurskoden, för vilken LiU-kurs som helst, och se betygen på varje tentatillfälle.';
   `,
+  /* 21: Fem sidtitlar hade rött mitt i ordet (Evene*mang*). Sparade titlar som är exakt den gamla standardtexten får den nya, där
+     ordet står i en färg. Titlar som någon har ändrat står kvar. */ `
+  UPDATE settings SET value = 'Evenemang' WHERE key = 'text_evenemang_rubrik' AND value = 'Evene*mang*';
+  UPDATE settings SET value = 'Utskott' WHERE key = 'text_utskott_rubrik' AND value = 'Utsk*ott*';
+  UPDATE settings SET value = 'Galleri' WHERE key = 'text_galleri_rubrik' AND value = 'Galle*ri*';
+  UPDATE settings SET value = 'Dokument' WHERE key = 'text_dokument_rubrik' AND value = 'Doku*ment*';
+  UPDATE settings SET value = 'Styrelsen' WHERE key = 'text_styrelsen_rubrik' AND value = 'Styrel*sen*';
+  `,
+  /* 22: Heron fick en kort rubrik under loggan och ingen ingress. Sparade texter som är exakt den gamla standardtexten får den nya.
+     Texter som någon har ändrat står kvar. */ `
+  UPDATE settings SET value = 'Statistik, data och maskininlärning vid *LiU*'
+    WHERE key = 'hero_title' AND value = 'Sektionen för *statistik*, dataanalys och maskininlärning vid LiU';
+  UPDATE settings SET value = ''
+    WHERE key = 'hero_text' AND value = 'Sittningar, pubar, idrott, studiebevakning och kontakt med arbetslivet.' || char(10) || '_Drivet av studenter, för studenter._';
+  `,
+  /* 23: chatten i portalen. Kanalerna är inga rader: de följer av kontots roll och utskott (src/lib/chatt.ts), och channel bär nyckeln.
+     AUTOINCREMENT: läsmärket och hämtningen av nya meddelanden jämför id, så ett id får aldrig användas två gånger. Ett borttaget
+     meddelande står kvar som en rad utan text (deleted_at), så att alla som har kanalen öppen ser att det togs bort. */ `
+  CREATE TABLE chat_messages (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    channel    TEXT NOT NULL,                                      -- alla, styrelsen eller utskott:<id>
+    user_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    body       TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    deleted_at TEXT
+  );
+  CREATE INDEX chat_messages_channel ON chat_messages(channel, id);
+  CREATE TABLE chat_reads (
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    channel      TEXT NOT NULL,
+    last_read_id INTEGER NOT NULL,                                  -- det senaste meddelandet kontot har sett i kanalen
+    PRIMARY KEY (user_id, channel)
+  );
+  `,
+  /* 24: chatten hör till planeringen. Varje projektplan har en tråd (channel plan:<id>), och den läses och skrivs av den som äger
+     planen, den ansvariga posten och medarbetarna. collab_all = 1 betyder hela StatLin: alla konton i portalen. seen_at är tom tills
+     kontot har öppnat planen, så att en ny inbjudan kan visas som en avisering. */ `
+  ALTER TABLE project_plans ADD COLUMN collab_all INTEGER NOT NULL DEFAULT 0;
+  CREATE TABLE plan_collaborators (
+    plan_id  INTEGER NOT NULL REFERENCES project_plans(id) ON DELETE CASCADE,
+    user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    added_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+    seen_at  TEXT,
+    PRIMARY KEY (plan_id, user_id)
+  );
+  CREATE INDEX plan_collaborators_user ON plan_collaborators(user_id, plan_id);
+  `,
 ];
 
 export function migrate(db: Database.Database) {

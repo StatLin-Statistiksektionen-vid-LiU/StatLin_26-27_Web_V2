@@ -4,8 +4,9 @@ import { setTaskStatus } from "@/app/admin/_actions/tasks";
 import { TaskActionForm } from "@/components/admin/task-action-form";
 import { DueLabel, PersonChip } from "@/components/admin/task-ui";
 import { PendingButton } from "@/components/admin/wheel-buttons";
-import { ArrowRight, Board, Calendar, Check, Eye, Handshake, Image as ImageIcon, Mail, MessageCircle, Newspaper } from "@/components/icons";
+import { ArrowRight, Board, Calendar, Chat, Check, ClipboardList, Eye, Handshake, Image as ImageIcon, Mail, MessageCircle, Newspaper } from "@/components/icons";
 import { canReviewEvents, hasDesign } from "@/lib/auth/permissions";
+import { listAviseringar } from "@/lib/data/aviseringar";
 import { listEventsForAdmin, listEventsToReview, listPastEventsWithoutImages } from "@/lib/data/events";
 import { countUnseenQuestions } from "@/lib/data/fragelada";
 import { countNewCommitteeWishes } from "@/lib/data/onskelada";
@@ -13,7 +14,7 @@ import { canManageNaringsliv, countNewInterest, countNewWishes } from "@/lib/dat
 import { listNewsForAdmin } from "@/lib/data/news";
 import { countUnclaimedTasks, listOpenTasksTo, listTasksAskingForHelp } from "@/lib/data/tasks";
 import { addDaysLocal, formatDate, nowLocal, todayLocal } from "@/lib/dates";
-import type { EventItem, SessionUser, Task } from "@/lib/types";
+import type { SessionUser, Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 /**
@@ -98,7 +99,7 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
   const ownOrNothing = <T,>(load: (committeeId: number) => Promise<T[]>) => (own ? load(own) : Promise.resolve<T[]>([]));
   const forAll = editor || design;
 
-  const [tasks, askingForHelp, unclaimed, questions, wishes, interest, toReview, events, news, withoutImages] = await Promise.all([
+  const [tasks, askingForHelp, unclaimed, questions, wishes, interest, toReview, events, news, withoutImages, aviseringar] = await Promise.all([
     listOpenTasksTo(user.id, 100),
     listTasksAskingForHelp(user.id, 3),
     countUnclaimedTasks(user),
@@ -109,6 +110,7 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
     forAll ? listEventsForAdmin(null, { since: now }) : ownOrNothing((id) => listEventsForAdmin(id, { since: now })),
     editor ? listNewsForAdmin(null, { limit: 200 }) : ownOrNothing((id) => listNewsForAdmin(id, { limit: 200 })),
     forAll ? listPastEventsWithoutImages(null, 50) : ownOrNothing((id) => listPastEventsWithoutImages(id, 50)),
+    listAviseringar(user),
   ]);
 
   const ownWishes = !editor && user.committee_kind !== "styrelse" ? await countNewCommitteeWishes(own) : 0;
@@ -126,6 +128,12 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
       href: `/admin/uppdrag/${t.id}`,
       late: mine,
     });
+  }
+
+  // Någon har skrivit i en plans tråd eller bjudit in kontot till en plan: samma rader som klockan i menyn visar.
+  for (const a of aviseringar) {
+    if (a.slag === "trad") todos.push({ key: a.key, rank: 2, Icon: Chat, title: a.count === 1 ? `Nytt i tråden: ${a.title}` : `${a.count} nya i tråden: ${a.title}`, detail: a.text, href: a.href });
+    if (a.slag === "inbjudan") todos.push({ key: a.key, rank: 2, Icon: ClipboardList, title: a.title, detail: "Öppna planen och se vad som är på gång.", href: a.href });
   }
 
   if (questions > 0) {
@@ -162,9 +170,8 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
     todos.push({ key: `nyhet-${n.id}`, rank: 3, Icon: Newspaper, title: `Utkast: ${n.title}`, detail: "Nyhet. Syns inte på sajten än.", href: `/admin/nyheter/${n.id}` });
   }
 
-  // Omslagen: grafiskt ansvarig har alla kommande. Ett utskott har sina egna publicerade, för ett utkast står redan på listan.
-  const missingCover = events.filter((e) => !e.cover && (design || (!editor && e.committee_id === own && !!e.published)));
-  const coverHref = (e: EventItem) => (design ? `/admin/bilder/evenemang/${e.id}` : `/admin/evenemang/${e.id}`);
+  // Omslagen står bara hos grafiskt ansvarig. Utan bild genereras ett omslag i utskottets färg, så ingen annan har något att göra.
+  const missingCover = design ? events.filter((e) => !e.cover) : [];
   for (const e of missingCover.slice(0, EVENTS_SHOWN)) {
     todos.push({
       key: `omslag-${e.id}`,
@@ -172,12 +179,12 @@ async function collectTodos(user: SessionUser): Promise<{ todos: Todo[]; moreTas
       Icon: ImageIcon,
       title: `Omslag saknas: ${e.title}`,
       detail: `${formatDate(e.starts_at)} · ${e.committee?.short_name ?? "Hela sektionen"}${e.published ? "" : " · Utkast"}`,
-      href: coverHref(e),
+      href: `/admin/bilder/evenemang/${e.id}`,
     });
   }
   if (missingCover.length > EVENTS_SHOWN) {
     const rest = missingCover.length - EVENTS_SHOWN;
-    todos.push({ key: "omslag-fler", rank: 4, Icon: ImageIcon, title: plural(rest, "evenemang till saknar omslag", "evenemang till saknar omslag"), href: design ? "/admin/bilder" : "/admin/evenemang" });
+    todos.push({ key: "omslag-fler", rank: 4, Icon: ImageIcon, title: plural(rest, "evenemang till saknar omslag", "evenemang till saknar omslag"), href: "/admin/bilder" });
   }
 
   if (toReview.length > 0) {

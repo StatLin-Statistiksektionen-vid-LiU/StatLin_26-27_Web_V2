@@ -194,14 +194,15 @@ export default function BrandPage() {
             Utskottsloggorna bygger på baslogotypen: förkortningen i vit Arial i bandets övre halva och en egen bakgrundsgrafik. SCB och XCB följer
             en egen standard, och STAR har sitt eget varumärke.
           </p>
-          <ul className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3 lg:grid-cols-4">
+          {/* Rutorna ritar själva linjerna mellan sig. Loggorna fyller inte sista raden, och den tomma rutan ska ha kortets färg, inte linjens. */}
+          <ul className="mt-12 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-white sm:grid-cols-3 lg:grid-cols-4">
             {COMMITTEE_LOGOS.map((l) => (
-              <li key={l.file} className="group bg-white p-6 text-center">
+              <li key={l.file} className="group p-6 text-center ring-1 ring-line">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/brand/utskott/${l.file}.webp`} alt={`${l.name}-loggan`} className="mx-auto h-28 w-auto rounded-xl object-contain p-1.5 [[data-tema=mork]_&]:bg-ink transition-transform duration-700 group-hover:-translate-y-1 group-hover:rotate-[-6deg] md:h-32" loading="lazy" />
                 <p className="mt-5 font-bold">{l.name}</p>
                 <p className="text-xs text-stone">{l.note}</p>
-                <a href={`/brand/download/${l.file}.png`} download className="tryck mt-3 inline-flex pointer-coarse:mt-0 items-center gap-1.5 font-mono text-xs text-red hover:underline">
+                <a href={`/brand/download/${l.file}.png`} download className="tryck mt-3 inline-flex pointer-coarse:mt-0 items-center gap-1.5 font-mono text-xs text-red-deep hover:underline">
                   <Download size={13} /> PNG
                 </a>
               </li>
@@ -227,7 +228,7 @@ export default function BrandPage() {
                     <div className={cn("relative", p.colors.length > 3 ? "h-28" : "h-40")} style={{ background: c.hex }}>
                       <span className="absolute left-4 top-4 text-sm font-bold" style={{ color: ["#FFFFFF", "#EEE242", "#FBB03B", "#F15A24", "#29ABE2"].includes(c.hex) ? "#141413" : "#ffffff" }}>{c.name}</span>
                     </div>
-                    <dl className="grid gap-1.5 p-4 text-xs">
+                    <dl className="grid p-4 text-xs">
                       <ColorRow label="HEX" value={c.hex} />
                       <ColorRow label="RGB" value={c.rgb} />
                       <ColorRow label="CMYK" value={c.cmyk} />
@@ -324,7 +325,7 @@ export default function BrandPage() {
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <a href={href} className="block whitespace-nowrap rounded-full px-4 py-2 text-ink/70 transition-colors hover:bg-white hover:text-ink">
+    <a href={href} className="block whitespace-nowrap rounded-full px-4 py-2 text-ink/70 transition-colors hover:bg-white hover:text-ink pointer-coarse:py-3">
       {children}
     </a>
   );
@@ -403,7 +404,8 @@ function ColorRow({ label, value }: { label: string; value: string }) {
     <div className="flex items-center justify-between gap-2">
       <dt className="text-stone">{label}</dt>
       <dd>
-        <CopyButton value={value} className="text-ink hover:text-red-deep pointer-coarse:py-1" />
+        {/* Raden är knappens höjd: 24 px med mus, 44 px med fingret. Ett kort värde får samma bredd, med texten kvar vid högerkanten. */}
+        <CopyButton value={value} className="min-h-6 text-ink hover:text-red-deep pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-end" />
       </dd>
     </div>
   );

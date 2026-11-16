@@ -2,13 +2,16 @@
 
 import { useEffect, useRef } from "react";
 
-/** Månadsraden på telefonen börjar vid den valda månaden eller den innevarande, inte alltid i januari. */
-export function ScrollChipIntoView({ target }: { target: string }) {
+/**
+ * Månadsraden på telefonen börjar vid den valda månaden eller den innevarande, inte alltid i januari. Den följer också med när
+ * månaden väljs i hjulet, som ligger under listan.
+ */
+export function ScrollChipIntoView({ target, month }: { target: string; month: number | null }) {
   useEffect(() => {
     const nav = document.getElementById(target);
     const chip = nav?.querySelector<HTMLElement>('[aria-current="true"]:not([data-alla]), [data-nu]');
     if (nav && chip) nav.scrollLeft = chip.offsetLeft - nav.offsetLeft - 8;
-  }, [target]);
+  }, [target, month]);
   return null;
 }
 

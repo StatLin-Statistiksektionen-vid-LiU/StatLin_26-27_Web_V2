@@ -2,12 +2,12 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, Close } from "@/components/icons";
-import type { SpeletProps } from "./spel-logga";
+import type { SpeletProps } from "./spel-kort";
 
 /*
  * Stapla normalen, eSTIG:s eget lilla spel. Block faller ner i nio kolumner och ska fylla varje stapel upp till sitt streck, så att
  * staplarna till slut följer normalfördelningens kurva. Ett block över strecket är ett extremvärde och kostar ett liv. Filen hämtas
- * först när någon trycker på loggan (spel-logga.tsx). Brädet ritas på en canvas, och rekordet sparas bara i webbläsaren.
+ * först när någon trycker på Spela (spel-kort.tsx). Brädet ritas på en canvas, och rekordet sparas bara i webbläsaren.
  */
 
 const KOL = 9;
@@ -360,7 +360,7 @@ export default function Spelet({ onStang }: SpeletProps) {
   const [hud, setHud] = useState<Hud>(() => hudAv(nyttTillstand(lasRekord())));
   const [status, setStatus] = useState("");
 
-  // Dialogen öppnas när filen har hämtats. Escape och Stäng stänger den, och då tas spelet bort (spel-logga.tsx).
+  // Dialogen öppnas när filen har hämtats. Escape och Stäng stänger den, och då tas spelet bort (spel-kort.tsx).
   useEffect(() => {
     const d = dialogRef.current;
     if (!d) return;

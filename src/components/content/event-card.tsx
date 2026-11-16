@@ -25,22 +25,23 @@ function DateBlock({ date, className, dark, locale }: { date: string; className?
 
 /**
  * Kortet är en container. Brett (en kolumn på surfplatta) ligger det med bilden till vänster, och smalt får datumet en egen rad
- * över rubriken. Bilden har inget ovanpå sig: dagen och hur långt det är kvar står i texten.
+ * över rubriken. Bilden har inget ovanpå sig: dagen och hur långt det är kvar står i texten. Där det stående kortet är ensamt i en
+ * bred spalt blir 16:10 för högt, och då ger --omslag-form bilden ett lägre format.
  */
-export function EventCard({ event, priority, className }: { event: EventItem; priority?: boolean; className?: string }) {
+export function EventCard({ event, href = `/evenemang/${event.slug}`, priority, className }: { event: EventItem; href?: string; priority?: boolean; className?: string }) {
   const p = parts(event.starts_at);
   const when = relativeDay(event.starts_at, event.ends_at, event.all_day);
   const soon = when === "Pågår" || when === "I dag" || when === "I morgon";
   return (
     <Link
-      href={`/evenemang/${event.slug}`}
+      href={href}
       className={cn(
         "group @container relative block rounded-2xl border border-line bg-white p-1.5 transition-[border-color,box-shadow] duration-300 ease-[var(--ease-out-expo)] hover:border-ink/20 hover:shadow-[0_22px_44px_-30px_rgb(0_0_0/0.5)]",
         className,
       )}
     >
       <div className="flex h-full flex-col @xl:flex-row">
-        <div className="relative aspect-[16/10] shrink-0 overflow-hidden rounded-[0.7rem] bg-paper-2 @xl:aspect-auto @xl:min-h-52 @xl:w-[44%]">
+        <div className="relative aspect-[var(--omslag-form,16/10)] shrink-0 overflow-hidden rounded-[0.7rem] bg-paper-2 @xl:aspect-auto @xl:min-h-52 @xl:w-[44%]">
           {event.cover ? (
             <SmartImage
               image={event.cover}
@@ -52,7 +53,6 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
           ) : (
             <CoverArt
               seed={event.slug}
-              title={event.title}
               accent={event.committee?.accent}
               logo={event.committee?.logo_url}
               className="h-full w-full transition-transform duration-[1.2s] ease-[var(--ease-out-expo)] group-hover:scale-[1.03]"
@@ -72,7 +72,7 @@ export function EventCard({ event, priority, className }: { event: EventItem; pr
             <p className="kicker flex min-w-0 items-center gap-2 text-stone">
               {event.committee && (
                 <>
-                  <span className="size-1.5 shrink-0 rounded-full" style={{ background: event.committee.accent }} aria-hidden />
+                  <span className="utskottsprick size-1.5 shrink-0 rounded-full" style={{ "--prick": event.committee.accent } as React.CSSProperties} aria-hidden />
                   <span className="truncate">{event.committee.short_name}</span>
                   <span aria-hidden className="text-stone-light">
                     ·

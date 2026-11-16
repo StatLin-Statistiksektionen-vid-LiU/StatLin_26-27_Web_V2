@@ -5,7 +5,7 @@ import { Field, FixedCommittee, FormSection, MoreDetails, Select, TextArea, Text
 import { ImageField } from "./image-field";
 import { MarkdownEditor } from "./markdown-editor";
 import { publishButtons } from "./publish-buttons";
-import type { Committee, EventItem, ImageRef, SessionUser } from "@/lib/types";
+import { committeeLabel, type Committee, type EventItem, type ImageRef, type SessionUser } from "@/lib/types";
 import { TEXT_LIMITS } from "@/lib/admin/limits";
 
 export function EventForm({
@@ -88,14 +88,15 @@ export function EventForm({
           </FormSection>
           <FormSection title="Arrangör">
             {lockedCommittee ? (
-              <FixedCommittee label="Utskott" name={own ? `${own.short_name}: ${own.name}` : "Ditt utskott"} hint="Evenemanget visas på er utskottssida och i kalendern." />
+              <FixedCommittee label="Utskott" name={own ? committeeLabel(own) : "Ditt utskott"} hint="Evenemanget visas på er utskottssida och i kalendern." />
             ) : (
               <Field label="Utskott" name="committee_id">
-                <Select name="committee_id" defaultValue={String(source?.committee_id ?? user.committee_id ?? "")}>
+                {/* Kontots utskott föreslås bara för ett helt nytt evenemang. Ett för hela sektionen hade annars fått en arrangör vid nästa sparning. */}
+                <Select name="committee_id" defaultValue={String(source ? (source.committee_id ?? "") : (user.committee_id ?? ""))}>
                   <option value="">Ingen / hela sektionen</option>
                   {committees.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.short_name}: {c.name}
+                      {committeeLabel(c)}
                     </option>
                   ))}
                 </Select>

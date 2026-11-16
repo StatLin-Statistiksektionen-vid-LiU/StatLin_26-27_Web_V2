@@ -47,9 +47,12 @@ async function EventImages({ params }: { params: PageProps<"/admin/bilder/evenem
                 <Edit size={15} /> Redigera evenemanget
               </Link>
             )}
-            <Link href={`/evenemang/${event.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
-              Visa sidan <ArrowUpRight size={15} />
-            </Link>
+            {/* Ett utkast har ingen sida att visa. */}
+            {!!event.published && (
+              <Link href={`/evenemang/${event.slug}`} target="_blank" className="btn btn-ghost btn-sm bg-white">
+                Visa sidan <ArrowUpRight size={15} />
+              </Link>
+            )}
           </>
         }
       />

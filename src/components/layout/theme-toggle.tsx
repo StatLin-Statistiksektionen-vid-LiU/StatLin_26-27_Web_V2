@@ -3,12 +3,11 @@
 import { type MouseEvent, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 import { Moon, Sun } from "@/components/icons";
+import { TEMA_FARG } from "@/lib/tema";
 import { cn } from "@/lib/utils";
 
 /** Samma nyckel som skriptet i src/app/layout.tsx läser innan sidan ritas. */
 const KEY = "statlin-tema";
-/** Webbläsarens adressfält på telefon får sidans bakgrund i båda lägena. */
-const THEME_COLORS = { ljust: "#f9f8f5", mork: "#121211" };
 
 // Knappen finns både i sidomenyn och i telefonens meny, så båda får veta när läget byts.
 const listeners = new Set<() => void>();
@@ -22,7 +21,7 @@ function apply(dark: boolean) {
   const root = document.documentElement;
   if (dark) root.dataset.tema = "mork";
   else delete root.dataset.tema;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", dark ? THEME_COLORS.mork : THEME_COLORS.ljust);
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", TEMA_FARG[dark ? "mork" : "ljust"]);
   try {
     // Båda valen sparas, så att besökarens val står kvar även om standardläget ändras.
     localStorage.setItem(KEY, dark ? "mork" : "ljust");
@@ -67,8 +66,9 @@ export function ThemeToggle({ className, withLabel }: { className?: string; with
     <button
       type="button"
       onClick={toggle}
-      aria-pressed={dark}
-      aria-label="Mörkt läge"
+      // Med synlig text är texten knappens namn och säger vilket läge den byter till (det man ser är det man säger).
+      // Utan text är knappen en växel för mörkt läge.
+      {...(withLabel ? {} : { "aria-pressed": dark, "aria-label": "Mörkt läge" })}
       title={dark ? "Byt till ljust läge" : "Byt till mörkt läge"}
       className={cn("inline-flex items-center justify-center gap-2", className)}
     >

@@ -144,7 +144,7 @@ export const mailtoWithSubject = (email: string, subject: string) => `mailto:${e
  * sida, så actionen skickar besökaren tillbaka med en kod. Bara kända koder ger en text.
  */
 const WISH_ERRORS = {
-  fel: "Kontrollera önskemålet: det får vara högst 120 tecken, och kommentaren högst 500.",
+  fel: `Kontrollera önskemålet: det måste fyllas i och får vara högst ${WISH_TITLE_MAX} tecken, och kommentaren högst ${WISH_COMMENT_MAX}.`,
   fort: "Du har skickat många önskemål på kort tid. Vänta en stund och försök igen.",
   full: "Önskelådan är full just nu. Försök igen om några dagar.",
 } as const;

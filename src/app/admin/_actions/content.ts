@@ -29,6 +29,7 @@ import { SITE_TEXT_KEYS, textDef, type SiteTextKey } from "@/lib/site-texts";
 import { deleteMediaIfUnused, isSameUpload, MediaError, replaceFile, storeFile } from "@/lib/media-store";
 import { renderMarkdown } from "@/lib/markdown";
 import { toImageRef } from "@/lib/media-url";
+import { isValidDate } from "@/lib/projektplan-mallar";
 import { DOCUMENT_CATEGORY_VALUES, type DocumentCategory, type Media } from "@/lib/types";
 
 
@@ -240,10 +241,12 @@ const docSchema = z.object({
   category: z.enum(DOCUMENT_CATEGORY_VALUES),
   description: zText(300, "Beskrivningen"),
   url: zUrl,
+  // Ett ogiltigt datum ger ett fel i stället för att tyst sparas som inget datum, som på uppdragen.
   doc_date: z
     .string()
     .optional()
-    .transform((v) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null)),
+    .refine((v) => !v || isValidDate(v), "Datumet är inte giltigt.")
+    .transform((v) => v || null),
   published: zCheckbox,
 });
 
@@ -347,6 +350,8 @@ export async function savePartner(_prev: FormState, fd: FormData): Promise<FormS
   if (id) {
     const old = db.prepare("SELECT logo_media_id, sort_order FROM partners WHERE id = ?").get(id) as { logo_media_id: number | null; sort_order: number } | undefined;
     if (!old) return { error: "Sponsorn finns inte längre." };
+    // SASU:s utskottskonton får sköta sponsorerna, men som logga bara använda egna uppladdningar, som för STAR-företagen.
+    if (old.logo_media_id !== parsed.data.logo_media_id && !canUseImage(user, parsed.data.logo_media_id)) return forbidden();
     db.prepare(
       "UPDATE partners SET name=@name, url=@url, description=@description, logo_media_id=@logo_media_id, tier=@tier, sort_order=@sort_order, active=@active WHERE id=@id",
     ).run({ ...parsed.data, sort_order: parsed.data.sort_order ?? old.sort_order, id });
@@ -355,6 +360,7 @@ export async function savePartner(_prev: FormState, fd: FormData): Promise<FormS
     revalidateSite();
     return { ok: true, message: "Sponsorn är sparad." };
   }
+  if (!canUseImage(user, parsed.data.logo_media_id)) return forbidden();
   db.prepare(
     "INSERT INTO partners (name, url, description, logo_media_id, tier, sort_order, active) VALUES (@name, @url, @description, @logo_media_id, @tier, @sort_order, @active)",
   ).run({ ...parsed.data, sort_order: parsed.data.sort_order ?? 0 });
@@ -421,10 +427,8 @@ const settingsSchema = z.object({
   hero_text: zText(300, "Underrubriken"),
   hero_ring_color: z.enum(["red", "white"], "Välj röd eller vit."),
   hero_formulas: z.enum(["pa", "av"], "Välj på eller av."),
-  band_color: z.enum(["vit", "rod", "natt"], "Välj en av färgerna."),
   tema_dator: z.enum(["mork", "ljust"], "Välj mörkt eller ljust."),
   tema_telefon: z.enum(["mork", "ljust"], "Välj mörkt eller ljust."),
-  home_intro: zRequired(400, "Texten"),
   announcement: zText(200),
   announcement_url: zUrl,
   education_committee_id: z.string().regex(/^\d*$/, "Välj ett utskott i listan."),
@@ -448,7 +452,7 @@ export async function saveSettings(_prev: FormState, fd: FormData): Promise<Form
   db.transaction(() => {
     for (const [k, v] of Object.entries(parsed.data)) if (k in DEFAULT_SETTINGS) stmt.run(k, v);
   })();
-  audit(user.id, "update", "settings", null, present.some((k) => k.startsWith("hero_") || k === "home_intro") ? "Startsidan" : present.some((k) => k.startsWith("text_")) ? "Texter på sajten" : "Webbplatsinställningar");
+  audit(user.id, "update", "settings", null, present.some((k) => k.startsWith("hero_")) ? "Startsidan" : present.some((k) => k.startsWith("text_")) ? "Texter på sajten" : "Webbplatsinställningar");
   revalidateSite();
   return { ok: true, message: "Inställningarna är sparade." };
 }

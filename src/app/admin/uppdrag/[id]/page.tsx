@@ -205,14 +205,14 @@ async function TaskDetail({
               {task.event && (
                 <Meta label="Evenemang">
                   <Link href={`/evenemang/${task.event.slug}`} target="_blank" className="inline-flex items-center gap-1 font-semibold hover:underline">
-                    {task.event.title} <ArrowUpRight size={13} className="text-red" />
+                    {task.event.title} <ArrowUpRight size={13} className="shrink-0 text-red" />
                   </Link>
                 </Meta>
               )}
               {task.plan && (
                 <Meta label="Projektplan">
                   <Link href={`/admin/projektplaner/${task.plan.id}`} className="inline-flex items-center gap-1 font-semibold hover:underline">
-                    {task.plan.title} <ArrowUpRight size={13} className="text-red" />
+                    {task.plan.title} <ArrowUpRight size={13} className="shrink-0 text-red" />
                   </Link>
                 </Meta>
               )}
@@ -221,7 +221,7 @@ async function TaskDetail({
                   "Alla poster"
                 ) : (
                   <span className="inline-flex items-center gap-1.5">
-                    <Lock size={13} /> Avsändare, mottagare och ordf/vice/info
+                    <Lock size={13} className="shrink-0" /> Avsändare, mottagare och ordf/vice/info
                   </span>
                 )}
               </Meta>
@@ -240,7 +240,7 @@ async function TaskDetail({
 
       {mayEdit && (
         <details className="group mt-8 rounded-[1.5rem] border border-ink/10 bg-white/60 p-5 open:bg-transparent open:p-0 open:pt-2">
-          <summary className="tryck cursor-pointer list-none font-bold group-open:mb-5">Redigera uppdraget</summary>
+          <summary className="tryck cursor-pointer font-bold group-open:mb-5">Redigera uppdraget</summary>
           <TaskForm
             task={task}
             recipients={recipients}

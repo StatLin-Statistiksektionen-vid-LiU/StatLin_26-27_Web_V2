@@ -29,7 +29,6 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
   const done = wishes.filter((w) => w.status === "genomford");
   const totalVotes = wishes.reduce((sum, w) => sum + w.votes, 0);
   const litByServer = Number(sp.stjarna) || null;
-  const wishError = wishErrorText(sp.fel);
 
   return (
     <>
@@ -116,19 +115,7 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
           <aside id="onska" className="lg:col-span-5">
             <div className="star-sky rounded-[1.75rem] p-7 text-white md:p-9 lg:sticky lg:top-[calc(var(--header-h)+1.5rem)]">
               <h2 className="display-tight text-3xl">Önska</h2>
-              {sp.tack ? (
-                <div role="status" className="mt-5 rounded-xl bg-white px-4 py-3 font-semibold text-ink">
-                  Tack! SASU läser ditt önskemål, och sedan hamnar det på listan.
-                </div>
-              ) : (
-                <p className="mt-3 text-white/85">Ett ämne, ett företag eller en person. Du är anonym. SASU läser först, så önskemålet syns inte på listan direkt.</p>
-              )}
-              {wishError && (
-                <p role="alert" className="mt-5 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-red-dark">
-                  {wishError}
-                </p>
-              )}
-              <WishForm />
+              <WishForm tack={!!sp.tack} serverError={wishErrorText(sp.fel)} />
             </div>
           </aside>
         </div>
@@ -258,7 +245,8 @@ function WishVote({ wish, litByServer }: { wish: LectureWish; litByServer: boole
 function WishMeta({ wish, onSky = false }: { wish: LectureWish; onSky?: boolean }) {
   return (
     <>
-      <span className={cn("chip", CHIP_CLASS[wish.status])}>{WISH_STATUS_LABELS[wish.status]}</span>
+      {/* På himlen är bläcket mörkt i båda lägena men papperet inte, så där behövs en vit lapp för att texten ska synas i mörkt läge. */}
+      <span className={cn("chip", onSky && wish.status === "onskad" ? "bg-white text-ink" : CHIP_CLASS[wish.status])}>{WISH_STATUS_LABELS[wish.status]}</span>
       {wish.event_slug && (
         <Link href={`/evenemang/${wish.event_slug}`} className={cn("tryck inline-flex items-center gap-1 text-sm font-semibold underline-offset-4 hover:underline", onSky ? "text-white" : "text-red-deep")}>
           Till föreläsningen <ArrowUpRight size={14} />
@@ -297,11 +285,12 @@ function WishComet({ wish, most }: { wish: LectureWish; most: number }) {
   const y = 8;
   const x = tail + 8;
   return (
-    <svg className="shrink-0" width={x + 8} height="16" viewBox={`0 0 ${x + 8} 16`} aria-hidden>
+    // Marinblått försvinner mot den mörka listan, så i mörkt läge får svansen textens färg.
+    <svg className="shrink-0 text-star-navy [[data-tema=mork]_&]:text-ink" width={x + 8} height="16" viewBox={`0 0 ${x + 8} 16`} aria-hidden>
       <defs>
         <linearGradient id={`komet-${wish.id}`}>
-          <stop offset="0" stopColor="var(--color-star-navy)" stopOpacity="0" />
-          <stop offset="1" stopColor="var(--color-star-navy)" stopOpacity="0.6" />
+          <stop offset="0" stopColor="currentColor" stopOpacity="0" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0.6" />
         </linearGradient>
       </defs>
       <rect x="0" y={y - 0.75} width={tail} height="1.5" fill={`url(#komet-${wish.id})`} />

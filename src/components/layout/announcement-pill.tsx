@@ -23,7 +23,7 @@ export function AnnouncementPill({ text, href }: { text: string; href: string | 
     return () => clearTimeout(t);
   }, [key]);
 
-  // På startsidan fyller heron, med texten om sektionen och siffrorna, första skärmen och mer på telefon. Meddelandet väntar därför tills
+  // På startsidan når heron ner till skärmens nederkant i ett lågt fönster och på en liten telefon. Meddelandet väntar därför tills
   // heron inte längre når ner i skärmens nedersta del, där meddelandet ligger. Hela heron bevakas, inte en linje i den, så att också
   // ett hopp förbi den på en gång räknas: den går då från att nå ner dit till att inte göra det.
   useEffect(() => {

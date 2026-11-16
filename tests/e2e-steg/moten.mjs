@@ -6,9 +6,12 @@ import { uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
 const CHAIR = "admin@statlin.se";
 const MEMBER = "scb@statlin.se";
 
-/** Titlarna på dagordningen, i ordning. Den förra sidan kan ligga kvar dold i dokumentet efter ett sidbyte, så bara den synliga räknas. */
+/**
+ * Titlarna på dagordningen, i ordning. Den förra sidan kan ligga kvar dold i dokumentet efter ett sidbyte, så bara den synliga räknas.
+ * För ordföranden ligger texten i en knapp, eftersom punkten går att rätta.
+ */
 const agenda = (p) =>
-  p.locator('section[aria-labelledby="dagordning"]:visible ol > li').evaluateAll((els) => els.map((li) => li.querySelector(":scope > span.flex-1 > span:first-child")?.textContent));
+  p.locator('section[aria-labelledby="dagordning"]:visible ol > li').evaluateAll((els) => els.map((li) => li.querySelector("span.flex-1 > span:first-child")?.textContent));
 
 export default async function motenSteg({ BASE, page, step, switchAccount }) {
   const marker = uniqueId();

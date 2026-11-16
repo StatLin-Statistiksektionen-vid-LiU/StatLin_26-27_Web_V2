@@ -11,7 +11,7 @@ import { listAllPublishedEvents } from "@/lib/data/events";
 import { listLinks } from "@/lib/data/links";
 import { listNews } from "@/lib/data/news";
 import { listResources } from "@/lib/data/resources";
-import { formatDate, todayLocal } from "@/lib/dates";
+import { eventEnd, formatDate, isoToLocal, nowLocal } from "@/lib/dates";
 import { getBlock } from "@/lib/innehall/server";
 import { categoryLabel, isExternalUrl } from "@/lib/links";
 import { starIsLive } from "@/lib/naringsliv";
@@ -100,9 +100,10 @@ export async function buildSearchIndex(): Promise<SearchEntry[]> {
   }
   for (const page of EXTRA_PAGES) addPage(page.href, page.title, page.meta);
 
-  const today = todayLocal();
+  // Samma gräns som evenemangssidan: ett evenemang som slutade tidigare i dag har varit.
+  const now = nowLocal();
   for (const e of events) {
-    const upcoming = (e.ends_at ?? e.starts_at).slice(0, 10) >= today;
+    const upcoming = eventEnd(e.starts_at, e.ends_at, e.all_day) >= now;
     entries.push({
       href: `/evenemang/${e.slug}`,
       kind: "evenemang",
@@ -120,7 +121,8 @@ export async function buildSearchIndex(): Promise<SearchEntry[]> {
       href: `/nyheter/${n.slug}`,
       kind: "nytt",
       title: n.title,
-      meta: formatDate(n.published_at, true),
+      // Publiceringstiden är lagrad i UTC. Utan omräkning står en nyhet från sent på kvällen med gårdagens datum här men dagens på kortet.
+      meta: formatDate(isoToLocal(n.published_at), true),
       keywords: [n.committee?.name, n.author_post].filter(Boolean).join(" "),
       text: [n.excerpt, plain(n.body_md)].filter(Boolean).join(" "),
       boost: n.pinned ? 2 : 1,

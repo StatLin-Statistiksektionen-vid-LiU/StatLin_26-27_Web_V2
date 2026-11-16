@@ -115,6 +115,12 @@ export default function PrivacyPage() {
             kvar tills uppdraget raderas (rubriken står kvar i revisionsloggen); då raderas kommentarerna med det. Raderas ett konto
             står texten kvar, utan namn.
           </p>
+          <p>
+            Chatten i adminpanelen sparar meddelandena med vem som skrivit dem och när. De syns bara för inloggade poster som har
+            kanalen: alla konton, styrelsens poster eller ett utskotts konton, och alltid för administratörerna. Den som skrivit ett
+            meddelande kan ta bort det, och en administratör kan ta bort vilket som helst. Då raderas texten. Meddelandena raderas
+            efter 24 månader, och raderas ett konto står texten kvar, utan namn.
+          </p>
 
           <Suspense fallback={null}>
             <QuestionBoxPrivacy />

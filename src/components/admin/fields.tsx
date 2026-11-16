@@ -157,6 +157,8 @@ export function TitleSlugFields({
           className="py-3 text-lg font-semibold"
           maxLength={titleMaxLength}
           autoComplete="off"
+          // Något nytt har ingen adress än: då står markören i titeln när sidan öppnas.
+          autoFocus={!defaultSlug}
           required
         />
       </Field>
@@ -190,7 +192,7 @@ export function FormSection({
   className?: string;
 }) {
   return (
-    <section className={cn("rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-7", className)}>
+    <section className={cn("form-sektion rounded-[1.5rem] border border-ink/10 bg-white p-5 md:p-7", className)}>
       <div className="mb-5">
         <h2 className="text-base font-bold">{title}</h2>
         {description && <p className="mt-1 text-sm text-stone">{description}</p>}

@@ -29,7 +29,6 @@ export default function ListRedigerare({
   min = 0,
   efter,
   verktyg,
-  forhandsvisning,
 }: ListaProps<unknown>) {
   const [oppen, setOppen] = useState<number | null>(null);
   const [ordning, setOrdning] = useState<number[] | null>(null);
@@ -263,7 +262,6 @@ export default function ListRedigerare({
           }}
           onStang={() => setOppen(null)}
           verktyg={verktyg ? (stang) => verktyg(items[oppen], oppen, stang) : undefined}
-          forhandsvisning={forhandsvisning}
         />
       )}
       {nyRad && falt && (
@@ -283,7 +281,6 @@ export default function ListRedigerare({
           onTaBort={() => setNyRad(null)}
           onFlytta={() => undefined}
           onStang={() => setNyRad(null)}
-          forhandsvisning={forhandsvisning}
         />
       )}
     </>

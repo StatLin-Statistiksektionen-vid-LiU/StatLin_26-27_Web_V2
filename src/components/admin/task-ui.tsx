@@ -5,9 +5,6 @@ import { formatDate, formatDateShort, todayLocal } from "@/lib/dates";
 import { TASK_STATUSES, type Task, type TaskPerson, type TaskStatus } from "@/lib/types";
 import { cn, simplify } from "@/lib/utils";
 
-/** Alla statusar, i den ordning de står i listor och menyer. */
-export const STATUS_ORDER: TaskStatus[] = ["planerad", "pagar", "hjalp", "klar"];
-
 /**
  * Tavlans tre steg. Behöver hjälp är inget eget steg: uppdraget pågår fortfarande, och kortet får en röd markering i Pågår
  * så att alla som ser tavlan kan hoppa in.

@@ -45,7 +45,11 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
   // Vårens punkter gäller då nästa år, både i listan, på hjulet och när de läggs på tavlan.
   const rolling = view === "nu" && autumn;
   const vtYear = rolling ? year + 1 : year;
-  const month = monthParam(sp.manad);
+  // Utan månad i adressen visas den innevarande månaden, det som gäller nu. Hela året är ett eget val (manad=alla), och ett annat år
+  // än det här har ingen innevarande månad och visas helt.
+  const currentMonth = year === thisYear ? thisMonth : null;
+  const chosen = sp.manad === "alla" ? null : (monthParam(sp.manad) ?? undefined);
+  const month = chosen === undefined ? currentMonth : chosen;
   // Den egna posten eller det egna utskottet, för filtret Bara SCB.
   const ourLabel = user.committee_name?.trim() || user.post.trim();
   const ours = sp.vara === "1" && ourLabel !== "";
@@ -58,10 +62,11 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
   const views: View[] = autumn ? [thisYear - 1, thisYear, "nu", thisYear + 1] : [thisYear - 1, "nu", thisYear + 1];
   const at = views.indexOf(view);
   const viewLabel = (v: View) => (v === "nu" ? (autumn ? `${thisYear}/${String(thisYear + 1).slice(2)}` : String(thisYear)) : String(v));
-  const query = (v: View, m: number | null, onlyOurs = ours) => {
+  // m är en månad, null för hela året eller undefined för det som sidan väljer själv.
+  const query = (v: View, m: number | null | undefined, onlyOurs = ours) => {
     const q = new URLSearchParams();
     if (v !== "nu") q.set("ar", String(v));
-    if (m !== null) q.set("manad", String(m));
+    if (m !== undefined) q.set("manad", m === null ? "alla" : String(m));
     if (onlyOurs) q.set("vara", "1");
     const s = q.toString();
     return s ? `/admin/arshjul?${s}` : "/admin/arshjul";
@@ -75,8 +80,6 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
     const s = q.toString();
     return s ? `/admin/arshjul/ny?${s}` : "/admin/arshjul/ny";
   };
-  const currentMonth = year === thisYear ? thisMonth : null;
-
   const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
   const springMonths = allMonths.filter((m) => termOfMonth(m) === "vt");
   // Månadsknapparna på telefon går i samma ordning som listan: på hösten från juli till juni.
@@ -130,6 +133,8 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
 
   const missingSuggestions = WHEEL_SUGGESTIONS.some((s) => !allItems.some((i) => i.seed_key === s.seed_key));
   const filtered = month !== null ? items.filter((i) => i.month === month) : items;
+  // Öppnar sidan på en tom månad visas också nästa månad som har något, så att den som kommer hit ser vad som väntar.
+  const nextMonth = chosen === undefined && filtered.length === 0 ? [...comingMonths, ...(rolling ? springMonths : [])].find((m) => items.some((i) => i.month === m)) : undefined;
   const scope = month !== null ? ` i ${MONTHS[month - 1].toLowerCase()} ${monthYear(month)}` : rolling ? ` under hösten ${year} och våren ${vtYear}` : ` under ${year}`;
 
   return (
@@ -155,11 +160,11 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
       <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:grid-cols-[minmax(0,30rem)_minmax(0,1fr)]">
         {/* Hjulet: på telefon under listan och mindre, på datorn bredvid den och kvar när listan scrollas. */}
         <div className="order-2 lg:sticky lg:top-6 lg:order-1">
-          <div className="mx-auto max-w-[23rem] rounded-[2rem] bg-ink p-4 text-paper sm:p-5 lg:max-w-none [[data-tema=mork]_&]:ring-1 [[data-tema=mork]_&]:ring-white/10 [[data-tema=mork]_&]:[--color-ink:#141413] [[data-tema=mork]_&]:[--color-ink-3:#262522] [[data-tema=mork]_&]:[--color-paper:#f9f8f5] [[data-tema=mork]_&]:[--color-white:#fff]">
+          <div className="mx-auto max-w-[23rem] rounded-[2rem] bg-ink p-4 text-paper sm:p-5 lg:max-w-none [[data-tema=mork]_&]:ring-1 [[data-tema=mork]_&]:ring-white/10 [[data-tema=mork]_&]:[--color-ink:#141413] [[data-tema=mork]_&]:[--color-ink-3:#262522] [[data-tema=mork]_&]:[--color-paper:#ece8df] [[data-tema=mork]_&]:[--color-white:#f8f6f0]">
             <nav aria-label="Välj år" className="mb-3 flex items-center justify-between">
-              <YearLink target={views[at - 1]} href={(v) => query(v, month)} label={(v) => `Föregående, ${viewLabel(v)}`} Icon={ChevronLeft} />
+              <YearLink target={views[at - 1]} href={(v) => query(v, chosen)} label={(v) => `Föregående, ${viewLabel(v)}`} Icon={ChevronLeft} />
               <p className="font-mono text-sm font-medium tracking-[0.2em] tabular">{viewLabel(view)}</p>
-              <YearLink target={views[at + 1]} href={(v) => query(v, month)} label={(v) => `Nästa, ${viewLabel(v)}`} Icon={ChevronRight} />
+              <YearLink target={views[at + 1]} href={(v) => query(v, chosen)} label={(v) => `Nästa, ${viewLabel(v)}`} Icon={ChevronRight} />
             </nav>
             <WheelDial items={items} stateOf={stateOf} year={year} vtYear={vtYear} today={today} selected={month} href={href} />
             <WheelLegend />
@@ -170,10 +175,10 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
           {/* Filtret syns för den som har något i hjulet, och alltid när det är på, så att det går att stänga av. */}
           {ourLabel && (ours || allItems.some(concernsUs)) && (
             <nav aria-label="Vems punkter" className="mb-3 flex w-fit max-w-full gap-1 rounded-full border border-ink/15 bg-white p-1">
-              <FilterLink href={query(view, month, false)} active={!ours}>
+              <FilterLink href={query(view, chosen, false)} active={!ours}>
                 Hela sektionen
               </FilterLink>
-              <FilterLink href={query(view, month, true)} active={ours}>
+              <FilterLink href={query(view, chosen, true)} active={ours}>
                 Bara {ourLabel}
               </FilterLink>
             </nav>
@@ -190,7 +195,7 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
               ))}
             </nav>
           )}
-          <ScrollChipIntoView target="manadsval" />
+          <ScrollChipIntoView target="manadsval" month={month} />
           <p role="status" className="mb-4 flex flex-wrap items-center gap-x-3 text-sm text-stone">
             <span>
               {countLabel(filtered.length)}
@@ -231,16 +236,19 @@ async function Wheel({ searchParams }: { searchParams: PageProps<"/admin/arshjul
             </EmptyState>
           ) : month !== null ? (
             filtered.length === 0 ? (
-              <EmptyState
-                title={`Inget i ${MONTHS[month - 1].toLowerCase()}`}
-                action={
-                  <Link href={newHref(month)} className="btn btn-ink">
-                    <Plus size={18} /> Lägg till en punkt
-                  </Link>
-                }
-              >
-                Brukar något hända då? Lägg in det, så ser nästa års post det också.
-              </EmptyState>
+              <>
+                <EmptyState
+                  title={`Inget i ${MONTHS[month - 1].toLowerCase()}`}
+                  action={
+                    <Link href={newHref(month)} className="btn btn-ink">
+                      <Plus size={18} /> Lägg till en punkt
+                    </Link>
+                  }
+                >
+                  Brukar något hända då? Lägg in det, så ser nästa års post det också.
+                </EmptyState>
+                {nextMonth !== undefined && monthGroup(nextMonth)}
+              </>
             ) : (
               <ul className="space-y-2.5">{filtered.map(row)}</ul>
             )

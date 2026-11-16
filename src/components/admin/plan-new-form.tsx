@@ -78,7 +78,7 @@ export function PlanNewForm({
 
       <div className="grid gap-5 @lg:grid-cols-2">
         <Field label="Namn på planen" name="title" required>
-          <TextInput name="title" defaultValue={defaults.title} maxLength={140} placeholder="Till exempel Julsittning 2026" />
+          <TextInput name="title" defaultValue={defaults.title} maxLength={140} placeholder="Till exempel Julsittning 2026" autoFocus />
         </Field>
         <Field label="Datum" name="plan_date" required hint="Dagen det händer. Stegen räknas ut bakåt härifrån.">
           <TextInput type="date" name="plan_date" value={date} onChange={(e) => setDate(e.target.value)} />

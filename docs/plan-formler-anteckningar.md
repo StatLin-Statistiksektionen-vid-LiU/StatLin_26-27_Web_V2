@@ -3,6 +3,9 @@
 Önskemålet (2026-11-07): formlerna i rutnätet och anteckningarna med pil ska gå att ändra, flytta och ta bort. Formlerna skrivs
 i LaTeX. Formlerna ska skrivas fram för hand innan de tonas bort, även när animationseffekterna är av i Windows.
 
+**2026-11-15:** ljuset kring pekaren och formlerna i rutnätet är borttagna, med tolken, sättaren och listan i sidfoten. Avsnitten om
+formlerna gäller inte längre. Anteckningarna med pil finns kvar.
+
 ## 1. Formlerna i rutnätet
 
 - Formlerna sparas i blocket Handskriften, bredvid citaten i sidfoten. Standard är dagens 15 formler, omskrivna till LaTeX.

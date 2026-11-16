@@ -24,7 +24,7 @@ const clean = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
 
 /**
  * Ett önskemål från en anonym besökare. Det syns inte förrän SASU godkänt det, och varken adressen eller något annat om
- * besökaren sparas. Redirect både med och utan JavaScript: tacket står i adressen, och formuläret är tomt igen.
+ * besökaren sparas. Utan JavaScript står tacket i adressen. Med JavaScript svarar actionen ok, och formuläret tackar och tömmer fälten.
  */
 export async function submitWish(_prev: FormState, fd: FormData): Promise<FormState> {
   // Honungsfällan: fältet är dolt för människor. Boten får samma svar som alla andra och tror att det gick bra.
@@ -44,9 +44,11 @@ export async function submitWish(_prev: FormState, fd: FormData): Promise<FormSt
   if (!title) return fail("fel", { fieldErrors: { title: "Önskemålet måste fyllas i." }, error: "Kontrollera fälten som är markerade." });
   const unread = db.prepare("SELECT COUNT(*) AS n FROM lecture_wishes WHERE status = 'ny'").get() as { n: number };
   if (unread.n >= MAX_UNREAD) return fail("full");
-  // Samma önskemål två gånger blir en rad. Besökaren behöver inte veta det, SASU slipper dubbletterna.
-  const same = db.prepare("SELECT 1 FROM lecture_wishes WHERE title = ? COLLATE NOCASE").get(title);
+  // Samma önskemål två gånger blir en rad. Besökaren behöver inte veta det, SASU slipper dubbletterna. En föreläsning som redan har
+  // hållits får önskas igen, annars skulle en ny årskulls önskan försvinna tyst.
+  const same = db.prepare("SELECT 1 FROM lecture_wishes WHERE title = ? COLLATE NOCASE AND status <> 'genomford'").get(title);
   if (!same) db.prepare("INSERT INTO lecture_wishes (title, comment, created_on) VALUES (?, ?, ?)").run(title, parsed.data.comment, todayLocal());
+  if (requestHeaders.get("next-action")) return { ok: true };
   redirect(`${PAGE}?tack=1#onska`);
 }
 

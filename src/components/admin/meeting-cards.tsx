@@ -31,7 +31,7 @@ export async function NextMeetingNotice() {
   return (
     <Link
       href={`/admin/moten/${m.id}`}
-      className="tryck mt-6 flex items-center gap-4 rounded-[1.5rem] border border-red/25 bg-white p-4 transition-colors hover:border-red/50 sm:px-5"
+      className="utskott-tema tryck mt-6 flex items-center gap-4 rounded-[1.5rem] border border-red/25 bg-white p-4 transition-colors hover:border-red/50 sm:px-5"
     >
       <DateBadge starts_at={m.starts_at} strong />
       <span className="min-w-0 flex-1">

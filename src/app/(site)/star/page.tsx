@@ -35,7 +35,8 @@ const H2 = "star-type text-[clamp(2.4rem,6vw,4.5rem)] font-light uppercase leadi
 export default async function StarPage(props: PageProps<"/star">) {
   const [companies, sasu, settings, user, sp] = await Promise.all([listStarCompanies({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings(), getSessionUser(), props.searchParams]);
   const event = await getStarEvent(Number(settings.star_event_id) || null);
-  const contact = sasu?.email || "sasu@statlin.se";
+  // Samma mottagare som anmälningarna från inbjudan, så att ett företag aldrig får två olika adresser.
+  const contact = sasu?.email || settings.contact_email;
   const companyMail = mailtoWithSubject(contact, "Vi vill vara med på STAR");
   const live = starIsLive(settings);
   const owner = !!user && !user.must_change_password && canManageNaringsliv(user);
@@ -355,7 +356,7 @@ function CountdownFacts({ event }: { event: EventFactsData }) {
 function SeekFilter({ companies }: { companies: StarCompany[] }) {
   const counts = SEEK_KINDS.map((kind) => ({ kind, count: companies.filter((c) => parseSeeks(c.seeks).includes(kind)).length })).filter((k) => k.count > 0);
   if (counts.length === 0) return null;
-  const chip = "flex h-10 cursor-pointer items-center gap-2 rounded-full border border-white/30 px-4 font-mono text-[0.72rem] uppercase tracking-[0.08em] transition-colors hover:border-white";
+  const chip = "flex h-10 pointer-coarse:h-11 cursor-pointer items-center gap-2 rounded-full border border-white/30 px-4 font-mono text-[0.72rem] uppercase tracking-[0.08em] transition-colors hover:border-white";
   return (
     <fieldset className="star-filter mt-7">
       <legend className="sr-only">Visa företag som söker</legend>
@@ -386,7 +387,7 @@ function CompanyCard({ company, delay }: { company: StarCompany; delay: number }
       <div className="flex flex-col items-start gap-3 @xs:flex-row @xs:items-center @xs:gap-4">
         <span className={cn("grid h-20 w-32 shrink-0 place-items-center overflow-hidden rounded-xl p-2.5", company.logo ? "bg-white" : "border border-white/25")}>
           {company.logo ? (
-            <SmartImage image={company.logo} sizes="128px" className="h-full w-full !bg-transparent !object-contain" alt="" />
+            <SmartImage image={company.logo} contain sizes="128px" className="h-full w-full" alt="" />
           ) : (
             <span className="star-type text-2xl font-light uppercase tracking-[0.1em]" aria-hidden>
               {company.name.slice(0, 2)}
@@ -410,7 +411,7 @@ function CompanyCard({ company, delay }: { company: StarCompany; delay: number }
         </p>
       )}
       {url && (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="link-underline mt-auto inline-flex items-center gap-1.5 self-start pt-5 text-sm font-semibold">
+        <a href={url} target="_blank" rel="noopener noreferrer" className="tryck link-underline mt-auto inline-flex items-center gap-1.5 self-start pt-5 text-sm font-semibold">
           Till webbplatsen <ArrowUpRight size={15} />
           <span className="sr-only"> för {company.name} (öppnas i ny flik)</span>
         </a>
@@ -448,7 +449,7 @@ function Route({ stops }: { stops: ProgramStop[] }) {
 function SponsorPlate({ company, className, imageClass, textClass }: { company: StarCompany; className: string; imageClass: string; textClass: string }) {
   const url = safeExternalUrl(company.url);
   const inner = company.logo ? (
-    <SmartImage image={company.logo} sizes="320px" className={`h-full max-w-[80%] !bg-transparent !object-contain ${imageClass}`} alt={company.name} />
+    <SmartImage image={company.logo} contain sizes="320px" className={`h-full max-w-[80%] ${imageClass}`} alt={company.name} />
   ) : (
     <span className={`star-type px-3 text-center text-star-navy [overflow-wrap:anywhere] ${textClass}`}>{company.name}</span>
   );

@@ -27,14 +27,13 @@ export function PageHero({
   className?: string;
 }) {
   return (
-    // data-ljus: rutnätet lyser kring pekaren här, se RutnatLjus.
-    <section data-ljus className={cn("relative isolate border-b border-line", className)}>
-      {/* Millimeterpapperet, som kring loggan på startsidan. Bakom innehållet, men framför ljuset kring pekaren. */}
+    <section className={cn("relative isolate border-b border-line", className)}>
+      {/* Millimeterpapperet, som kring loggan på startsidan, bakom innehållet. */}
       <div aria-hidden className="sidhuvud-rutnat grid-millimeter pointer-events-none absolute inset-0 -z-10 text-ink" />
       <div className="container-site relative grid items-end gap-10 pb-12 pt-[calc(var(--header-h)+3rem)] md:grid-cols-12 md:pb-14 md:pt-[calc(var(--header-h)+4.5rem)]">
         <div className={cn(aside ? "md:col-span-8" : "md:col-span-10")}>
           <p className="kicker flex items-center gap-2.5 text-stone">
-            <span className="size-1.5 rounded-full" style={{ background: accent ?? "var(--color-red)" }} aria-hidden />
+            <span className="utskottsprick size-1.5 rounded-full" style={accent ? ({ "--prick": accent } as CSSProperties) : undefined} aria-hidden />
             {kicker}
           </p>
           <div className="@container mt-5">

@@ -47,6 +47,7 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
   return (
     <>
       {sp.raderad && <Notice>Evenemanget är borttaget.</Notice>}
+      {sp.nekad && <Notice tone="warning">Du har inte behörighet till det evenemanget.</Notice>}
       <AdminHeader
         title="Evenemang"
         description={user.role === "committee" ? `Evenemang för ${user.committee_name}.` : "Alla sektionens evenemang."}
@@ -116,7 +117,10 @@ async function Events({ searchParams }: { searchParams: PageProps<"/admin/evenem
                             {e.committee.short_name}
                           </>
                         )}
-                        <span className="md:hidden">· {formatDate(e.starts_at)}</span>
+                        <span className="md:hidden">
+                          {e.committee && "· "}
+                          {formatDate(e.starts_at)}
+                        </span>
                         {!e.published && <span className="font-semibold text-ink/70 sm:hidden">· Utkast</span>}
                       </span>
                     </Link>

@@ -3,7 +3,7 @@ import type { ImageRef } from "@/lib/types";
 /** HEIC och liknande har ofta ingen filtyp i webbläsaren. */
 export const isImageFile = (file: File) => file.type.startsWith("image/") || /\.(heic|heif|avif)$/i.test(file.name);
 
-export type UploadResult = { id: number; image?: ImageRef; caption?: string; href?: string; name?: string; error?: string };
+export type UploadResult = { id: number; image?: ImageRef; caption?: string; error?: string };
 
 /** Laddar upp en fil till /api/admin/upload med förloppsrapportering (XHR, eftersom fetch saknar upload-progress). */
 export function uploadFile(

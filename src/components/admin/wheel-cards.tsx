@@ -119,7 +119,7 @@ export async function WheelCards({ user }: { user: SessionUser }) {
         empty={
           <>
             Inget väntar i {nextName.toLowerCase()}.{" "}
-            <Link href="/admin/arshjul" className="font-semibold text-ink underline">
+            <Link href="/admin/arshjul?manad=alla" className="font-semibold text-ink underline">
               Titta i hjulet
             </Link>{" "}
             om något saknas.
@@ -133,12 +133,12 @@ export async function WheelCards({ user }: { user: SessionUser }) {
         rows={toPlan}
         user={user}
         thisYear={thisYear}
-        more="/admin/arshjul"
+        more="/admin/arshjul?manad=alla"
         showPlacement
         empty={
           <>
             Allt som beror på andra är planerat.{" "}
-            <Link href="/admin/arshjul" className="font-semibold text-ink underline">
+            <Link href="/admin/arshjul?manad=alla" className="font-semibold text-ink underline">
               Hela hjulet
             </Link>{" "}
             finns ett klick bort.

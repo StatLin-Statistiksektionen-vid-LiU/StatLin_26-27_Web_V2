@@ -43,7 +43,6 @@ export function RadRuta({
   onFlytta,
   onStang,
   verktyg,
-  forhandsvisning,
   ny = false,
 }: {
   ankare: () => HTMLElement | null;
@@ -59,8 +58,6 @@ export function RadRuta({
   onFlytta: (steg: -1 | 1, nytt: Item) => void;
   onStang: () => void;
   verktyg?: (stang: () => void) => ReactNode;
-  /** Visas under fälten med det som står i dem just nu. */
-  forhandsvisning?: (utkast: Item) => ReactNode;
   /** En ny rad som läggs till först när man trycker Klar, eller när något ändrats och man klickar utanför. */
   ny?: boolean;
 }) {
@@ -407,7 +404,6 @@ export function RadRuta({
           })}
         </div>
       )}
-      {forhandsvisning && <div className="redigerbar-forhand">{forhandsvisning(utkast)}</div>}
 
       <div className="redigerbar-ruta-fot">
         <div className="flex items-center gap-1">

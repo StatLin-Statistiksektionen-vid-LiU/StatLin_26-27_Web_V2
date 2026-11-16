@@ -57,7 +57,7 @@ Klart lokalt sedan tidigare, men inte live:
 ## Kreativt
 
 9. **Rutnät och handskrift (11):**
-   - Rutnätet lyser upp där muspekaren är, på hela sidan. Det gäller bara med mus, och sedan 2026-11-07 också med reducerad rörelse. Tekniken är ett lager med radial mask, där läget sätts som CSS-variabel i requestAnimationFrame.
+   - Rutnätet lyser upp där muspekaren är, på hela sidan. Det gäller bara med mus, och sedan 2026-11-07 också med reducerad rörelse. Tekniken är ett lager med radial mask, där läget sätts som CSS-variabel i requestAnimationFrame. Borttaget 2026-11-15: papperet står stilla överallt utom på inloggningen, där ljuset finns kvar (`PekarLjus`).
    - Handskrivna ekvationer, citat och bilder ritas fram med stroke-dasharray och går att ändra.
 10. **eSTIG-sidan (14):**
     - spel- och filmtema i eSTIG:s färger
@@ -78,16 +78,16 @@ Klart lokalt sedan tidigare, men inte live:
 
 - **UBU:** knappen till kursutvärderingarna står både på UBU:s utskottssida och på UBU-kortet. Länken ligger i blocket `ubu`, och flaggan `ubu` i `far()` och adminlisten styr vem som får ändra den.
 - **Rutnätet:** ljuset under musen ligger i `src/components/layout/rutnat-ljus.tsx`. Det är av utan mus men lyser också med reducerad rörelse, då utan att tonas in och ut. Sidhuvudenas rutnät är millimeterpapper.
-- **Handskriften:** `src/components/content/handskrift.tsx` och blocket `handskrift`, med typsnittet Mynerve. Anteckningen vid loggan syns från 1280 px, och sidfoten visar ett slumpat citat. Ringen runt namnet går ut lika långt oavsett namnets längd, så att den ryms på telefoner från 320 px.
+- **Handskriften:** `src/components/content/handskrift.tsx` och blocket `handskrift`, med typsnittet Caveat Brush (sedan 2026-11-14, tidigare Mynerve, som formlerna har kvar). Anteckningen vid loggan syns från 1280 px, och sidfoten visar ett slumpat citat. Ringen runt namnet går ut lika långt oavsett namnets längd, så att den ryms på telefoner från 320 px.
 - **eSTIG:**
-  - Temat byter sidans röda mot eSTIG:s blå (`.estig-tema` i `globals.css`). Sidhuvudet har tända pixlar i rutnätet och loggan i en kamerasökare, och en filmremsa står under det.
-  - Loggan startar spelet Stapla normalen (`src/components/estig/spelet.tsx`). Spelet är eget: man fyller nio staplar upp till en normalfördelning, och ett block över strecket är ett extremvärde som kostar ett liv. Koden hämtas först när musen är över loggan eller när någon trycker, och rekordet sparas i webbläsaren.
+  - Sedan 2026-11-16 har alla utskott samma uppbyggnad (`.utskott-tema` i `globals.css`, `src/lib/karaktar.ts`): sidans röda blir utskottets färg och loggan har utskottets motiv runt om. Pixlarna, kamerasökaren och filmremsan är borttagna.
+  - Kortet under sidhuvudet startar spelet Stapla normalen (`src/components/estig/spelet.tsx`). Spelet är eget: man fyller nio staplar upp till en normalfördelning, och ett block över strecket är ett extremvärde som kostar ett liv. Koden hämtas först när musen är över knappen eller när någon trycker, och rekordet sparas i webbläsaren.
   - Discordknappen syns för besökare när den har både text och länk. Länken saknas än och läggs in i redigeringsläget.
   - Spelönskemålen går till eSTIG:s önskelåda. Migreringssteg 19 och seeden slår på den för eSTIG, och utskottet kan stänga den i Admin.
 
 ## Handstil, anteckningar och formler
 
-- **Formlerna i rutnätet:** `RutnatLjus` skriver då och då en statistisk formel för hand där pekaren lyser, mitt i den tomma ytan mellan innehållet. Den syns bara i ljuset (en mask kring pekaren, `.rutnat-formel`), står kvar i sju sekunder och tonas sedan bort. Högst två åt gången, var tredje med rödpenna. Ytan mäts med `elementFromPoint`: text, länkar, kort med egen bakgrund, hårlinjer och fönstrets kanter räknas som innehåll.
+- **Formlerna i rutnätet:** `RutnatLjus` skriver då och då en statistisk formel för hand där pekaren lyser, mitt i den tomma ytan mellan innehållet. Den syns bara i ljuset (en mask kring pekaren, `.rutnat-formel`), står kvar i sju sekunder och tonas sedan bort. Högst två åt gången, var tredje med rödpenna. Ytan mäts med `elementFromPoint`: text, länkar, kort med egen bakgrund, hårlinjer och fönstrets kanter räknas som innehåll. Borttaget 2026-11-15 tillsammans med ljuset kring pekaren.
 - **Anteckningarna:** `Anteckning` i `src/components/content/anteckning.tsx` skriver en kort anteckning med en pil till ett ord i rubriken. Den provar några platser kring ordet och hamnar där den inte täcker något, och får den inte plats syns den inte. Texterna är inställningar (`text_<grupp>_anteckning` och `text_om_anteckning`): en tom ruta ger standardtexten, ett `-` tar bort anteckningen och `*text*` gör den röd.
   - Om StatLin: "(topp 5 sektion)" ovanför rubriken, med pilen till StatLin. Den ändras där den står i redigeringsläget.
   - Nytt, Galleri (röd), Dokument och Styrelsen: vid slutet av rubriken. De ändras med pennan för sidhuvudet.

@@ -8,6 +8,7 @@ import { audit, forbidden, nowIso } from "@/lib/admin/helpers";
 import { yearInRange } from "@/lib/arshjul";
 import { canChangePlan } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
+import { planChannelKey } from "@/lib/chatt";
 import { todayLocal } from "@/lib/dates";
 import { getDb } from "@/lib/db";
 import { isValidDate, planTemplate } from "@/lib/projektplan-mallar";
@@ -135,6 +136,9 @@ export async function addPlanStep(_prev: FormState, fd: FormData): Promise<FormS
   const plan = loadPlan(d.plan_id);
   if (!plan) return { error: "Planen finns inte längre." };
   if (!canChangePlan(user, plan)) return forbidden();
+  // Samma tak som när planen skapas, annars gick det att lägga till steg ett i taget förbi det.
+  const { n } = getDb().prepare("SELECT COUNT(*) AS n FROM plan_steps WHERE plan_id = ?").get(plan.id) as { n: number };
+  if (n >= MAX_STEPS) return { error: `En plan får ha högst ${MAX_STEPS} steg.` };
   getDb().prepare("INSERT INTO plan_steps (plan_id, title, description, due_date) VALUES (?, ?, ?, ?)").run(plan.id, d.title, d.description, d.due_date);
   audit(user.id, "update", "project_plan", plan.id, `Nytt steg: ${d.title}`);
   await renewSessionIfDue();
@@ -234,6 +238,55 @@ export async function sendPlanSteps(fd: FormData): Promise<FormState> {
   return { ok: true, message: sent.length === 1 ? `"${sent[0].title}" ligger nu på tavlan.` : `${sent.length} steg ligger nu på tavlan.` };
 }
 
+/**
+ * Vilka som är med i planen utöver den som la in den och den ansvariga posten: hela StatLin, eller de konton som kryssas i. De som är
+ * med får fråga och svara i planens tråd. En ny inbjudan står som avisering hos kontot tills det öppnar planen.
+ */
+export async function savePlanCollaborators(_prev: FormState, fd: FormData): Promise<FormState> {
+  const user = await actionUser({ renew: false });
+  if ("error" in user) return user;
+  const planId = Number(fd.get("plan_id"));
+  const plan = Number.isSafeInteger(planId) ? loadPlan(planId) : undefined;
+  if (!plan) return { error: "Planen finns inte längre." };
+  if (!canChangePlan(user, plan)) return forbidden();
+  const db = getDb();
+  const all = fd.get("collab_all") === "on" ? 1 : 0;
+  const active = new Set((db.prepare("SELECT id FROM users WHERE active = 1").all() as { id: number }[]).map((r) => r.id));
+  // Den som la in planen är redan med.
+  const wanted = new Set(fd.getAll("user_id").map(Number).filter((id) => active.has(id) && id !== plan.owner_user_id));
+  const now = nowIso();
+
+  const added = db.transaction(() => {
+    db.prepare("UPDATE project_plans SET collab_all = ? WHERE id = ?").run(all, plan.id);
+    const current = new Set((db.prepare("SELECT user_id FROM plan_collaborators WHERE plan_id = ?").all(plan.id) as { user_id: number }[]).map((r) => r.user_id));
+    const remove = db.prepare("DELETE FROM plan_collaborators WHERE plan_id = ? AND user_id = ?");
+    for (const id of current) if (!wanted.has(id)) remove.run(plan.id, id);
+    // Den som bjuder in sig själv behöver ingen avisering om det.
+    const insert = db.prepare("INSERT INTO plan_collaborators (plan_id, user_id, added_at, seen_at) VALUES (?, ?, ?, ?)");
+    let n = 0;
+    for (const id of wanted) {
+      if (current.has(id)) continue;
+      insert.run(plan.id, id, now, id === user.id ? now : null);
+      n++;
+    }
+    return n;
+  })();
+  audit(user.id, "update", "project_plan", plan.id, all ? `Medarbetare: hela StatLin (${plan.title})` : `Medarbetare: ${wanted.size} inbjudna (${plan.title})`);
+  await renewSessionIfDue();
+  revalidateAdmin();
+  if (all) return { ok: true, message: "Hela StatLin är med i planen och kan fråga och svara i tråden." };
+  if (wanted.size === 0) return { ok: true, message: "Ingen är inbjuden. Tråden är för dig och den ansvariga posten." };
+  return { ok: true, message: added > 0 ? `Sparat. ${added === 1 ? "Den nya medarbetaren får" : "De nya medarbetarna får"} en avisering.` : "Medarbetarna är sparade." };
+}
+
+/** Inbjudan räknas som sedd när kontot öppnar planen. Anropas av sidan själv, så det förlänger inte sessionen. */
+export async function markPlanInviteSeen(planId: number) {
+  const user = await actionUser({ renew: false });
+  if ("error" in user || !Number.isSafeInteger(planId)) return;
+  const res = getDb().prepare("UPDATE plan_collaborators SET seen_at = ? WHERE plan_id = ? AND user_id = ? AND seen_at IS NULL").run(nowIso(), planId, user.id);
+  if (res.changes > 0) revalidateAdmin();
+}
+
 export async function deletePlan(fd: FormData): Promise<FormState> {
   const user = await actionUser({ renew: false });
   if ("error" in user) return user;
@@ -241,8 +294,14 @@ export async function deletePlan(fd: FormData): Promise<FormState> {
   const existing = loadPlan(id);
   if (!existing) return { error: "Planen finns inte längre." };
   if (!canChangePlan(user, existing)) return forbidden();
-  // Stegen försvinner med planen. Skickade uppdrag står kvar på tavlan utan plan (ON DELETE SET NULL), och årshjulspunkten blir öppen igen om inget annat är planerat.
-  getDb().prepare("DELETE FROM project_plans WHERE id = ?").run(id);
+  // Stegen och medarbetarna försvinner med planen. Skickade uppdrag står kvar på tavlan utan plan (ON DELETE SET NULL), och årshjulspunkten
+  // blir öppen igen om inget annat är planerat. Trådens meddelanden tas bort här: de hänger på nyckeln plan:<id>, och ett id kan återanvändas.
+  const db = getDb();
+  db.transaction(() => {
+    db.prepare("DELETE FROM chat_reads WHERE channel = ?").run(planChannelKey(id));
+    db.prepare("DELETE FROM chat_messages WHERE channel = ?").run(planChannelKey(id));
+    db.prepare("DELETE FROM project_plans WHERE id = ?").run(id);
+  })();
   audit(user.id, "delete", "project_plan", id, existing.title);
   await renewSessionIfDue();
   revalidateAdmin();

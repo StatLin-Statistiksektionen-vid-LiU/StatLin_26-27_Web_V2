@@ -9,6 +9,7 @@ import {
   BookOpen,
   Calendar,
   Chain,
+  Chat,
   ClipboardList,
   Close,
   FileText,
@@ -33,7 +34,10 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { hasDesign } from "@/lib/auth/permissions";
 import { ROLE_LABELS, type SessionUser } from "@/lib/types";
 import { closeWhenWider, useFocusLayer } from "@/lib/use-focus-layer";
+import type { Avisering } from "@/lib/data/aviseringar";
 import { cn, initials } from "@/lib/utils";
+import { Aviseringar } from "./aviseringar";
+import { useChatUnread } from "./chatt/unread";
 import { LogoutForm } from "./logout-form";
 
 type SidebarUser = Pick<SessionUser, "name" | "post" | "role" | "committee_name" | "committee_id" | "committee_kind" | "design">;
@@ -41,7 +45,10 @@ type NavItem = { href: string; label: string; Icon: typeof Home; exact?: boolean
 
 export function AdminSidebar({
   user,
+  logo,
   unseenTasks = 0,
+  unreadChat = 0,
+  aviseringar = [],
   questionBox,
   naringsliv = false,
   newWishes = 0,
@@ -49,7 +56,13 @@ export function AdminSidebar({
   ownWishes = 0,
 }: {
   user: SidebarUser;
+  /** Utskottets logga, eller StatLins för styrelsens poster. */
+  logo: string;
   unseenTasks?: number;
+  /** Olästa meddelanden i chatten när skalet renderades. Webbläsaren håller sedan siffran aktuell (useChatUnread). */
+  unreadChat?: number;
+  /** Klockans lista när skalet renderades. */
+  aviseringar?: Avisering[];
   questionBox?: { show: boolean; unseen: number };
   naringsliv?: boolean;
   newWishes?: number;
@@ -58,6 +71,7 @@ export function AdminSidebar({
   ownWishes?: number;
 }) {
   const pathname = usePathname();
+  const chatUnread = useChatUnread(unreadChat);
   const [open, setOpen] = useState(false);
   const topbarRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -115,6 +129,8 @@ export function AdminSidebar({
         { href: "/admin", label: "Översikt", Icon: Home, exact: true },
         { href: "/admin/uppdrag", label: "Uppdragstavla", Icon: Board, badge: unseenTasks },
         { href: "/admin/projektplaner", label: "Projektplaner", Icon: ClipboardList },
+        // Chatten är planernas trådar, så den står intill dem.
+        { href: "/admin/chatt", label: "Chatt", Icon: Chat, badge: chatUnread },
         { href: "/admin/arshjul", label: "Årshjul", Icon: Wheel },
         { href: "/admin/moten", label: "Möten", Icon: ListBullets },
         questionBox?.show ? { href: "/admin/fragelada", label: "Frågelådan", Icon: MessageCircle, badge: questionBox.unseen } : null,
@@ -161,7 +177,7 @@ export function AdminSidebar({
                       active ? "bg-ink/[0.06] font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink",
                     )}
                   >
-                    <Icon size={16} className={active ? "text-red" : ""} />
+                    <Icon size={16} className={active ? "egen-text" : ""} />
                     {label}
                     {!!badge && (
                       <span className="ml-auto grid min-w-5 place-items-center rounded-full bg-red px-1.5 text-[0.7rem] font-bold leading-5 text-white tabular">
@@ -179,12 +195,15 @@ export function AdminSidebar({
     </nav>
   );
 
+  // Raden under StatLin i hörnet: kontots post i postens färg.
+  const brandLine = <span className={cn("block truncate text-[0.72rem]", user.post ? "egen-text font-medium" : "text-stone")}>{user.post || "Adminpanel"}</span>;
+
   // Står fast under menyn, så att kontot och utloggningen alltid syns även när menyn behöver scrollas.
   const footerLink = "flex h-8 w-full items-center justify-center gap-1.5 rounded-md px-2 text-[0.8rem] text-stone transition-colors hover:bg-ink/[0.05] hover:text-ink pointer-coarse:h-10";
   const profile = (
     <div className="shrink-0 border-t border-line px-3 pb-3 pt-2">
       <Link href="/admin/konto" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-lg p-2 transition-colors hover:bg-ink/[0.04]">
-        <span className="grid size-8 shrink-0 place-items-center rounded-full bg-red text-xs font-bold text-white">{initials(user.name)}</span>
+        <span className="egen-yta grid size-8 shrink-0 place-items-center rounded-full text-xs font-bold">{initials(user.name)}</span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-semibold leading-tight text-ink">{user.name}</span>
           <span className="block truncate text-xs text-stone">
@@ -213,17 +232,20 @@ export function AdminSidebar({
       <div ref={topbarRef} role="banner" className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-line bg-paper/92 px-4 backdrop-blur-xl pointer-coarse:bg-paper pointer-coarse:backdrop-filter-none opak:bg-paper lg:hidden print:hidden">
         <Link href="/admin" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/statlin.svg" alt="" className="size-8" />
+          <img src={logo} alt="" className="size-8 object-contain" />
           <span className="leading-tight">
             <span className="block text-[0.98rem] font-semibold tracking-[-0.01em]" translate="no">
               StatLin
             </span>
-            <span className="block text-[0.72rem] text-stone">Adminpanel</span>
+            {brandLine}
           </span>
         </Link>
-        <button ref={toggleRef} type="button" onClick={() => setOpen((o) => !o)} className="grid size-10 place-items-center rounded-lg border border-line" aria-label={open ? "Stäng menyn" : "Öppna menyn"} aria-expanded={open} aria-controls="adminmeny">
-          {open ? <Close size={18} /> : <Menu size={18} />}
-        </button>
+        <div className="flex items-center gap-1.5">
+          <Aviseringar rendered={aviseringar} chatUnread={chatUnread} />
+          <button ref={toggleRef} type="button" onClick={() => setOpen((o) => !o)} className="grid size-10 place-items-center rounded-lg border border-line" aria-label={open ? "Stäng menyn" : "Öppna menyn"} aria-expanded={open} aria-controls="adminmeny">
+            {open ? <Close size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
       </div>
       <div ref={menuRef} id="adminmeny" className={cn("fixed inset-0 top-16 z-30 flex flex-col bg-paper lg:hidden", open ? "flex" : "hidden")}>
         {nav}
@@ -231,17 +253,21 @@ export function AdminSidebar({
       </div>
 
       {/* Desktop */}
-      <aside className="sticky top-0 hidden h-dvh flex-col border-r border-line bg-paper lg:flex print:hidden">
-        <Link href="/admin" className="group flex shrink-0 items-center gap-2.5 px-5 pb-3 pt-5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/brand/statlin.svg" alt="" className="size-8 transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:rotate-[-12deg]" />
-          <span className="leading-tight">
-            <span className="block text-[0.98rem] font-semibold tracking-[-0.01em]" translate="no">
-              StatLin
+      {/* z-30: klockans lista sticker ut över sidan och ska ligga över det som står fast där (formulärens sparlist). */}
+      <aside className="sticky top-0 z-30 hidden h-dvh flex-col border-r border-line bg-paper lg:flex print:hidden">
+        <div className="flex shrink-0 items-center justify-between gap-2 pr-3">
+          <Link href="/admin" className="group flex min-w-0 items-center gap-2.5 px-5 pb-3 pt-5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logo} alt="" className="size-8 object-contain transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:rotate-[-12deg]" />
+            <span className="leading-tight">
+              <span className="block text-[0.98rem] font-semibold tracking-[-0.01em]" translate="no">
+                StatLin
+              </span>
+              {brandLine}
             </span>
-            <span className="block text-[0.72rem] text-stone">Adminpanel</span>
-          </span>
-        </Link>
+          </Link>
+          <Aviseringar rendered={aviseringar} chatUnread={chatUnread} className="mt-2" />
+        </div>
         {nav}
         {profile}
       </aside>

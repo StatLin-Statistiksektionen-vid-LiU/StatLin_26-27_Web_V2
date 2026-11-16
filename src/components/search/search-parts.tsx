@@ -20,7 +20,7 @@ export function Marked({ text, terms, corrected }: { text: string; terms: string
     <>
       {highlight(text, terms, corrected).map((part, i) =>
         part.hit ? (
-          <mark key={i} className="rounded-[0.2em] bg-red/[0.12] px-[0.08em] text-inherit">
+          <mark key={i} className="rounded-[0.2em] bg-red/[0.12] px-[0.08em] text-ink">
             {part.text}
           </mark>
         ) : (

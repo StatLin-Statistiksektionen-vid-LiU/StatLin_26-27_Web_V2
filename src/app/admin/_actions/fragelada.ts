@@ -20,10 +20,10 @@ import { isValidDate } from "@/lib/projektplan-mallar";
 
 const BOARD = "/admin";
 
-type BoxRow = { id: number; slug: string | null; code: string | null; title: string; owner_id: number | null; updated_at: string };
+type BoxRow = { id: number; slug: string | null; code: string | null; title: string; owner_id: number | null; closes_on: string | null; updated_at: string };
 
 function loadBox(id: number): BoxRow | undefined {
-  return getDb().prepare("SELECT id, slug, code, title, owner_id, updated_at FROM question_boxes WHERE id = ?").get(id) as BoxRow | undefined;
+  return getDb().prepare("SELECT id, slug, code, title, owner_id, closes_on, updated_at FROM question_boxes WHERE id = ?").get(id) as BoxRow | undefined;
 }
 
 const idFrom = (fd: FormData) => {
@@ -69,14 +69,15 @@ export async function saveBox(_prev: FormState, fd: FormData): Promise<FormState
   const parsed = boxSchema.safeParse(formObject(fd));
   if (!parsed.success) return invalid(parsed.error);
   const d = parsed.data;
-  if (d.closes_on && d.closes_on < todayLocal()) {
-    return { error: "Kontrollera fälten som är markerade.", fieldErrors: { closes_on: "Datumet har redan varit." } };
-  }
+  const past: FormState | null =
+    d.closes_on && d.closes_on < todayLocal() ? { error: "Kontrollera fälten som är markerade.", fieldErrors: { closes_on: "Datumet har redan varit." } } : null;
   const db = getDb();
 
   if (d.id) {
     const box = loadBox(d.id);
     if (!box || !ownsBox(user, box)) return forbidden();
+    // Ett datum som redan stod på lådan får stå kvar. Annars gick det inte att rätta titeln på en låda som har stängt av sig själv.
+    if (past && d.closes_on !== box.closes_on) return past;
     // En fast låda har ingen kod. Ett tomt fält betyder att koden får vara kvar.
     const code = box.slug === null ? cleanOwnCode(d.code) || box.code : null;
     const newCode = code !== box.code;
@@ -95,6 +96,7 @@ export async function saveBox(_prev: FormState, fd: FormData): Promise<FormState
     return { ok: true, message: "Sparat.", data: { updated_at: now } };
   }
 
+  if (past) return past;
   const own = cleanOwnCode(d.code);
   if (own) {
     const problem = ownCodeError(own, null);

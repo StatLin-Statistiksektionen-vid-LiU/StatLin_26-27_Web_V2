@@ -2,17 +2,16 @@ import { revalidatePath } from "next/cache";
 import { audit } from "@/lib/admin/helpers";
 import { isSameOriginRequest } from "@/lib/allowed-origins";
 import { json } from "@/lib/api";
-import { canEditImages, isEditor } from "@/lib/auth/permissions";
+import { canEditImages } from "@/lib/auth/permissions";
 import { getSessionUser } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
-import { MediaError, isImageUpload, storeFile, storeImage } from "@/lib/media-store";
-import { fileHref, toImageRef } from "@/lib/media-url";
+import { MediaError, isImageUpload, storeImage } from "@/lib/media-store";
+import { toImageRef } from "@/lib/media-url";
 
 /**
- * Uppladdning från adminpanelen (bilder och dokument).
+ * Uppladdning av bilder från adminpanelen. Dokument och hjälpmedel skickas med sina formulär och sparas av actionen.
  * purpose = "image"   → fristående bild (omslag, porträtt, logga); kopplas när formuläret sparas
  *         = "gallery" → bild som läggs direkt i ett evenemangs galleri (kräver eventId; eget utskott eller grafiskt ansvar)
- *         = "file"    → dokument (PDF m.m.), endast redaktörer
  */
 export async function POST(request: Request) {
   // CSRF-skydd utöver SameSite-cookien: kräv samma ursprung – också när Origin saknas.
@@ -33,12 +32,6 @@ export async function POST(request: Request) {
   if (!(file instanceof File) || file.size === 0) return json({ error: "Ingen fil skickades." }, 400);
 
   try {
-    if (purpose === "file") {
-      if (!isEditor(user)) return json({ error: "Endast redaktörer kan ladda upp dokument." }, 403);
-      const media = await storeFile(file, user.id);
-      return json({ id: media.id, href: fileHref(media), name: media.original_name, size: media.size });
-    }
-
     if (!isImageUpload(file)) return json({ error: "Filen måste vara en bild (JPG, PNG, WebP, GIF eller AVIF)." }, 415);
 
     if (purpose === "gallery") {

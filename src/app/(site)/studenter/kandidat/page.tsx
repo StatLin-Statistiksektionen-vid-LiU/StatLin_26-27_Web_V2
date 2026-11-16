@@ -60,7 +60,7 @@ function Formula() {
         <>
           R² = 0,94 · n = 180 hp
           <br />
-          <span className="text-red">p &lt; 0,001</span>
+          <span className="text-red-deep">p &lt; 0,001</span>
         </>
       }
     />

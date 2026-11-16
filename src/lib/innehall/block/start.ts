@@ -10,7 +10,6 @@ const knapp = z.object({ text: z.string().trim().max(40, "Knappens text får var
 
 export const startSchema = z.object({
   hero: z.array(knapp).max(4, "Högst fyra knappar i heron."),
-  om: z.array(knapp).max(3, "Högst tre knappar under texten om sektionen."),
   lankar: z.object({ ny: lank, star: lank, starLive: lank }),
 });
 
@@ -21,10 +20,6 @@ export const START = {
       { text: "Engagera dig", href: "/utskott" },
       { text: "Ny student?", href: "/studenter/ny-student" },
       { text: "För företag", href: "/foretag" },
-    ],
-    om: [
-      { text: "Om StatLin", href: "/sektionen" },
-      { text: "Möt styrelsen", href: "/sektionen/styrelsen" },
     ],
     lankar: { ny: "/studenter/ny-student", star: "/foretag", starLive: "/star" },
   }),

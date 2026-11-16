@@ -130,7 +130,7 @@ export function SiteSearch() {
                     setQuery("");
                     inputRef.current?.focus();
                   }}
-                  className="grid size-9 shrink-0 place-items-center rounded-lg text-stone transition-colors hover:bg-ink/[0.05] hover:text-ink"
+                  className="grid size-9 shrink-0 place-items-center rounded-lg text-stone transition-colors hover:bg-ink/[0.05] hover:text-ink pointer-coarse:size-11"
                   aria-label="Töm sökrutan"
                 >
                   <Close size={18} />

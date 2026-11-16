@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zEmail, zOptionalId, zRequired, zText } from "@/lib/admin/form";
@@ -56,6 +57,8 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
     ).run({ ...d, id });
     if (!d.active) destroyAllSessionsForUser(id);
     audit(me.id, "update", "user", id, d.email);
+    // Namnet står i sidans rubrik och i listan, och ens eget konto i sidomenyn. Utan omritning visade de det gamla.
+    revalidatePath("/admin", "layout");
     return { ok: true, message: "Kontot är sparat." };
   }
 
@@ -66,6 +69,8 @@ export async function saveUser(_prev: FormState, fd: FormData): Promise<FormStat
     )
     .run({ ...d, hash: await hashPassword(password) });
   audit(me.id, "create", "user", Number(res.lastInsertRowid), d.email);
+  // Det nya kontot ska synas i listan bredvid formuläret direkt.
+  revalidatePath("/admin", "layout");
   return {
     ok: true,
     message: `Kontot för ${d.email} är skapat. Ge personen lösenordet nedan. Det visas bara en gång och måste bytas vid första inloggningen.`,

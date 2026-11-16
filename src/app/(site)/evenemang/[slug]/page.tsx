@@ -84,7 +84,11 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
             <span className={`chip ${isPast ? "border border-line bg-paper-2 text-stone" : "bg-red text-white"}`}>{isPast ? "Har varit" : relativeDay(event.starts_at, event.ends_at, event.all_day)}</span>
             {event.committee &&
               (committeeLink ? (
-                <Link href={committeeLink} className="chip border border-line bg-white text-ink transition-colors hover:border-ink/25">
+                <Link
+                  href={committeeLink}
+                  // Chippet är 24 px högt. Med fingret når tryckytan 46 px genom en osynlig yta runt om, räknad från insidan av kanten.
+                  className="chip relative border border-line bg-white text-ink transition-colors hover:border-ink/25 pointer-coarse:after:absolute pointer-coarse:after:-inset-x-1 pointer-coarse:after:-inset-y-3"
+                >
                   {event.committee.short_name}
                 </Link>
               ) : (
@@ -101,12 +105,12 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
               {event.summary}
             </p>
           )}
-          {/* Omslaget, eller den genererade grafiken, som en inramad bild under rubriken. Grafiken har sin egen mörka yta. */}
+          {/* Omslaget, eller plattan med utskottets logga, som en inramad bild under rubriken. */}
           <div className="relative mt-10 aspect-video overflow-hidden rounded-2xl border border-line bg-paper-2 [animation:fade-up_1s_0.18s_var(--ease-out-expo)_backwards] md:aspect-[21/9]">
             {event.cover ? (
               <SmartImage image={event.cover} priority sizes="(min-width: 1280px) 1100px, 100vw" className="h-full w-full" alt="" />
             ) : (
-              <CoverArt seed={event.slug} title={event.title} accent={event.committee?.accent} className="h-full w-full" />
+              <CoverArt seed={event.slug} accent={event.committee?.accent} logo={event.committee?.logo_url} className="h-full w-full" />
             )}
           </div>
         </div>
@@ -129,7 +133,7 @@ async function EventDetail({ params }: { params: PageProps<"/evenemang/[slug]">[
               {event.location && (
                 <InfoRow icon={<MapPin size={18} />} label="Plats">
                   {mapUrl ? (
-                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="link-underline inline-flex items-center gap-1">
+                    <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="tryck link-underline inline-flex items-center gap-1">
                       {event.location} <ArrowUpRight size={14} className="text-stone" />
                     </a>
                   ) : (
@@ -252,12 +256,15 @@ function Organizer({ committee, href }: { committee: NonNullable<EventItem["comm
 
 function InfoRow({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex gap-4 px-5 py-4">
-      <span className="mt-0.5 text-stone">{icon}</span>
-      <div className="min-w-0">
-        <dt className="kicker text-stone">{label}</dt>
-        <dd className="mt-1 font-medium">{children}</dd>
-      </div>
+    // En rad i en dl får bara innehålla dt och dd, annars läser skärmläsare inte upp paren. Ikonen ligger därför i dt och ställs i vänsterkanten.
+    <div className="relative min-w-0 py-4 pl-[3.375rem] pr-5">
+      <dt className="kicker text-stone">
+        <span aria-hidden className="absolute left-5 top-[1.125rem]">
+          {icon}
+        </span>
+        {label}
+      </dt>
+      <dd className="mt-1 font-medium">{children}</dd>
     </div>
   );
 }

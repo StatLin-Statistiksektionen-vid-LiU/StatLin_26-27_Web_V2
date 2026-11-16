@@ -616,9 +616,10 @@
 .wish-count {
   position: relative;
 }
+/* Siffran döljer tråden bakom sig med listans egen yta, som är mörk i mörkt läge. */
 .wish-row .wish-count {
   padding-inline: 0.35rem;
-  background: #fff;
+  background: var(--color-white);
 }
 .wish-leader [role="alert"] {
   color: #fff;

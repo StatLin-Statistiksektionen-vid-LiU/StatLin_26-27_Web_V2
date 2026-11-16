@@ -40,7 +40,7 @@ const egenRad = (b: Bit[]) => b.length === 1 && b[0].hand;
  */
 export function AccentText({
   text,
-  accentClassName = "mono-accent text-red",
+  accentClassName = "text-red",
   stilla,
   plats,
 }: {

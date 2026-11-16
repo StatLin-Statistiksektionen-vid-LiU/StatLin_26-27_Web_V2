@@ -150,8 +150,9 @@ async function Companies() {
                 const url = safeExternalUrl(p.url);
                 const inner = (
                   <>
+                    {/* Loggor är ritade för ljus bakgrund, så i mörkt läge får de en ljus platta. */}
                     {p.logo ? (
-                      <SmartImage image={p.logo} sizes="200px" className="h-16 w-auto max-w-[80%] object-contain grayscale transition-all duration-500 group-hover:grayscale-0 [[data-tema=mork]_&]:rounded-lg [[data-tema=mork]_&]:bg-ink [[data-tema=mork]_&]:px-3 [[data-tema=mork]_&]:py-2" alt={p.name} />
+                      <SmartImage image={p.logo} contain sizes="200px" className="h-16 w-auto max-w-[80%] grayscale transition-all duration-500 group-hover:grayscale-0 [[data-tema=mork]_&]:rounded-lg [[data-tema=mork]_&]:bg-ink [[data-tema=mork]_&]:px-3 [[data-tema=mork]_&]:py-2" alt={p.name} />
                     ) : (
                       <span className="display-tight min-w-0 max-w-full text-center text-lg [overflow-wrap:anywhere] sm:text-xl">{p.name}</span>
                     )}

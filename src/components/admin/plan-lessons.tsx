@@ -1,13 +1,12 @@
 import Link from "next/link";
 import type { PlanLessons } from "@/lib/data/arshjul";
 import { formatDate } from "@/lib/dates";
-import { cn } from "@/lib/utils";
 
 /** Det förra årets post skrev till den här. Visas när nästa plan skapas från samma årshjulspunkt, och på planen själv. */
-export function LessonsPanel({ lessons, className }: { lessons: PlanLessons[]; className?: string }) {
+export function LessonsPanel({ lessons }: { lessons: PlanLessons[] }) {
   if (lessons.length === 0) return null;
   return (
-    <section aria-labelledby="lardomar-tidigare" className={cn("mb-6 rounded-[1.5rem] bg-ink p-5 text-paper md:p-6", className)}>
+    <section aria-labelledby="lardomar-tidigare" className="mb-6 rounded-[1.5rem] bg-ink p-5 text-paper md:p-6">
       <h2 id="lardomar-tidigare" className="kicker text-paper/70">
         Lärdomar från tidigare år
       </h2>

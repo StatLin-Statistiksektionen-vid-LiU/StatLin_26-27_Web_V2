@@ -24,6 +24,7 @@ async function News({ searchParams }: { searchParams: PageProps<"/admin/nyheter"
   return (
     <>
       {sp.raderad && <Notice>Nyheten är borttagen.</Notice>}
+      {sp.nekad && <Notice tone="warning">Du har inte behörighet till den nyheten.</Notice>}
       <AdminHeader
         title="Nytt"
         actions={
@@ -54,7 +55,8 @@ async function News({ searchParams }: { searchParams: PageProps<"/admin/nyheter"
               <Link href={`/admin/nyheter/${n.id}`} className="grid size-9 place-items-center rounded-full hover:bg-paper" aria-label="Redigera">
                 <Edit size={16} />
               </Link>
-              {!!n.published && (
+              {/* En schemalagd nyhet har ingen sida att visa än. */}
+              {!!n.published && n.published_at <= now && (
                 <Link href={`/nyheter/${n.slug}`} target="_blank" className="hidden size-9 place-items-center rounded-full hover:bg-paper sm:grid" aria-label="Visa">
                   <ArrowUpRight size={16} />
                 </Link>

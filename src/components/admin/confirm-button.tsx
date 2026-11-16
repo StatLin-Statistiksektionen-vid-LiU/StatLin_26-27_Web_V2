@@ -93,7 +93,7 @@ export function ConfirmButton({
             <button type="button" disabled={pending} onClick={() => dialogRef.current?.close()} className="btn btn-sm btn-ghost bg-white disabled:opacity-70">
               Avbryt
             </button>
-            <button type="submit" disabled={pending} className="btn btn-sm btn-red disabled:opacity-70">
+            <button type="submit" disabled={pending} className="btn btn-sm btn-red fara disabled:opacity-70">
               {pending ? (
                 <>
                   <span className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white" aria-hidden />

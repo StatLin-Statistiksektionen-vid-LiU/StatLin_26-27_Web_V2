@@ -96,7 +96,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
                 setShowAll(false);
               }}
               className={cn(
-                "h-9 rounded-lg border px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10",
+                "h-9 rounded-lg border px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-11",
                 x.code === m.code ? "border-ink bg-ink text-paper" : "border-line bg-white text-ink hover:border-ink/25",
               )}
             >
@@ -147,7 +147,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
               type="button"
               aria-pressed={view === v}
               onClick={() => setView(v)}
-              className={cn("h-8 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10", view === v ? "bg-ink text-paper" : "text-stone hover:text-ink")}
+              className={cn("h-8 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-11", view === v ? "bg-ink text-paper" : "text-stone hover:text-ink")}
             >
               {v === "chart" ? "Diagram" : "Tabell"}
             </button>
@@ -176,7 +176,8 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
                   className={cn("absolute whitespace-nowrap", failShare < 0.14 ? "translate-x-0" : failShare > 0.86 ? "-translate-x-full" : "-translate-x-1/2")}
                   style={{ left: `${failShare * 100}%` }}
                 >
-                  snitt {formatPercent(failShare)}
+                  {/* Linjen står vid andelen underkända, men resten av sidan räknar godkända, så etiketten gör det också. */}
+                  snitt {formatPercent(1 - failShare)}
                 </span>
               )}
             </span>
@@ -286,7 +287,7 @@ export function ExamChart({ stats, today }: { stats: ExamStats; today: string })
       <div className="mt-4 flex flex-col gap-3 text-sm text-stone sm:flex-row sm:items-center sm:justify-between">
         <p>
           Godkända = alla betyg utom U, F och Fx.
-          {view === "chart" && showAverage && " Den streckade linjen visar hur stor andel som brukar bli underkänd."}
+          {view === "chart" && showAverage && " Den streckade linjen är snittet: till höger om den står de godkända, så når det röda förbi linjen gick tillfället sämre än vanligt."}
           {hidden > 0 && ` ${hidden} ${hidden === 1 ? "tillfälle" : "tillfällen"} med färre än ${MIN_RESULTS} resultat visas inte.`}
         </p>
         {collapsible && (

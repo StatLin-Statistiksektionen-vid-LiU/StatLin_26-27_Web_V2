@@ -28,32 +28,27 @@ const shortcuts = (links: LinkItem[]) =>
     return href ? [{ ...l, href }] : [];
   });
 
-const chipClass = "group inline-flex h-8 items-center gap-2 rounded-lg border border-line bg-white px-2.5 text-[0.84rem] font-medium text-ink transition-colors hover:border-ink/25 hover:bg-paper-2/60 pointer-coarse:h-10";
+/** Måtten är valda så att sju genvägar ryms på en rad bredvid sidomenyn i ett 1280 pixlar brett fönster. */
+const chipClass = "group inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-white px-2 text-[0.82rem] font-medium text-ink transition-colors hover:border-ink/25 hover:bg-paper-2/60 pointer-coarse:h-11 max-md:w-full max-md:min-w-0";
 const chipIconClass = "text-stone transition-colors group-hover:text-red";
 
-/** Raden direkt under heron, ovanför tidslinjen: genvägarna som små knappar på en rad. */
+/** Genvägarna på startsidan som en smal rad direkt under heron: etiketten, knapparna och länken till alla länkar. Frågelådan står sist när den är öppen. */
 export function QuickLinksRow({ links, fragelada = false }: { links: LinkItem[]; fragelada?: boolean }) {
-  if (links.length === 0 && !fragelada) return null;
   return (
-    <section aria-labelledby="genvagar-start" className="border-b border-line">
-      <div className="container-site py-5">
-        <div className="flex items-center justify-between gap-4">
-          <h2 id="genvagar-start" className="kicker text-stone">
-            Genvägar för studenter
-          </h2>
-          <Link href="/studenter/lankar" className="tryck group inline-flex shrink-0 items-center gap-1.5 text-[0.84rem] font-medium text-stone transition-colors hover:text-ink">
-            Alla länkar
-            <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-0.5" />
-          </Link>
-        </div>
-        <ul className="mt-3 flex flex-wrap gap-1.5">
+    <section aria-labelledby="genvagar-start" className="border-b border-line py-4 md:py-5">
+      {/* På telefon etiketten och länken på en rad och knapparna under, i två spalter där en lång text kortas. Från surfplatta allt på en rad, där knapparna bryts om de inte ryms. */}
+      <div className="container-site flex flex-wrap items-baseline justify-between gap-x-5 gap-y-3">
+        <h2 id="genvagar-start" className="kicker text-stone">
+          Genvägar
+        </h2>
+        <ul className="order-last grid w-full grid-cols-2 gap-1.5 md:order-none md:flex md:w-auto md:flex-1 md:flex-wrap [&>li]:min-w-0">
           {shortcuts(links).map((l, i) => (
             <FadeInOnce key={l.id} group="genvagar" delay={0.2 + i * 0.04}>
               <AnyLink href={l.href} className={chipClass}>
                 <span className={chipIconClass}>
                   <LinkIcon name={l.icon} size={14} />
                 </span>
-                {l.label}
+                <span className="truncate">{l.label}</span>
               </AnyLink>
             </FadeInOnce>
           ))}
@@ -63,11 +58,15 @@ export function QuickLinksRow({ links, fragelada = false }: { links: LinkItem[];
                 <span className={chipIconClass}>
                   <Mail size={14} />
                 </span>
-                Frågelådan: har du en kod?
+                <span className="truncate">Frågelådan</span>
               </Link>
             </li>
           )}
         </ul>
+        <Link href="/studenter/lankar" className="tryck group inline-flex shrink-0 items-center gap-1.5 text-[0.88rem] font-medium text-stone transition-colors hover:text-ink">
+          Alla länkar
+          <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />
+        </Link>
       </div>
     </section>
   );

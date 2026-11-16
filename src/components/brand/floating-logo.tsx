@@ -9,15 +9,16 @@ import { cn } from "@/lib/utils";
  * Loggan visas i sin officiella form, med en tunn vit kant som skiljer den svarta ringen från den svarta bakgrunden.
  * Introt bygger upp loggan lager för lager; slutläget är alltid den exakta loggan.
  * `ring` ligger i samma 3D-lager som loggan, och heron lägger formelringen där.
+ * Med svavar={false} står loggan stilla och plant på papperet, utan glöd och reflex: så står den i startsidans hero, inskriven i rutnätet.
  */
-export function FloatingLogo({ className, intro = true, ring }: { className?: string; intro?: boolean; ring?: ReactNode }) {
+export function FloatingLogo({ className, intro = true, svavar = true, ring }: { className?: string; intro?: boolean; svavar?: boolean; ring?: ReactNode }) {
   const rawId = useId();
   const id = rawId.replace(/[^a-zA-Z0-9_-]/g, "");
   const tiltRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = tiltRef.current;
-    if (!el) return;
+    if (!el || !svavar) return;
     // En telefon gungar med CSS i stället, se .logo-tilt i globals.css.
     if (window.matchMedia("(prefers-reduced-motion: reduce), (pointer: coarse)").matches) return;
 
@@ -74,29 +75,23 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
       window.removeEventListener("pointermove", onMove);
       document.documentElement.removeEventListener("pointerleave", onLeave);
     };
-  }, []);
+  }, [svavar]);
 
   return (
     <div className={cn("floating-logo relative aspect-square select-none", intro && "is-intro", className)}>
       {/* Röd glöd bakom loggan. Intoningen och andningen ligger på var sitt element: två animationer av samma egenskaper på ett element kan inte gå på grafikkortet, och då räknar huvudtråden om sidan i varje bildruta. */}
-      <div aria-hidden className="logo-glow-in pointer-events-none absolute inset-[6%]">
-        <div
-          className="logo-glow h-full w-full rounded-full"
-          style={{
-            background:
-              "radial-gradient(closest-side, rgb(255 7 7 / 0.38), rgb(255 7 7 / 0.12) 55%, transparent 75%)",
-          }}
-        />
-      </div>
-      <div className="relative h-full w-full animate-float [perspective:1400px]">
-        <div
-          ref={tiltRef}
-          className="logo-tilt relative h-full w-full"
-          style={{
-            transformStyle: "preserve-3d",
-            willChange: "transform",
-          }}
-        >
+      {svavar && (
+        <div aria-hidden className="logo-glow-in pointer-events-none absolute inset-[6%]">
+          <div
+            className="logo-glow h-full w-full rounded-full"
+            style={{
+              background: "radial-gradient(closest-side, rgb(255 7 7 / 0.38), rgb(255 7 7 / 0.12) 55%, transparent 75%)",
+            }}
+          />
+        </div>
+      )}
+      <div className={cn("relative h-full w-full", svavar && "animate-float [perspective:1400px]")}>
+        <div ref={tiltRef} className={cn("relative h-full w-full", svavar && "logo-tilt")} style={svavar ? { transformStyle: "preserve-3d", willChange: "transform" } : undefined}>
           {ring}
           <svg
             viewBox={LOGO_VIEWBOX}
@@ -149,7 +144,7 @@ export function FloatingLogo({ className, intro = true, ring }: { className?: st
       </div>
 
       {/* Reflex under loggan */}
-      <div aria-hidden className="logo-reflex pointer-events-none absolute left-1/2 -translate-x-1/2 animate-float-shadow rounded-[50%]" />
+      {svavar && <div aria-hidden className="logo-reflex pointer-events-none absolute left-1/2 -translate-x-1/2 animate-float-shadow rounded-[50%]" />}
     </div>
   );
 }

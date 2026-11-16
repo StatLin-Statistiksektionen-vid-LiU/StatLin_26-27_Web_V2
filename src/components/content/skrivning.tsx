@@ -3,10 +3,10 @@
 import { Fragment, useLayoutEffect, useRef, type CSSProperties, type Ref } from "react";
 
 /*
- * Text som skrivs fram för hand. Används av handskrift.tsx (anteckningen vid loggan och citaten i sidfoten) och av ForHand nedan,
+ * Text som skrivs fram för hand. Används av ForHand nedan,
  * det som står _så här_ i de redigerbara texterna (accent-text.tsx). Orden visas ett i taget från vänster till höger med clip-path,
  * i den takt de skulle skrivas. Lägena står i data-skriv och sätts här direkt på elementet:
- *   inget  dolt, i ett vanligt typsnitt skalat till Mynerves mått, och Mynerve är inte hämtat (det hämtas när texten närmar sig skärmen),
+ *   inget  dolt, i ett vanligt typsnitt skalat till handstilens mått, och handstilen är inte hämtad (den hämtas när texten närmar sig skärmen),
  *   laddar typsnittet hämtas,
  *   skriver animationerna går,
  *   klar   allt syns.
@@ -19,9 +19,11 @@ export type Ord = { delar: Del[]; d: number; t: number };
 
 /**
  * _x eller _{xy} blir index och ^x eller ^{xy} exponent, eftersom typsnittet saknar de små siffrorna. Ett streck över en bokstav,
- * som i x̄ (U+0304), ritas för sig (.hs-streck), eftersom Mynerve lägger strecket bredvid bokstaven.
+ * som i x̄ (U+0304), ritas för sig (.hs-streck), eftersom handstilen inte har något streck som hamnar över bokstaven. ȳ som ett
+ * enda tecken saknas också, och delas därför upp i y och strecket.
  */
-function tolka(ord: string): Del[] {
+function tolka(text: string): Del[] {
+  const ord = text.replace(/[ȳȲ]/g, (t) => t.normalize("NFD"));
   const delar: Del[] = [];
   let i = 0;
   for (const m of ord.matchAll(/([_^])(?:\{([^}]*)\}|(.))|(\P{M})̄/gu)) {
@@ -110,7 +112,7 @@ export function useSkrivning<T extends HTMLElement>(nyckel: string, prov: string
       timers.push(window.setTimeout(() => satt("skriver"), vanta));
       timers.push(window.setTimeout(() => satt("klar"), vanta + langd + 150));
     };
-    // Typsnittet hämtas när texten är på väg in i bild, inte på varje sida som har en sidfot.
+    // Typsnittet hämtas när texten är på väg in i bild, inte på varje sida där den står längre ner.
     const nara = new IntersectionObserver(
       (poster) => {
         if (!poster.some((p) => p.isIntersecting)) return;
@@ -120,7 +122,10 @@ export function useSkrivning<T extends HTMLElement>(nyckel: string, prov: string
           laddad = true;
           starta();
         };
-        Promise.race([document.fonts.load('1em "Mynerve"', prov), new Promise((r) => window.setTimeout(r, 2500))]).then(klar, klar);
+        // Penseln, och de grekiska bokstäver texten har: dem saknar penseln, så de kommer ur formlernas typsnitt.
+        const grekiska = prov.match(/[\u0370-\u03ff]/g)?.join("");
+        const hamta = [document.fonts.load('1em "Caveat Brush"', prov), ...(grekiska ? [document.fonts.load('1em "Handstil Grekiska"', grekiska)] : [])];
+        Promise.race([Promise.all(hamta), new Promise((r) => window.setTimeout(r, 2500))]).then(klar, klar);
       },
       { rootMargin: "400px 0px" },
     );

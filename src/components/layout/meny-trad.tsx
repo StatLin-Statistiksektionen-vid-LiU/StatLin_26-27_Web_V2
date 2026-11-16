@@ -74,7 +74,7 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
 
   const row = cn(
     "flex w-full items-center gap-2.5 rounded-md px-2.5 transition-colors",
-    storlek === "sm" ? "h-8 text-[0.875rem] pointer-coarse:h-10" : "h-11 text-[1rem]",
+    storlek === "sm" ? "h-8 text-[0.875rem] pointer-coarse:h-11" : "h-11 text-[1rem]",
   );
   const rowState = (on: boolean) => (on ? "bg-ink/[0.06] font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink");
   const iconSize = storlek === "sm" ? 16 : 18;
@@ -82,7 +82,7 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
   const linkRow = (href: string, label: string, Icon: IconType) => {
     const on = active(href);
     return (
-      <Link href={href} aria-current={pathname === href ? "page" : undefined} onClick={valj} className={cn(row, rowState(on))}>
+      <Link href={href} aria-current={pathname === href ? "page" : on ? "true" : undefined} onClick={valj} className={cn(row, rowState(on))}>
         <Icon size={iconSize} className={on ? "text-red" : undefined} />
         {label}
       </Link>
@@ -94,11 +94,12 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
     return (
       <Link
         href={c.href}
-        aria-current={pathname === c.href ? "page" : undefined}
+        // På en undersida (ett evenemang, ett utskott) är raden inte sidan själv, men den är var man är. Det sägs då också till skärmläsare.
+        aria-current={pathname === c.href ? "page" : here ? "true" : undefined}
         onClick={valj}
         className={cn(
           "relative flex items-center rounded-md px-2.5 transition-colors",
-          storlek === "sm" ? "h-7 text-[0.84rem] pointer-coarse:h-10" : "h-10 text-[0.95rem]",
+          storlek === "sm" ? "h-7 text-[0.84rem] pointer-coarse:h-11" : "h-11 text-[0.95rem]",
           here ? "bg-ink/[0.06] font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink",
         )}
       >

@@ -55,7 +55,7 @@ export function LoginForm({ children, error }: { children?: ReactNode; error?: s
           <button
             type="button"
             onClick={() => setShow((s) => !s)}
-            className="absolute right-1.5 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-stone transition-colors hover:bg-paper-2 hover:text-ink"
+            className="absolute right-1.5 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-stone transition-colors hover:bg-paper-2 hover:text-ink pointer-coarse:right-0.5 pointer-coarse:size-11"
             aria-label={show ? "Dölj lösenord" : "Visa lösenord"}
           >
             <Eye size={18} />

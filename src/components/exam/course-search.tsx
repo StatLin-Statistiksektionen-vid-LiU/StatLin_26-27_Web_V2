@@ -119,7 +119,7 @@ export function CourseSearch({
           enterKeyHint="search"
           className="h-full min-w-0 flex-1 bg-transparent font-mono text-lg uppercase tracking-tight outline-none placeholder:font-sans placeholder:normal-case placeholder:tracking-normal placeholder:text-stone focus-visible:outline-none"
         />
-        <button type="submit" className="btn btn-red h-10 shrink-0 px-4">
+        <button type="submit" className="btn btn-red h-10 shrink-0 px-4 pointer-coarse:h-11">
           <span className="hidden sm:inline">Visa</span>
           <ArrowRight size={18} />
           <span className="sr-only sm:hidden">Visa statistiken</span>

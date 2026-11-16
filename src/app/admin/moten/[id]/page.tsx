@@ -6,8 +6,8 @@ import { ConfirmButton } from "@/components/admin/confirm-button";
 import { Field, FormSection, TextArea, TextInput } from "@/components/admin/fields";
 import { InlineActionForm } from "@/components/admin/inline-action-form";
 import { meetingWhen } from "@/components/admin/meeting-cards";
-import { MeetingMoveButtons } from "@/components/admin/meeting-order";
-import { AdminHeader, Card, Notice } from "@/components/admin/ui";
+import { EditableItem, MeetingMoveButtons } from "@/components/admin/meeting-order";
+import { AdminHeader, Card, JumpToForm, Notice } from "@/components/admin/ui";
 import { canManageMeetings } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
 import { getMeeting, isPastMeeting, type MeetingItem } from "@/lib/data/meetings";
@@ -41,7 +41,7 @@ async function MeetingPage({ params, searchParams }: { params: PageProps<"/admin
   return (
     <>
       {sp.ny && <Notice>Mötet är inlagt och dagordningen är ifylld från mallen. Alla i portalen ser mötet på översikten.</Notice>}
-      <AdminHeader back={{ href: "/admin/moten", label: "Alla möten" }} kicker={past ? "Styrelsemöte som har varit" : "Styrelsemöte"} title={capitalize(meetingWhen(m))} description={m.place || undefined} />
+      <AdminHeader back={{ href: "/admin/moten", label: "Alla möten" }} kicker={past ? "Styrelsemöte som har varit" : "Styrelsemöte"} title={capitalize(meetingWhen(m))} description={m.place || undefined} actions={canPropose && <JumpToForm href="#foresla">{chair ? "Lägg till en punkt" : "Föreslå en punkt"}</JumpToForm>} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <div className="min-w-0 space-y-8 lg:col-span-3">
           {m.note && <Card className="whitespace-pre-line p-5 text-sm md:px-6">{m.note}</Card>}
@@ -57,14 +57,17 @@ async function MeetingPage({ params, searchParams }: { params: PageProps<"/admin
                 {agenda.map((item, i) => (
                   <li key={item.id} className="flex items-start gap-3 px-4 py-3 sm:gap-4 sm:px-5">
                     <span className="w-9 shrink-0 pt-0.5 text-sm font-semibold tabular text-stone">§ {i + 1}</span>
-                    <ItemText item={item} />
-                    {chair && (
-                      <span className="flex shrink-0 items-center gap-1">
-                        <MeetingMoveButtons id={item.id} title={item.title} first={i === 0} last={i === agenda.length - 1} />
-                        <Decide id={item.id} decision="declined" label={`Stryk ${item.title}`}>
-                          Stryk
-                        </Decide>
-                      </span>
+                    {chair ? (
+                      <EditableItem item={item} text={<ItemText item={item} />}>
+                        <span className="flex shrink-0 items-center gap-1">
+                          <MeetingMoveButtons id={item.id} title={item.title} first={i === 0} last={i === agenda.length - 1} />
+                          <Decide id={item.id} decision="declined" label={`Stryk ${item.title}`}>
+                            Stryk
+                          </Decide>
+                        </span>
+                      </EditableItem>
+                    ) : (
+                      <ItemText item={item} />
                     )}
                   </li>
                 ))}
@@ -83,27 +86,25 @@ async function MeetingPage({ params, searchParams }: { params: PageProps<"/admin
               <ul className="mt-3 divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
                 {waiting.map((item) => (
                   <li key={item.id} className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-start sm:px-5">
-                    <ItemText item={item} when />
-                    <span className="flex shrink-0 flex-wrap items-center gap-2">
-                      {chair && (
-                        <>
-                          <Decide id={item.id} decision="agenda" label={`Ta med ${item.title}`} primary>
-                            Ta med
-                          </Decide>
-                          <Decide id={item.id} decision="declined" label={`Avslå ${item.title}`}>
-                            Avslå
-                          </Decide>
-                        </>
-                      )}
-                      {item.proposed_by === user.id && (
-                        <InlineActionForm action={withdrawItem}>
-                          <input type="hidden" name="id" value={item.id} />
-                          <button type="submit" className="btn btn-ghost btn-sm bg-white" aria-label={`Dra tillbaka ${item.title}`}>
-                            Dra tillbaka
-                          </button>
-                        </InlineActionForm>
-                      )}
-                    </span>
+                    {chair || item.proposed_by === user.id ? (
+                      <EditableItem item={item} text={<ItemText item={item} when />}>
+                        <span className="flex shrink-0 flex-wrap items-center gap-2">
+                          {chair && (
+                            <>
+                              <Decide id={item.id} decision="agenda" label={`Ta med ${item.title}`} primary>
+                                Ta med
+                              </Decide>
+                              <Decide id={item.id} decision="declined" label={`Avslå ${item.title}`}>
+                                Avslå
+                              </Decide>
+                            </>
+                          )}
+                          {item.proposed_by === user.id && <Withdraw item={item} />}
+                        </span>
+                      </EditableItem>
+                    ) : (
+                      <ItemText item={item} when />
+                    )}
                   </li>
                 ))}
               </ul>
@@ -152,6 +153,18 @@ function ItemText({ item, when, muted }: { item: MeetingItem; when?: boolean; mu
         </span>
       )}
     </span>
+  );
+}
+
+/** Den som föreslog punkten drar tillbaka den. */
+function Withdraw({ item }: { item: MeetingItem }) {
+  return (
+    <InlineActionForm action={withdrawItem} className="shrink-0">
+      <input type="hidden" name="id" value={item.id} />
+      <button type="submit" className="btn btn-ghost btn-sm bg-white" aria-label={`Dra tillbaka ${item.title}`}>
+        Dra tillbaka
+      </button>
+    </InlineActionForm>
   );
 }
 

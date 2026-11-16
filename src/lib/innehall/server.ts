@@ -48,19 +48,11 @@ export function tolkaBlock<K extends BlockNyckel>(nyckel: K, rad: string | null)
 
 /**
  * Blocket som sidan visar det. Sidan och sparningen läser med samma funktion, så att servern kan se om någon annan hunnit
- * spara emellan. Knapparna under Om var sajttexter förut: tills startsidans block sparats första gången gäller de texterna.
+ * spara emellan.
  */
 export function lasBlock<K extends BlockNyckel>(db: Database.Database, nyckel: K): BlockVarde[K] {
   const rad = db.prepare("SELECT value FROM settings WHERE key = ?").get(BLOCK_PREFIX + nyckel) as { value: string } | undefined;
   const varde = tolkaBlock(nyckel, rad?.value ?? null);
-  if (nyckel === "start" && !rad) {
-    const start = varde as BlockVarde["start"];
-    const gamla = db.prepare("SELECT key, value FROM settings WHERE key IN ('text_start_om_knapp', 'text_start_om_knapp2')").all() as { key: string; value: string }[];
-    for (const g of gamla) {
-      const knapp = start.om[g.key === "text_start_om_knapp" ? 0 : 1];
-      if (knapp && g.value.trim()) knapp.text = g.value.trim().slice(0, 40);
-    }
-  }
   // Anteckningarna var sajttexter förut, en per sida. Tills blocket sparats första gången gäller texterna som ändrats där.
   if (nyckel === "anteckningar" && !rad) {
     const gamla = db

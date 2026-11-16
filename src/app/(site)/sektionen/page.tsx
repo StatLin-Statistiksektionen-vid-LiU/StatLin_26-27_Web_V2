@@ -104,7 +104,7 @@ async function AboutContent() {
         <section className="border-t border-line py-16 md:py-24">
           <div className="container-site">
             <Reveal>
-              <SectionHeading kicker="Styrelsen" title={<>Möt <span className="mono-accent text-red-deep">styrelsen</span></>} href="/sektionen/styrelsen" linkLabel="Hela styrelsen" />
+              <SectionHeading kicker="Styrelsen" title={<>Möt <span className="text-red">styrelsen</span></>} href="/sektionen/styrelsen" linkLabel="Hela styrelsen" />
             </Reveal>
             <div className="mt-12 grid grid-cols-2 gap-x-5 gap-y-10 md:grid-cols-4">
               {board.slice(0, 4).map((m, i) => (
@@ -120,7 +120,7 @@ async function AboutContent() {
       <section className="border-t border-line py-16 md:py-24">
         <div className="container-site">
           <Reveal>
-            <SectionHeading kicker="Utskott" title={<>Våra <span className="mono-accent text-red-deep">utskott</span></>} href="/utskott" linkLabel="Alla utskott" />
+            <SectionHeading kicker="Utskott" title={<>Våra <span className="text-red">utskott</span></>} href="/utskott" linkLabel="Alla utskott" />
           </Reveal>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {utskott.map((c, i) => (

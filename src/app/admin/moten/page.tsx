@@ -87,7 +87,7 @@ async function Meetings({ searchParams }: { searchParams: PageProps<"/admin/mote
 
 function NextMeeting({ m }: { m: Meeting }) {
   return (
-    <section aria-labelledby="nasta-mote" className="rounded-[1.5rem] border border-red/25 bg-white p-5 md:p-6">
+    <section aria-labelledby="nasta-mote" className="utskott-tema rounded-[1.5rem] border border-red/25 bg-white p-5 md:p-6">
       <p className="kicker text-[0.62rem] text-red-deep">Nästa möte · {relativeDay(m.starts_at)}</p>
       <h2 id="nasta-mote" className="mt-1 text-xl font-bold">
         {meetingWhen(m)}

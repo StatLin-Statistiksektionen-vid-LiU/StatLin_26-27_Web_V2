@@ -6,12 +6,16 @@ import { AdminSidebar } from "@/components/admin/sidebar";
 import { Notice } from "@/components/admin/ui";
 import { canManageFragelada } from "@/lib/auth/permissions";
 import { getSessionUser, loginPath, sessionExpiresSoon } from "@/lib/auth/session";
+import { listAviseringar } from "@/lib/data/aviseringar";
+import { countUnreadChat } from "@/lib/data/chatt";
 import { readDb } from "@/lib/data/db";
 import { countUnseenQuestions, frageladaIsOpen } from "@/lib/data/fragelada";
+import { kontoKaraktar } from "@/lib/data/karaktar";
 import { countNewCommitteeWishes } from "@/lib/data/onskelada";
 import { canManageNaringsliv, countNewInterest, countNewWishes } from "@/lib/data/naringsliv";
 import { countUnseenTasks } from "@/lib/data/tasks";
 import { formatTimestamp } from "@/lib/dates";
+import { egenFarg } from "@/lib/karaktar";
 
 export const metadata: Metadata = {
   title: { default: "Adminpanel", template: "%s · Admin · StatLin" },
@@ -33,8 +37,10 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user) redirect(await loginPath());
   const naringsliv = canManageNaringsliv(user);
-  const [unseenTasks, expiresAt, unseenQuestions, db, newWishes, newInterest, ownWishes] = await Promise.all([
+  const [eget, unseenTasks, unreadChat, expiresAt, unseenQuestions, db, newWishes, newInterest, ownWishes, aviseringar] = await Promise.all([
+    kontoKaraktar(user.post, user.committee_id),
     countUnseenTasks(user.id),
+    countUnreadChat(user),
     sessionExpiresSoon(),
     countUnseenQuestions(user.id),
     readDb(),
@@ -42,10 +48,13 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
     naringsliv ? countNewInterest() : 0,
     // Utskottets egen önskelåda. Styrelseposter utan eget utskott har ingen.
     countNewCommitteeWishes(user.role === "committee" && user.committee_kind !== "styrelse" ? user.committee_id : null),
+    listAviseringar(user),
   ]);
   return (
-    <div className="min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] print:block print:bg-white">
+    // Portalen bär postens färg (.portal i globals.css): menyn, sidhuvudena och välkomstkortet.
+    <div className="portal min-h-dvh bg-paper lg:grid lg:grid-cols-[17.5rem_minmax(0,1fr)] print:block print:bg-white" style={egenFarg(eget.farg)}>
       <AdminSidebar
+        logo={eget.logo ?? "/brand/statlin.svg"}
         user={{
           name: user.name,
           post: user.post,
@@ -56,6 +65,8 @@ async function AdminShell({ children }: { children: React.ReactNode }) {
           design: user.design,
         }}
         unseenTasks={unseenTasks}
+        unreadChat={unreadChat}
+        aviseringar={aviseringar}
         questionBox={{ show: canManageFragelada(user) || frageladaIsOpen(db) || unseenQuestions > 0, unseen: unseenQuestions }}
         naringsliv={naringsliv}
         newWishes={newWishes}

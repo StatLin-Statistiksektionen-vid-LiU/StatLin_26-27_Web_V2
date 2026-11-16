@@ -113,14 +113,3 @@ export async function sparaInnehall(andringar: Andring[]): Promise<SparaSvar> {
     varden,
   };
 }
-
-/** Standardvärdet för ett block, för Återställ i redigeringsläget. Det sparas inte förrän användaren trycker Spara. */
-export async function standardInnehall(id: string): Promise<{ varde?: unknown; error?: string }> {
-  const user = await actionUser();
-  if ("error" in user) return { error: user.error };
-  const nyckel = typeof id === "string" ? id.slice(2) : "";
-  if (!id.startsWith("b:") || !isBlockNyckel(nyckel)) return { error: "Det finns inget standardinnehåll för den här delen." };
-  const behorighet = postBehorighet(id);
-  if (!behorighet || !far(user, behorighet)) return { error: "Ditt konto får inte ändra den här delen." };
-  return { varde: BLOCK_DEF[nyckel].standard() };
-}

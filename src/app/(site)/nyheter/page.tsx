@@ -18,7 +18,7 @@ const PER_PAGE = 9;
 export default function NewsPage(props: PageProps<"/nyheter">) {
   return (
     <>
-      <TextHero group="nyheter" accentClassName="mono-accent text-red max-md:block" />
+      <TextHero group="nyheter" accentClassName="text-red max-md:block" />
       <Suspense fallback={<PageSkeleton />}>
         <NewsList searchParams={props.searchParams} />
       </Suspense>
@@ -64,13 +64,13 @@ async function NewsList({ searchParams }: { searchParams: PageProps<"/nyheter">[
         ))}
       </div>
       {pages > 1 && (
-        <nav aria-label="Sidor" className="mt-16 flex justify-center gap-2">
+        <nav aria-label="Sidor" className="mt-16 flex flex-wrap justify-center gap-2">
           {Array.from({ length: pages }, (_, i) => i + 1).map((p) => (
             <Link
               key={p}
               href={p === 1 ? "/nyheter" : `/nyheter?sida=${p}`}
               aria-current={p === page ? "page" : undefined}
-              className={cn("grid size-9 place-items-center rounded-lg border font-mono text-[0.82rem] tabular", p === page ? "border-ink bg-ink text-paper" : "border-line bg-white text-stone hover:border-ink/25 hover:text-ink")}
+              className={cn("grid size-9 place-items-center rounded-lg border font-mono text-[0.82rem] tabular pointer-coarse:size-11", p === page ? "border-ink bg-ink text-paper" : "border-line bg-white text-stone hover:border-ink/25 hover:text-ink")}
             >
               {p}
             </Link>

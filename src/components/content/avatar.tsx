@@ -33,8 +33,8 @@ export function Avatar({
       <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full" aria-hidden preserveAspectRatio="xMidYMid slice">
         <defs>
           <linearGradient id={gradientId} gradientTransform={`rotate(${angle} .5 .5)`}>
-            <stop offset="0" stopColor="#ff0707" stopOpacity="0.32" />
-            <stop offset="1" stopColor="#ff0707" stopOpacity="0" />
+            <stop offset="0" stopColor="var(--color-red)" stopOpacity="0.32" />
+            <stop offset="1" stopColor="var(--color-red)" stopOpacity="0" />
           </linearGradient>
         </defs>
         <rect width="200" height="200" fill={`url(#${gradientId})`} />

@@ -1,4 +1,4 @@
-// Tangentbord, fokus, tidslinjen på startsidan och redigeringsbubblan, så som någon utan mus eller på telefon möter dem.
+// Tangentbord, fokus, kalendern på startsidan och redigeringsbubblan, så som någon utan mus eller på telefon möter dem.
 import assert from "node:assert";
 import { mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -83,41 +83,32 @@ export default async function tillganglighetSteg({ BASE, browser, page, step, sw
     assert.equal(await captions.nth(1).inputValue(), "Röd", "ordningen ska vara sparad");
   });
 
-  await step("Tidslinjen på startsidan står still, har en uppsättning länkar och går att ta sig igenom med tangentbordet", async () => {
+  await step("Kalendern på startsidan står still, har en uppsättning länkar och går att ta sig igenom med tangentbordet", async () => {
     const { context, page: visitor } = await newVisitor(browser, { reducedMotion: "reduce", viewport: { width: 1280, height: 800 } });
     await visitor.goto(`${BASE}/`);
-    const timeline = visitor.getByRole("region", { name: "Kommande evenemang" });
-    await timeline.waitFor();
-    const links = timeline.getByRole("link");
+    const kalender = visitor.locator("section", { has: visitor.getByRole("heading", { name: "Kommande evenemang" }) });
+    await kalender.waitFor();
+    const links = kalender.getByRole("link");
     const hrefs = await links.evaluateAll((all) => all.map((a) => a.getAttribute("href")));
     assert.ok(hrefs.length >= 2, `minst ett evenemang och kalendern, fick ${hrefs.length}`);
     assert.equal(new Set(hrefs).size, hrefs.length, `länkarna ska finnas en gång var: ${hrefs.join(", ")}`);
-    assert.equal(await timeline.locator('[aria-hidden="true"] a').count(), 0, "inget gömt dubbelband");
-    const moving = await timeline.evaluate((el) => [el, ...el.querySelectorAll("*")].filter((x) => getComputedStyle(x).animationName !== "none").length);
+    const moving = await kalender.evaluate((el) => [el, ...el.querySelectorAll("*")].filter((x) => getComputedStyle(x).animationName !== "none").length);
     assert.equal(moving, 0, "inget får röra sig med prefers-reduced-motion");
 
-    // Varje länk ska hamna helt inne i bilden när den får fokus.
-    await waitForHydration(visitor, timeline.getByRole("button", { name: "Senare evenemang" }));
+    // Tabbordningen följer sidan, och varje länk står helt inne i bilden när den får fokus.
     await links.first().focus();
     for (let i = 0; i < hrefs.length; i++) {
-      const href = await visitor.evaluate(() => document.activeElement?.getAttribute("href"));
-      assert.equal(href, hrefs[i], `tabbordningen ska följa linjen, plats ${i + 1}`);
-      const box = await visitor.evaluate(() => {
+      const at = await visitor.evaluate(() => {
         const r = document.activeElement.getBoundingClientRect();
-        return { left: r.left, right: r.right };
+        return { href: document.activeElement.getAttribute("href"), inne: r.left >= 0 && r.right <= innerWidth };
       });
-      await visitor.waitForFunction(() => {
-        const r = document.activeElement.getBoundingClientRect();
-        return r.left >= 0 && r.right <= innerWidth;
-      }, undefined, { timeout: 3000 }).catch(() => assert.fail(`länken ${href} syns inte helt: ${JSON.stringify(box)}`));
+      assert.deepEqual(at, { href: hrefs[i], inne: true }, `plats ${i + 1} i tabbordningen`);
       await visitor.keyboard.press("Tab");
-      // Pilknapparna ligger sist i bandet. Är allt redan i bild är de avstängda och hoppas över.
-      if (i < hrefs.length - 1 && (await visitor.evaluate(() => document.activeElement?.tagName)) === "BUTTON") await visitor.keyboard.press("Tab");
     }
 
     await visitor.setViewportSize({ width: 390, height: 844 });
     await visitor.reload();
-    await timeline.waitFor();
+    await kalender.waitFor();
     const wider = await visitor.evaluate(() => document.documentElement.scrollWidth - innerWidth);
     assert.ok(wider <= 0, `sidan ska inte bli bredare än telefonen, ${wider} px`);
     await context.close();

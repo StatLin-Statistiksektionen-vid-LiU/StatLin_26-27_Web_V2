@@ -13,7 +13,7 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      {/* Heron har texten om sektionen och siffrorna. Under den kommer kalendern, genvägarna, utskotten, nytt och korten. */}
+      {/* Heron har rubriken och loggan. Under den kommer genvägarna, kalendern med nytt, utskotten och korten. */}
       <Suspense fallback={<HomeSkeleton />}>
         <HomeSections />
       </Suspense>

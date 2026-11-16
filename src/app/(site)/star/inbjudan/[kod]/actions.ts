@@ -77,11 +77,14 @@ export async function submitStarInterest(_prev: FormState, fd: FormData): Promis
   };
   const thanks = `${page}?tack=${vill ? "mote" : "1"}#anmal`;
 
-  // Samma anmälan två gånger (dubbeltryck, en omladdning) blir en rad och ett mejl. Företaget behöver inte veta det.
+  // Samma anmälan två gånger (dubbeltryck, en omladdning) blir en rad och ett mejl. Företaget behöver inte veta det. Alla fält jämförs,
+  // så att en rättad anmälan, till exempel med "boka möte" ikryssat i efterhand, inte försvinner tyst.
   const created = nowLocal();
   const same = db
-    .prepare("SELECT id, created_at FROM star_intresse WHERE epost = ? AND foretag = ? COLLATE NOCASE AND meddelande = ? ORDER BY id DESC LIMIT 1")
-    .get(row.epost, row.foretag, row.meddelande) as { id: number; created_at: string } | undefined;
+    .prepare(
+      "SELECT created_at FROM star_intresse WHERE epost = ? AND foretag = ? COLLATE NOCASE AND kontakt_namn = ? AND telefon = ? AND val = ? AND vill_boka_mote = ? AND moteforslag = ? AND meddelande = ? ORDER BY id DESC LIMIT 1",
+    )
+    .get(row.epost, row.foretag, row.kontakt_namn, row.telefon, row.val, vill ? 1 : 0, row.moteforslag, row.meddelande) as { created_at: string } | undefined;
   if (same && same.created_at.slice(0, 10) === created.slice(0, 10)) redirect(thanks);
 
   const saved = db

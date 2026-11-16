@@ -1,6 +1,7 @@
 "use server";
 
 import crypto from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { type FormState, formObject, invalid, zCheckbox, zOptionalId, zRequired, zText, zUrl } from "@/lib/admin/form";
@@ -148,8 +149,9 @@ export async function saveWish(_prev: FormState, fd: FormData): Promise<FormStat
   return { ok: true, message: "Önskemålet är sparat." };
 }
 
-/** Godkänn och dölj med en knapp. Formuläret skickar med vilken flik man stod på, så att man kommer tillbaka dit. */
 const INTEREST_PAGE = "/admin/intresseanmalningar";
+/** Siffran för nya anmälningar står i sidomenyn, som en omdirigering annars inte renderar om. */
+const revalidateInterest = () => revalidatePath("/admin", "layout");
 
 /** Intresseanmälan till STAR: markera som hanterad eller flytta tillbaka, och samma flik öppnas igen. */
 export async function setInterestStatus(fd: FormData): Promise<void> {
@@ -159,8 +161,12 @@ export async function setInterestStatus(fd: FormData): Promise<void> {
   const id = Number(fd.get("id"));
   const status = String(fd.get("status")) === "hanterad" ? "hanterad" : "ny";
   const row = getDb().prepare("UPDATE star_intresse SET status = ? WHERE id = ? RETURNING foretag").get(status, id) as { foretag: string } | undefined;
-  if (row) audit(user.id, "status", "star_intresse", id, `${row.foretag}: ${status}`);
-  redirect(`${INTEREST_PAGE}?klar=${status}`);
+  if (row) {
+    audit(user.id, "status", "star_intresse", id, `${row.foretag}: ${status}`);
+    revalidateInterest();
+  }
+  // Knappen stod under den andra fliken: Markera som hanterad under Nya, Flytta till nya under Hanterade.
+  redirect(`${INTEREST_PAGE}?flik=${status === "hanterad" ? "nya" : "hanterade"}&klar=${status}`);
 }
 
 export async function deleteInterest(fd: FormData): Promise<FormState | void> {
@@ -168,9 +174,13 @@ export async function deleteInterest(fd: FormData): Promise<FormState | void> {
   if ("error" in user) return user;
   if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id"));
-  const row = getDb().prepare("DELETE FROM star_intresse WHERE id = ? RETURNING foretag").get(id) as { foretag: string } | undefined;
-  if (row) audit(user.id, "delete", "star_intresse", id, row.foretag);
-  redirect(`${INTEREST_PAGE}?raderad=1`);
+  const row = getDb().prepare("DELETE FROM star_intresse WHERE id = ? RETURNING foretag, status").get(id) as { foretag: string; status: string } | undefined;
+  if (row) {
+    audit(user.id, "delete", "star_intresse", id, row.foretag);
+    revalidateInterest();
+  }
+  // Tillbaka till fliken som anmälan låg under.
+  redirect(`${INTEREST_PAGE}?${row ? `flik=${row.status === "hanterad" ? "hanterade" : "nya"}&` : ""}raderad=1`);
 }
 
 /** För en anmälan som kom in innan mejlet var inställt eller när det inte gick att skicka. */
@@ -199,6 +209,7 @@ export async function renewStarInvite(): Promise<FormState | void> {
   redirect("/admin/star?nylank=1#inbjudan");
 }
 
+/** Godkänn och dölj med en knapp. Formuläret skickar med vilken flik man stod på, så att man kommer tillbaka dit. */
 export async function setWishStatus(fd: FormData): Promise<void> {
   const user = await actionUser();
   if ("error" in user) redirect("/logga-in?next=/admin/lunchonskemal");
@@ -222,10 +233,12 @@ export async function deleteWish(fd: FormData): Promise<FormState | void> {
   if (!canManageNaringsliv(user)) return forbidden();
   const id = Number(fd.get("id"));
   const db = getDb();
-  const row = db.prepare("DELETE FROM lecture_wishes WHERE id = ? RETURNING title").get(id) as { title: string } | undefined;
+  const row = db.prepare("DELETE FROM lecture_wishes WHERE id = ? RETURNING title, status").get(id) as { title: string; status: WishStatus } | undefined;
   if (row) {
     audit(user.id, "delete", "lecture_wish", id, row.title);
     revalidateSite();
   }
-  redirect("/admin/lunchonskemal?raderad=1");
+  // Tillbaka till fliken som önskemålet låg under, som efter Godkänn och Dölj. Annars hamnade man bland de nya efter att ha rensat bland de dolda.
+  const tab = row ? `flik=${row.status === "ny" ? "nya" : row.status === "dold" ? "dolda" : "listan"}&` : "";
+  redirect(`/admin/lunchonskemal?${tab}raderad=1`);
 }

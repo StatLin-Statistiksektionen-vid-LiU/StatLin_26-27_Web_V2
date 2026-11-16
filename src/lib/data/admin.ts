@@ -1,5 +1,6 @@
 import "server-only";
 import { readDb } from "./db";
+import { todayLocal } from "@/lib/dates";
 import type { Role } from "@/lib/types";
 
 export interface UserListItem {
@@ -83,4 +84,19 @@ export async function listAudit(limit = 12, userId?: number): Promise<AuditItem[
 export async function sessionCount(userId: number): Promise<number> {
   const db = await readDb();
   return (db.prepare("SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND expires_at > ?").get(userId, new Date().toISOString()) as { n: number }).n;
+}
+
+/** Vad sektionen har hunnit med under verksamhetsåret, 1 juli till 30 juni: evenemang som har varit, nyheter och klara uppdrag. Står i hälsningen på översikten. */
+export async function yearInNumbers() {
+  const today = todayLocal();
+  const year = Number(today.slice(0, 4)) - (today.slice(5, 7) < "07" ? 1 : 0);
+  const db = await readDb();
+  const counts = db
+    .prepare(
+      `SELECT (SELECT COUNT(*) FROM events WHERE published = 1 AND starts_at >= @start AND starts_at < @today) AS events,
+              (SELECT COUNT(*) FROM news WHERE published = 1 AND published_at >= @start AND published_at <= @now) AS news,
+              (SELECT COUNT(*) FROM tasks WHERE status = 'klar' AND completed_at >= @start) AS tasks`,
+    )
+    .get({ start: `${year}-07-01`, today, now: new Date().toISOString() }) as { events: number; news: number; tasks: number };
+  return { label: `${year}/${String(year + 1).slice(2)}`, ...counts };
 }

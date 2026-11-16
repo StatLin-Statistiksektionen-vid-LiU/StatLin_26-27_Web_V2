@@ -58,7 +58,7 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
         title="STAR"
         description="Datum, plats och program kommer från evenemanget. Resten sköts här."
         actions={
-          <Link href="/star" target="_blank" className="btn btn-ghost btn-sm">
+          <Link href="/star" target="_blank" className="btn btn-ghost btn-sm bg-white">
             {live ? "Visa sidan" : "Förhandsvisa"} <ArrowUpRight size={15} />
           </Link>
         }
@@ -107,7 +107,7 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
             </p>
           </div>
           <Link href="/admin/intresseanmalningar" className="btn btn-ink btn-sm shrink-0">
-            Anmälningar{newInterest > 0 && <span className="tabular opacity-80"> ({newInterest} nya)</span>} <ArrowRight size={15} />
+            Anmälningar{newInterest > 0 && <span className="tabular opacity-80"> ({newInterest === 1 ? "1 ny" : `${newInterest} nya`})</span>} <ArrowRight size={15} />
           </Link>
         </div>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -142,10 +142,11 @@ async function StarAdmin({ searchParams }: { searchParams: PageProps<"/admin/sta
             <ul className="@container divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
               {companies.map((c) => (
                 <li key={c.id} className="grid grid-cols-[3rem_minmax(0,1fr)_auto] items-center gap-x-2.5 gap-y-1 px-3.5 py-3.5 @lg:flex @lg:gap-4 @lg:px-5 @lg:py-4">
-                  <span className="row-span-2 grid h-10 w-12 shrink-0 place-items-center @lg:w-20">
+                  {/* Loggan på en vit platta, som på sajten och under Sponsorer, så att mörk text i loggan syns även i mörkt läge. */}
+                  <span className={cn("row-span-2 grid h-10 w-12 shrink-0 place-items-center rounded-lg @lg:w-20", c.logo && "bg-[#fff] px-1 ring-1 ring-line")}>
                     {c.logo ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={c.logo.thumb} alt="" className="max-h-10 max-w-12 object-contain @lg:max-w-20" />
+                      <img src={c.logo.thumb} alt="" className="max-h-10 max-w-full object-contain" />
                     ) : (
                       <span className="text-center text-xs leading-tight text-stone">Ingen logga</span>
                     )}

@@ -3,17 +3,21 @@ import { notFound } from "next/navigation";
 import { Suspense, type ReactNode } from "react";
 import { findResponsibleAccount } from "@/app/admin/_actions/projektplaner-hjalp";
 import { deletePlan } from "@/app/admin/_actions/projektplaner";
+import { ChatView } from "@/components/admin/chatt/chat-view";
 import { ConfirmButton } from "@/components/admin/confirm-button";
-import { PlanEditForm, PlanStepForm } from "@/components/admin/plan-edit-form";
+import { PlanCollaboratorsForm, PlanEditForm, PlanInviteSeen, PlanStepForm } from "@/components/admin/plan-edit-form";
 import { LessonsPanel } from "@/components/admin/plan-lessons";
 import { PlanMeter } from "@/components/admin/plan-meter";
 import { PlanSteps } from "@/components/admin/plan-steps";
 import { Notice } from "@/components/admin/ui";
 import { PrintButton } from "@/components/admin/wheel-buttons";
 import { ArrowLeft, Printer, Trash } from "@/components/icons";
-import { canChangePlan } from "@/lib/auth/permissions";
+import { nowIso } from "@/lib/admin/helpers";
+import { canChangePlan, canUsePlanThread, isAdmin } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
-import { getProjectPlan, getWheelItem, listLessons, listPlanSteps, listResponsibleOptions } from "@/lib/data/arshjul";
+import { planChannelKey } from "@/lib/chatt";
+import { getPlanInvite, getProjectPlan, getWheelItem, listLessons, listPlanCollaborators, listPlanSteps, listResponsibleOptions } from "@/lib/data/arshjul";
+import { chatAuthor, getLastReadId, listChannelSummaries, listMessages } from "@/lib/data/chatt";
 import { listTaskRecipients } from "@/lib/data/tasks";
 import { formatDate, todayLocal } from "@/lib/dates";
 import { planTemplate } from "@/lib/projektplan-mallar";
@@ -55,21 +59,30 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
   if (!plan) notFound();
   const today = todayLocal();
   const canChange = canChangePlan(user, plan);
-  const [steps, lessons, item, options, people] = await Promise.all([
+  const [steps, lessons, item, options, people, collaborators, invite] = await Promise.all([
     listPlanSteps(plan.id, user),
     plan.wheel_item_id ? listLessons(plan.wheel_item_id, plan.id) : [],
     plan.wheel_item_id ? getWheelItem(plan.wheel_item_id) : null,
     listResponsibleOptions(),
     canChange ? listTaskRecipients() : [],
+    listPlanCollaborators(plan.id),
+    getPlanInvite(plan.id, user.id),
   ]);
   const recipients = people.map((p) => ({
     id: p.id,
     label: p.committee && simplify(p.committee) !== simplify(p.label) ? `${p.label} (${p.committee})` : p.label,
     board: p.kind === "styrelse",
+    kind: p.kind,
   }));
   const visible = steps.filter((s) => !s.hidden);
   const hiddenCount = steps.length - visible.length;
   const over = plan.plan_date < today;
+  // Planens tråd, för dem som är med i planen. Klockan läses före meddelandena, som på chattsidan.
+  const tradKey = planChannelKey(plan.id);
+  const loadedAt = nowIso();
+  const trad = canUsePlanThread(user, plan, invite !== null)
+    ? await Promise.all([listChannelSummaries(user), listMessages(tradKey), getLastReadId(user.id, tradKey), chatAuthor(user)]).then(([channels, page, lastReadId, me]) => ({ key: tradKey, channels, page, lastReadId, me, loadedAt }))
+    : null;
 
   return (
     <>
@@ -82,7 +95,7 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
             <Printer size={16} /> Skriv ut
           </PrintButton>
           {canChange && (
-            <ConfirmButton action={deletePlan} id={plan.id} message="Ta bort projektplanen? Uppdrag som redan är skickade ligger kvar på tavlan, men utan koppling till planen.">
+            <ConfirmButton action={deletePlan} id={plan.id} message="Ta bort projektplanen? Trådens meddelanden försvinner med den. Uppdrag som redan är skickade ligger kvar på tavlan, men utan koppling till planen.">
               <Trash size={15} /> Ta bort
             </ConfirmButton>
           )}
@@ -107,12 +120,28 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
             <Fact label="Ansvarig">{plan.responsible || "Inte bestämt"}</Fact>
             {item && (
               <Fact label="Årshjulet">
-                <Link href={`/admin/arshjul${item.month ? `?manad=${item.month}` : ""}`} className="hover:underline">
+                <Link href={`/admin/arshjul?manad=${item.month ?? "alla"}`} className="hover:underline">
                   {item.title}
                 </Link>
               </Fact>
             )}
           </dl>
+          <div className="mt-4 print:hidden">
+            <p className="kicker mb-1.5 text-[0.62rem] text-stone">Medarbetare</p>
+            {plan.collab_all ? (
+              <p className="text-sm font-medium">Hela StatLin</p>
+            ) : collaborators.length === 0 ? (
+              <p className="text-sm text-stone">Ingen är inbjuden än.{canChange && " Du bjuder in längre ner på sidan."}</p>
+            ) : (
+              <ul className="flex flex-wrap gap-1.5">
+                {collaborators.map((c) => (
+                  <li key={c.id} className="rounded-full border border-ink/15 px-2.5 py-1 text-[0.8rem] font-medium">
+                    {c.committee && simplify(c.committee) !== simplify(c.label) ? `${c.label} (${c.committee})` : c.label}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <div className="mt-4">
             <p className="kicker mb-1.5 text-[0.62rem] text-stone">Framsteg</p>
             <PlanMeter done={plan.done} total={plan.total} />
@@ -145,8 +174,39 @@ async function Plan({ params, searchParams }: { params: PageProps<"/admin/projek
         </div>
       </article>
 
+      {invite && !invite.seen && <PlanInviteSeen planId={plan.id} />}
+
+      {/* Planens egen tråd: de som är med i planen frågar och svarar här. */}
+      {trad ? (
+        <section id="trad" className="mt-6 scroll-mt-20 print:hidden" aria-label="Frågor och svar om planen">
+          <ChatView
+            key={trad.key}
+            embedded
+            me={trad.me}
+            admin={isAdmin(user)}
+            channels={trad.channels}
+            open={{ key: trad.key, name: "Frågor och svar", audience: plan.collab_all ? "Hela StatLin är med och kan fråga och svara här." : "Planens medarbetare frågar och svarar här." }}
+            chosen
+            messages={trad.page.messages}
+            hasOlder={trad.page.hasOlder}
+            lastReadId={trad.lastReadId}
+            loadedAt={trad.loadedAt}
+          />
+        </section>
+      ) : (
+        <p className="mt-6 rounded-[1.5rem] border border-ink/10 bg-white p-5 text-sm text-stone print:hidden">
+          Planens tråd är för dem som är med i planen. Be {plan.responsible || "den som la in planen"} bjuda in dig om du vill fråga något eller hjälpa till.
+        </p>
+      )}
+
       {canChange && (
         <div className="mt-6 grid grid-cols-1 gap-4 print:hidden">
+          <details className="rounded-[1.5rem] border border-ink/10 bg-white p-5">
+            <summary className="tryck cursor-pointer font-bold">Bjud in medarbetare</summary>
+            <div className="mt-4">
+              <PlanCollaboratorsForm planId={plan.id} all={plan.collab_all === 1} invited={collaborators.map((c) => c.id)} accounts={recipients.filter((r) => r.id !== plan.owner_user_id)} />
+            </div>
+          </details>
           <details className="rounded-[1.5rem] border border-ink/10 bg-white p-5" open={over && !plan.lessons}>
             <summary className="tryck cursor-pointer font-bold">Ändra planen</summary>
             <div className="mt-4">

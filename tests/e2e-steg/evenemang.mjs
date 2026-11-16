@@ -200,17 +200,6 @@ export default async function evenemangSteg({ BASE, browser, page, step, switchA
     await removeItem(url);
   });
 
-  await step("SB-08: rutan Kommande evenemang räknar alla kommande, inte bara de sex som visas på startsidan", async () => {
-    await site.goto(`${BASE}/evenemang`);
-    const cards = site.locator('main a[href^="/evenemang/"]:has(h3)');
-    await cards.first().waitFor();
-    const upcoming = await cards.count();
-    assert.ok(upcoming > 6, `seeden ska ha fler än sex kommande för att testet ska säga något, är ${upcoming}`);
-    await site.goto(BASE);
-    // Siffrorna i heron är en lista med talet först på varje rad. Talet räknas upp, så raden väntas in tills det har stannat på rätt värde.
-    await site.locator("section[data-startsida] li", { hasText: "Kommande evenemang" }).locator("span.display").filter({ hasText: new RegExp(`^${upcoming}$`) }).waitFor();
-  });
-
   await step("SB-22: strukturerad data har tidszon, bara datum vid heldag, och sektionens adress och beskrivningen som reserv", async () => {
     const schemaEvent = async (slug) => {
       await site.goto(`${BASE}/evenemang/${slug}`);

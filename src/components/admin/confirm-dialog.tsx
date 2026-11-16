@@ -41,7 +41,7 @@ export function ConfirmDialog({
         <button type="button" onClick={() => onAnswer(false)} className="btn btn-sm btn-ghost bg-white">
           Avbryt
         </button>
-        <button type="button" onClick={() => onAnswer(true)} className="btn btn-sm btn-red">
+        <button type="button" onClick={() => onAnswer(true)} className="btn btn-sm btn-red fara">
           {confirmLabel}
         </button>
       </div>

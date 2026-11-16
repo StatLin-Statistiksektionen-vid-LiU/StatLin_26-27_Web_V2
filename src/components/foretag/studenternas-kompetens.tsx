@@ -311,7 +311,7 @@ export function StudenternasKompetens({ natt = false, innehall }: { natt?: boole
                   <label
                     key={NIVA_ID[i]}
                     className={cn(
-                      "group relative flex min-h-10 cursor-pointer select-none flex-wrap items-center justify-center gap-x-1.5 rounded-full px-2 py-1 text-center leading-tight has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 md:min-h-11",
+                      "group relative flex min-h-11 cursor-pointer select-none flex-wrap items-center justify-center gap-x-1.5 rounded-full px-2 py-1 text-center leading-tight has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2",
                       natt ? "has-[:focus-visible]:outline-white" : "has-[:focus-visible]:outline-ink",
                     )}
                   >

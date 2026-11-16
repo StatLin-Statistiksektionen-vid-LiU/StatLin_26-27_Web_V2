@@ -7,7 +7,6 @@
 
 /** Grupperna är det en penna öppnar, med rubriken i panelen. */
 export const SITE_TEXT_GROUPS = {
-  "start-om": "Startsidan: om sektionen",
   "start-evenemang": "Startsidan: evenemangen",
   "start-utskott": "Startsidan: utskotten",
   "start-nytt": "Startsidan: nytt",
@@ -36,25 +35,14 @@ function hero<G extends HeroGroup>(group: G, kicker: string, title: string, lead
 }
 
 const START = {
-  text_start_om_kicker: { group: "start-om", label: "Liten rad ovanför texten om sektionen", default: "Om sektionen", max: 60 },
-  text_start_siffra_utskott: { group: "start-om", label: "Siffrorna: utskotten", default: "Utskott & grupper", max: 40 },
-  text_start_siffra_styrelsen: { group: "start-om", label: "Siffrorna: styrelsen", default: "Poster i styrelsen", max: 40 },
-  text_start_siffra_styrelsen_not: { group: "start-om", label: "Siffrorna: raden under styrelsen", default: "väljs varje år", max: 60 },
-  text_start_siffra_evenemang: { group: "start-om", label: "Siffrorna: evenemangen", default: "Kommande evenemang", max: 40 },
-  text_start_siffra_evenemang_not: { group: "start-om", label: "Siffrorna: raden under evenemangen", default: "just nu i kalendern", max: 60 },
-  text_start_siffra_program: { group: "start-om", label: "Siffrorna: programmen", default: "Program", max: 40 },
 
   text_start_evenemang_kicker: { group: "start-evenemang", label: "Liten rad ovanför", default: "Kalender", max: 60 },
   text_start_evenemang_rubrik: { group: "start-evenemang", label: "Rubrik", default: "Kommande *evenemang*", max: 80 },
   text_start_evenemang_lank: { group: "start-evenemang", label: "Länken till kalendern", default: "Hela kalendern", max: 40 },
-  text_start_kalender_rubrik: { group: "start-evenemang", label: "Kalenderrutan: rubrik", default: "Prenumerera på kalendern", max: 80 },
-  text_start_kalender_text: { group: "start-evenemang", label: "Kalenderrutan: text", default: "Alla evenemang direkt i Google Kalender, iPhone eller Outlook.", max: 200, long: true },
 
   text_start_utskott_kicker: { group: "start-utskott", label: "Liten rad ovanför", default: "Utskott", max: 60 },
   text_start_utskott_rubrik: { group: "start-utskott", label: "Rubrik", default: "Hitta ditt *sammanhang*", max: 80 },
   text_start_utskott_lank: { group: "start-utskott", label: "Länken till alla utskott", default: "Alla utskott", max: 40 },
-  text_start_engagera_rubrik: { group: "start-utskott", label: "Rutan sist: rubrik", default: "Engagera dig", max: 40 },
-  text_start_engagera_text: { group: "start-utskott", label: "Rutan sist: text", default: "Alla utskott söker folk, _*ingen erfarenhet krävs.*_", max: 160, long: true },
 
   text_start_nytt_kicker: { group: "start-nytt", label: "Liten rad ovanför", default: "Från sektionen", max: 60 },
   text_start_nytt_rubrik: { group: "start-nytt", label: "Rubrik", default: "Senaste *nytt*", max: 80 },
@@ -79,16 +67,16 @@ const START = {
 
 export const SITE_TEXTS = {
   ...START,
-  ...hero("evenemang", "Kalender", "Evene*mang*", "Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så _missar du inget._"),
+  ...hero("evenemang", "Kalender", "Evenemang", "Sittningar, pubar, idrott, föreläsningar och sektionsmöten. Prenumerera på kalendern så _missar du inget._"),
   ...hero("nyheter", "Från sektionen", "Senaste *nytt*", "Information från styrelsen och utskotten, från sittningsanmälningar till beslut på sektionsmötet."),
   ...hero(
     "utskott",
     "Sektionen / Utskott",
-    "Utsk*ott*",
+    "Utskott",
     "_Utskotten är hjärtat i sektionen._ Varje utskott har sin egen logga, alla byggda på samma baslogotyp men med sin egen bakgrundsgrafik.",
   ),
-  ...hero("galleri", "Sektionen / Galleri", "Galle*ri*", "Bilder från sittningar, pubar, idrott och allt annat. Uppladdade av sektionens poster."),
-  ...hero("dokument", "Sektionen / Dokument", "Doku*ment*", "Stadgar, reglemente, mötesprotokoll och styrdokument. Allt som styr sektionen, samlat på ett ställe."),
+  ...hero("galleri", "Sektionen / Galleri", "Galleri", "Bilder från sittningar, pubar, idrott och allt annat. Uppladdade av sektionens poster."),
+  ...hero("dokument", "Sektionen / Dokument", "Dokument", "Stadgar, reglemente, mötesprotokoll och styrdokument. Allt som styr sektionen, samlat på ett ställe."),
   ...hero(
     "tentastatistik",
     "Studenter / Tentastatistik",
@@ -98,7 +86,7 @@ export const SITE_TEXTS = {
   ...hero(
     "styrelsen",
     "Sektionen / Styrelsen",
-    "Styrel*sen*",
+    "Styrelsen",
     "Styrelsen väljs på sektionsmötet och leder sektionen under ett verksamhetsår. Hör av dig direkt till rätt post.",
   ),
 };
@@ -106,10 +94,6 @@ export const SITE_TEXTS = {
 export type SiteTextKey = keyof typeof SITE_TEXTS;
 export const SITE_TEXT_KEYS = Object.keys(SITE_TEXTS) as SiteTextKey[];
 export const SITE_TEXT_DEFAULTS = Object.fromEntries(SITE_TEXT_KEYS.map((k) => [k, SITE_TEXTS[k].default])) as Record<SiteTextKey, string>;
-
-export function isSiteTextGroup(value: string): value is SiteTextGroup {
-  return Object.hasOwn(SITE_TEXT_GROUPS, value);
-}
 
 /** Texterna i en grupp, i den ordning de står ovan. */
 export function textsIn(group: SiteTextGroup): SiteTextKey[] {

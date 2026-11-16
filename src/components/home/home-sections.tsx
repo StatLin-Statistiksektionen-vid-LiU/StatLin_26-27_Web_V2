@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { NewsCard } from "@/components/content/news-card";
-import { ArrowRight, ArrowUpRight, Calendar, Handshake } from "@/components/icons";
+import { NewsRow } from "@/components/content/news-card";
+import { ArrowRight, Handshake } from "@/components/icons";
 import { QuickLinksRow } from "@/components/links/quick-links";
 import { Reveal } from "@/components/ui/reveal";
 import { SectionHeading } from "@/components/ui/section-heading";
@@ -13,175 +13,150 @@ import { listNews } from "@/lib/data/news";
 import { getBlock } from "@/lib/innehall/server";
 import { SITE_TEXTS, siteText, type SiteTextKey, type TextDef } from "@/lib/site-texts";
 import { RText } from "@/components/edit-mode/redigerbar";
+import { cn } from "@/lib/utils";
 import { StartKort } from "./start-knappar";
-import { UpcomingTimeline } from "./upcoming-timeline";
+import { UpcomingEvents } from "./upcoming-events";
 
-/** Raden med genvägar under kalendern. Frågelådan står sist när den är öppen, så att den som fått en kod hittar var den ska skrivas. */
-export async function HomeShortcuts() {
-  const [links, db] = await Promise.all([listFeaturedLinks(), readDb()]);
-  return <QuickLinksRow links={links} fragelada={frageladaIsOpen(db)} />;
-}
+/*
+ * Startsidan under heron börjar med genvägarna som en smal rad. Sedan kommer tre band med samma luft och samma rubrikstil: vad som
+ * händer (kalendern och nyheterna), utskotten och vem du är (ny student eller företag). Ett bands två delar står bredvid varandra där
+ * bandet är minst 896 pixlar brett. Bredden mäts på bandet och inte på fönstret, eftersom sidomenyn tar en del av fönstret från 1024 pixlar.
+ */
+const BAND = "@container py-10 md:py-14";
+const SPALTER = "container-site grid grid-cols-1 gap-x-12 @4xl:grid-cols-12";
+// Rubriken och innehållet står på bandets två rader, så att innehållet börjar på samma höjd i båda spalterna även när en rubrik bryts.
+const SPALT = "@4xl:row-span-2 @4xl:grid @4xl:grid-rows-subgrid @4xl:gap-y-0";
+const KORT = "redigerbar-farg group relative flex h-full flex-col gap-3 overflow-hidden rounded-2xl p-5 text-white md:p-6";
+// Rubrikerna är lika höga i båda korten (STAR har ett streck under sig), så att de står på samma linje och korten blir lika höga.
+const KORT_RUBRIK = "text-[clamp(1.5rem,1rem_+_1vw,1.875rem)] leading-none";
+// Texten och knappen står på samma rad där kortet är brett nog, annars knappen under texten. Texten börjar uppe och knappen står
+// i nedre högra hörnet, så att två kort bredvid varandra linjerar även när det ena har mer text.
+const KORT_INNE = "relative flex flex-1 flex-col";
+const KORT_FOT = "mt-2 flex flex-1 flex-wrap items-end gap-x-6 gap-y-3 text-[0.92rem] leading-snug";
+const KORT_TEXT = "max-w-md flex-1 basis-56 self-start";
+const KORT_KNAPP = "ml-auto inline-flex shrink-0 items-center gap-2.5 font-semibold";
+const KORT_PIL = "grid size-8 place-items-center rounded-full bg-white transition-transform duration-500 group-hover:translate-x-1";
 
 export async function HomeSections() {
-  const [news, committees, settings, start] = await Promise.all([listNews(4), listCommittees({ visibleOnly: true }), getSettings(), getBlock("start")]);
+  const [news, committees, settings, start, links, db] = await Promise.all([listNews(4), listCommittees({ visibleOnly: true }), getSettings(), getBlock("start"), listFeaturedLinks(), readDb()]);
   const utskott = committees.filter((c) => c.kind !== "styrelse");
+  // Frågelådan står sist bland genvägarna när den är öppen, så att den som fått en kod hittar var den ska skrivas.
+  const fragelada = frageladaIsOpen(db);
+  const genvagar = links.length > 0 || fragelada;
   // Rubrikerna och de små texterna ändras där de står i redigeringsläget, se site-texts.ts. Ett tomt fält ger standardtexten.
   const t = (key: SiteTextKey) => siteText(settings, key);
   // Utan accentstil får *ord* klassen contents, så att stjärnorna inte syns.
   const rtext = (key: SiteTextKey, className = "contents") => <RText id={`s:${key}`} value={t(key)} accent={className} rader={!!(SITE_TEXTS[key] as TextDef).long} />;
-  const rubrik = (key: SiteTextKey) => rtext(key, "mono-accent text-red-deep");
+  const rubrik = (key: SiteTextKey) => rtext(key, "text-red");
+  /** Bandens rubriker står i spalter, så länken står kvar på etikettens rad i alla bredder. */
+  const spaltrubrik = (del: "evenemang" | "nytt" | "utskott", href: string) => (
+    <Reveal>
+      <SectionHeading stack kicker={rtext(`text_start_${del}_kicker`)} title={rubrik(`text_start_${del}_rubrik`)} href={href} linkLabel={rtext(`text_start_${del}_lank`)} />
+    </Reveal>
+  );
 
   return (
     <>
-      {/* 01 Evenemang, direkt under heron. Tidslinjen går kant i kant genom delen och visar vad som är på gång. */}
-      <section className="relative border-b border-line bg-paper-2/40 py-10 md:py-14">
-        <div className="container-site">
-          <Reveal>
-            <SectionHeading index="01" kicker={rtext("text_start_evenemang_kicker")} title={rubrik("text_start_evenemang_rubrik")} href="/evenemang" linkLabel={rtext("text_start_evenemang_lank")} />
-          </Reveal>
-        </div>
-        <div className="mt-7 md:mt-8">
-          <UpcomingTimeline />
-        </div>
-        <div className="container-site">
-          <Reveal className="mt-7">
-            <a
-              href="/kalender.ics"
-              className="group flex flex-col items-start justify-between gap-3 rounded-xl border border-line bg-white px-5 py-3.5 transition-colors hover:border-ink/25 sm:flex-row sm:items-center"
-            >
-              <span className="flex items-center gap-4">
-                <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-ink text-paper">
-                  <Calendar size={18} />
-                </span>
-                <span>
-                  <span className="block font-semibold">{rtext("text_start_kalender_rubrik", "text-red-deep")}</span>
-                  <span className="block text-sm text-stone">{rtext("text_start_kalender_text", "text-red-deep")}</span>
-                </span>
-              </span>
-              <span className="kicker flex items-center gap-2 text-red-deep">
-                kalender.ics <ArrowUpRight size={14} />
-              </span>
-            </a>
-          </Reveal>
+      {genvagar && <QuickLinksRow links={links} fragelada={fragelada} />}
+
+      {/* Vad händer: kalendern, och de senaste nyheterna som rader bredvid. Utan nyheter får kalendern hela bredden. */}
+      <section className={cn(BAND, "border-b border-line")}>
+        <div className={cn(SPALTER, "gap-y-10")}>
+          <div className={cn(SPALT, news.length ? "@4xl:col-span-7" : "@4xl:col-span-12")}>
+            {spaltrubrik("evenemang", "/evenemang")}
+            <UpcomingEvents />
+          </div>
+          {news.length > 0 && (
+            <div className={cn(SPALT, "@4xl:col-span-5")}>
+              {spaltrubrik("nytt", "/nyheter")}
+              <ul className="mt-6 divide-y divide-line md:mt-7">
+                {news.map((n) => (
+                  <li key={n.id} className="py-4 first:pt-0 last:pb-0">
+                    <NewsRow item={n} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </section>
 
-      <HomeShortcuts />
-
-      {/* 02 Utskott */}
-      <section className="below-fold relative overflow-hidden py-12 [--fold-h:1250px] md:py-16">
-        <div className="container-site relative">
-          <Reveal>
-            <SectionHeading index="02" kicker={rtext("text_start_utskott_kicker")} title={rubrik("text_start_utskott_rubrik")} href="/utskott" linkLabel={rtext("text_start_utskott_lank")} />
-          </Reveal>
-          <ul className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line md:grid-cols-4">
-            {utskott.map((c, i) => (
-              <li key={c.id} className="bg-white">
-                <Reveal delay={(i % 4) * 70} className="h-full">
-                  <Link href={`/utskott/${c.slug}`} className="group relative flex h-full flex-col items-center px-5 pb-6 pt-7 text-center transition-colors duration-500 hover:bg-paper-2/60">
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
-                      style={{ background: `radial-gradient(circle at 50% 35%, ${c.accent}30, transparent 65%)` }}
+      {/* Utskotten: rubriken till vänster och loggorna till höger där bandet är brett nog, annars rubriken över loggorna. */}
+      <section className={cn(BAND, "below-fold border-b border-line [--fold-h:280px]")}>
+        <div className={cn(SPALTER, "gap-y-6 @4xl:items-center")}>
+          <div className="@4xl:col-span-5">{spaltrubrik("utskott", "/utskott")}</div>
+          {/* Fyra loggor per rad på telefon. Från 640 pixlar alla på en rad, hur många de än är. */}
+          <ul className="grid grid-cols-4 gap-x-2 gap-y-5 sm:auto-cols-fr sm:grid-flow-col sm:grid-cols-none @4xl:col-span-7">
+            {utskott.map((c) => (
+              <li key={c.id}>
+                <Link href={`/utskott/${c.slug}`} className="group flex flex-col items-center gap-2.5 text-center">
+                  {c.logo_url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={c.logo_url}
+                      alt={`${c.short_name}-loggan`}
+                      width={160}
+                      height={160}
+                      loading="lazy"
+                      className="size-14 object-contain drop-shadow-[0_10px_16px_rgba(20,20,19,0.16)] transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:-translate-y-1 group-hover:rotate-[-5deg]"
                     />
-                    {c.logo_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={c.logo_url}
-                        alt={`${c.short_name}-loggan`}
-                        width={160}
-                        height={160}
-                        loading="lazy"
-                        className="relative size-20 object-contain drop-shadow-[0_10px_16px_rgba(20,20,19,0.16)] transition-transform duration-700 ease-[var(--ease-out-expo)] group-hover:-translate-y-1.5 group-hover:rotate-[-5deg] group-hover:scale-105 md:size-24"
-                      />
-                    )}
-                    <span className="display-tight relative mt-5 text-xl normal-case">{c.short_name}</span>
-                    <span className="relative mt-1.5 line-clamp-4 text-sm leading-snug text-stone">{c.tagline}</span>
-                  </Link>
-                </Reveal>
-              </li>
-            ))}
-            {/* Fyller ut rutnätet och bjuder in till engagemang. Den som vill gå med väljer ett utskott och hör av sig till det. */}
-            {utskott.length % 2 === 1 && (
-              <li className="bg-white">
-                <Link href="/utskott" className="group flex h-full flex-col items-center justify-center gap-3.5 px-5 py-8 text-center transition-colors hover:bg-paper-2/60">
-                  <span className="grid size-14 place-items-center rounded-full border border-line text-2xl transition-[rotate,background-color,border-color,color] duration-500 group-hover:rotate-90 group-hover:border-red group-hover:bg-red group-hover:text-[#fff]">+</span>
-                  <span className="display-tight text-xl">{rubrik("text_start_engagera_rubrik")}</span>
-                  <span className="text-sm text-stone transition-colors group-hover:text-ink">{rtext("text_start_engagera_text", "text-red-deep")}</span>
+                  )}
+                  <span className="display-tight text-[0.95rem] normal-case transition-colors group-hover:text-red-deep">{c.short_name}</span>
                 </Link>
               </li>
-            )}
+            ))}
           </ul>
         </div>
       </section>
 
-      {/* 03 Nytt */}
-      {news.length > 0 && (
-        <section className="below-fold pb-12 [--fold-h:1900px] md:pb-16">
-          <div className="container-site">
-            <Reveal>
-              <SectionHeading index="03" kicker={rtext("text_start_nytt_kicker")} title={rubrik("text_start_nytt_rubrik")} href="/nyheter" linkLabel={rtext("text_start_nytt_lank")} />
-            </Reveal>
-            <Reveal className="mt-8">
-              <NewsCard item={news[0]} featured />
-            </Reveal>
-            {news.length > 1 && (
-              <div className="mt-10 grid gap-10 border-t border-line pt-8 md:grid-cols-3">
-                {news.slice(1, 4).map((n, i) => (
-                  <Reveal key={n.id} delay={i * 90}>
-                    <NewsCard item={n} />
-                  </Reveal>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* 04 Vägar in. Luften ovanför kommer från utskotten eller nyheterna. */}
-      <section className="below-fold pb-12 [--fold-h:860px] md:pb-16">
-        {/* Ordet STUDENT? får inte alltid plats i kortet i rubrikens minsta storlek, så den rubriken krymper med kortets bredd och STAR med skärmen under 360 px. grid-cols-1 hindrar att innehållet gör kolumnen bredare än sidan. */}
-        <div className="container-site grid grid-cols-1 gap-5 lg:grid-cols-2">
+      {/* Vem är du: två vägar in, för den som är ny och för företagen. */}
+      <section className={cn(BAND, "below-fold [--fold-h:410px]")}>
+        <div className="container-site grid grid-cols-1 gap-5 @4xl:grid-cols-2">
           <Reveal className="h-full">
-            <StartKort start={start} vilket="ny" className="redigerbar-farg noise group relative flex h-full min-h-[23rem] flex-col justify-between overflow-hidden rounded-2xl bg-red p-8 text-white md:p-10">
+            <StartKort start={start} vilket="ny" className={cn(KORT, "noise bg-red")}>
               <div className="grid-paper pointer-events-none absolute inset-0 text-white" aria-hidden />
               <span className="kicker relative text-white">{rtext("text_start_ny_kicker")}</span>
-              <div className="@container relative">
-                <h2 className="display text-[min(clamp(2.4rem,5vw,4.4rem),13.5cqw)]">{rtext("text_start_ny_rubrik", "mono-accent")}</h2>
-                <p className="mt-4 max-w-md text-lg text-white/85">{rtext("text_start_ny_text", "text-white")}</p>
-                <span className="mt-8 inline-flex items-center gap-3 font-semibold">
-                  {rtext("text_start_ny_knapp")}
-                  <span className="grid size-10 place-items-center rounded-full bg-white text-red transition-transform duration-500 group-hover:translate-x-1.5">
-                    <ArrowRight size={18} />
+              <div className={KORT_INNE}>
+                <h2 className={cn(KORT_RUBRIK, "display pb-2")}>{rtext("text_start_ny_rubrik")}</h2>
+                <div className={KORT_FOT}>
+                  <p className={cn(KORT_TEXT, "text-white/85")}>{rtext("text_start_ny_text", "text-white")}</p>
+                  <span className={KORT_KNAPP}>
+                    {rtext("text_start_ny_knapp")}
+                    <span className={cn(KORT_PIL, "text-red")}>
+                      <ArrowRight size={15} />
+                    </span>
                   </span>
-                </span>
+                </div>
               </div>
+              {/* Vattenmärket står uppe till höger och tonar ut nedåt, så att det inte går igenom texten. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/brand/statlin-vit.svg"
                 loading="lazy"
                 alt=""
                 aria-hidden
-                className="pointer-events-none absolute -bottom-24 -right-24 w-[26rem] max-w-none opacity-20 transition-transform duration-[1.4s] ease-[var(--ease-out-expo)] group-hover:rotate-[-10deg] group-hover:scale-105"
+                className="pointer-events-none absolute -right-14 -top-20 w-64 max-w-none opacity-[0.16] [mask-image:linear-gradient(to_bottom,#000_40%,transparent_80%)] transition-transform duration-[1.4s] ease-[var(--ease-out-expo)] group-hover:rotate-[-10deg] group-hover:scale-105"
               />
             </StartKort>
           </Reveal>
           <Reveal delay={120} className="h-full">
-            <StartKort start={start} vilket="star" live={starIsLive(settings)} className="redigerbar-farg group relative flex h-full min-h-[23rem] flex-col justify-between overflow-hidden rounded-2xl bg-star-navy p-8 text-white md:p-10">
+            <StartKort start={start} vilket="star" live={starIsLive(settings)} className={cn(KORT, "bg-star-navy")}>
               <StarField />
               <span className="kicker relative flex items-center gap-2 text-white/70">
                 <Handshake size={16} /> {rtext("text_start_star_kicker")}
               </span>
-              <div className="relative">
-                <p className="text-[clamp(2.4rem,5vw,4.4rem)] font-light uppercase leading-none tracking-[0.18em] [font-stretch:110%] max-[22.5rem]:text-[10vw]">STAR</p>
-                <div className="mt-2 h-[3px] w-40 bg-[#8f1d1d]" aria-hidden />
-                <p className="mt-5 max-w-md text-lg text-white/80">{rtext("text_start_star_text", "text-white")}</p>
-                <span className="mt-8 inline-flex items-center gap-3 font-semibold">
-                  {rtext(starIsLive(settings) ? "text_start_star_knapp_live" : "text_start_star_knapp")}
-                  <span className="grid size-10 place-items-center rounded-full bg-white text-star-navy transition-transform duration-500 group-hover:translate-x-1.5">
-                    <ArrowRight size={18} />
+              <div className={KORT_INNE}>
+                {/* Strecket under är lika brett som ordet, som i STAR-loggan. */}
+                <p className={cn(KORT_RUBRIK, "w-fit border-b-2 border-[#8f1d1d] pb-1.5 font-light uppercase tracking-[0.18em] [font-stretch:110%]")}>STAR</p>
+                <div className={KORT_FOT}>
+                  <p className={cn(KORT_TEXT, "text-white/80")}>{rtext("text_start_star_text", "text-white")}</p>
+                  <span className={KORT_KNAPP}>
+                    {rtext(starIsLive(settings) ? "text_start_star_knapp_live" : "text_start_star_knapp")}
+                    <span className={cn(KORT_PIL, "text-star-navy")}>
+                      <ArrowRight size={15} />
+                    </span>
                   </span>
-                </span>
+                </div>
               </div>
             </StartKort>
           </Reveal>

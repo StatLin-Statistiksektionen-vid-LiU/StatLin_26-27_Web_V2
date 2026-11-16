@@ -28,7 +28,7 @@ export function EventImagesEditor({ eventId, cover: savedCover, images }: { even
       </div>
       <div>
         <p className="mb-1.5 text-sm font-semibold">Bildgalleri</p>
-        <p className="mb-4 text-[0.82rem] text-stone">Bilderna publiceras direkt på evenemangssidan och i galleriet. ★ gör en galleribild till omslag.</p>
+        <p className="mb-4 text-[0.82rem] text-stone">Bilderna sparas direkt och syns på evenemangssidan och i galleriet så länge evenemanget är publicerat. ★ gör en galleribild till omslag.</p>
         <GalleryManager eventId={eventId} initial={images} coverMediaId={cover?.id ?? null} onCoverChange={setCover} />
       </div>
     </div>

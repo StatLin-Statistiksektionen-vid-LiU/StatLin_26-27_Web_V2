@@ -8,8 +8,8 @@ import { audit, forbidden, nowIso } from "@/lib/admin/helpers";
 import { canEditTask, canSeeTask, canUpdateTask } from "@/lib/auth/permissions";
 import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
+import { isValidDate } from "@/lib/projektplan-mallar";
 import { TASK_STATUSES, type TaskStatus } from "@/lib/types";
-
 
 type TaskRow = { id: number; title: string; from_user_id: number | null; to_user_id: number | null; shared: number; status: TaskStatus; assigned_at: string | null };
 
@@ -35,10 +35,12 @@ const taskSchema = z.object({
   description: zText(4000, "Beskrivningen"),
   to_user_id: zOptionalId,
   visibility: z.enum(["alla", "privat"]).default("alla"),
+  // Ett ogiltigt datum ger ett fel i stället för att tyst sparas som inget datum.
   due_date: z
     .string()
     .optional()
-    .transform((v) => (v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null)),
+    .refine((v) => !v || isValidDate(v), "Datumet är inte giltigt.")
+    .transform((v) => v || null),
   event_id: zOptionalId,
 });
 

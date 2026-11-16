@@ -76,7 +76,7 @@ export async function saveWheelItem(_prev: FormState, fd: FormData): Promise<For
   await renewSessionIfDue();
   revalidateAdmin();
   // Tillbaka till samma vy: månaden punkten hamnade i, och bara de egna punkterna om filtret var på.
-  redirect(`/admin/arshjul?sparad=1${month ? `&manad=${month}` : ""}${fd.get("vara") === "1" ? "&vara=1" : ""}`);
+  redirect(`/admin/arshjul?sparad=1&manad=${month || "alla"}${fd.get("vara") === "1" ? "&vara=1" : ""}`);
 }
 
 export async function deleteWheelItem(fd: FormData): Promise<FormState> {
@@ -110,7 +110,7 @@ export async function fillWheelSuggestions(): Promise<FormState> {
   audit(user.id, "create", "wheel_item", null, `Fyllde hjulet med ${added} förslag`);
   revalidateAdmin();
   // Knappen försvinner när hjulet har fyllts, så beskedet visas på hjulet, där det som lades in syns.
-  redirect(`/admin/arshjul?fylld=${added}`);
+  redirect(`/admin/arshjul?fylld=${added}&manad=alla`);
 }
 
 const yearOf = (fd: FormData) => {
@@ -162,8 +162,9 @@ export async function addWheelItemToBoard(fd: FormData): Promise<FormState> {
   const description = [item.description, item.depends_on && `Beror på: ${item.depends_on}`, `Från årshjulet, ${item.month ? "" : `${itemTerm(item).toUpperCase()} `}${year}.`].filter(Boolean).join("\n\n");
   // I en transaktion, så att ett dubbelklick inte ger två uppdrag.
   const created = db.transaction(() => {
-    const state = db.prepare("SELECT task_id FROM wheel_item_state WHERE item_id = ? AND year = ?").get(item.id, year) as { task_id: number | null } | undefined;
-    if (state?.task_id) return null;
+    const state = db.prepare("SELECT status, task_id FROM wheel_item_state WHERE item_id = ? AND year = ?").get(item.id, year) as { status: WheelStatus; task_id: number | null } | undefined;
+    // En punkt som är klar eller hoppas över i år har ingen knapp, men en äldre flik kan skicka, och uppdraget hade gjort den planerad igen.
+    if (state?.task_id || state?.status === "klar" || state?.status === "hoppad") return null;
     const res = db
       .prepare("INSERT INTO tasks (title, description, from_user_id, to_user_id, shared, due_date, assigned_at) VALUES (?, ?, ?, ?, 1, ?, ?)")
       .run(item.title, description, user.id, to, due, to !== null && to !== user.id ? nowIso() : null);

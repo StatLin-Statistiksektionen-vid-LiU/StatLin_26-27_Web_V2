@@ -47,6 +47,17 @@ type Steward = Pick<SessionUser, "id" | "role" | "committee_id" | "post" | "comm
 export const canChangeWheelItem = (u: Steward, item: Stewarded) => isAdmin(u) || item.owner_user_id === u.id || matchesResponsible(u, item.responsible);
 export const canChangePlan = canChangeWheelItem;
 
+/*
+ * Planens tråd. Med i planen är den som la in den, den ansvariga posten, medarbetarna som har bjudits in (invited) och, när planen
+ * är öppen för hela StatLin (collab_all), alla konton. De får trådens meddelanden som olästa och som aviseringar.
+ */
+type PlanCircle = Stewarded & { collab_all: number };
+export const isPlanParticipant = (u: Steward, plan: PlanCircle, invited: boolean) =>
+  plan.collab_all === 1 || invited || plan.owner_user_id === u.id || matchesResponsible(u, plan.responsible);
+
+/** Administratörerna får läsa och skriva i alla trådar, men aviseringar får de bara från planerna de själva är med i. */
+export const canUsePlanThread = (u: Steward, plan: PlanCircle, invited: boolean) => isAdmin(u) || isPlanParticipant(u, plan, invited);
+
 /* Grafiskt ansvar (flaggan under Konton): bilderna på hela sajten. Texterna följer fortfarande rollen. */
 export const hasDesign = (u: Pick<SessionUser, "design">) => !!u.design;
 

@@ -48,15 +48,15 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
   const sp = await searchParams;
   await connection();
   const view = sp.vy === "kalender" ? "kalender" : "lista";
-  const filter = typeof sp.utskott === "string" ? sp.utskott : undefined;
   const month = calendarMonth(sp.manad);
 
   const committees = (await listCommittees({ visibleOnly: true })).filter((c) => c.kind !== "ovrigt");
-  const active = committees.find((c) => c.slug === filter);
+  const active = committees.find((c) => c.slug === sp.utskott);
 
+  // Länkarna bär bara med sig ett utskott som finns. Ett okänt värde i adressen visar alla och ska inte följa med vidare.
   const href = (params: Record<string, string | undefined>) => {
     const q = new URLSearchParams();
-    const merged = { vy: view === "kalender" ? "kalender" : undefined, utskott: filter, manad: view === "kalender" ? month : undefined, ...params };
+    const merged = { vy: view === "kalender" ? "kalender" : undefined, utskott: active?.slug, manad: view === "kalender" ? month : undefined, ...params };
     for (const [k, v] of Object.entries(merged)) if (v) q.set(k, v);
     const s = q.toString();
     return `/evenemang${s ? `?${s}` : ""}`;
@@ -83,7 +83,7 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
             href={href({ vy: undefined, manad: undefined })}
             scroll={false}
             aria-current={view === "lista" ? "page" : undefined}
-            className={cn("inline-flex h-8 items-center rounded-md px-3.5 text-[0.84rem] font-medium transition-colors", view === "lista" ? "bg-ink text-paper" : "text-stone hover:text-ink")}
+            className={cn("inline-flex h-8 items-center rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-11", view === "lista" ? "bg-ink text-paper" : "text-stone hover:text-ink")}
           >
             Lista
           </Link>
@@ -91,7 +91,7 @@ async function EventsContent({ searchParams }: { searchParams: PageProps<"/evene
             href={href({ vy: "kalender" })}
             scroll={false}
             aria-current={view === "kalender" ? "page" : undefined}
-            className={cn("inline-flex h-8 items-center gap-2 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors", view === "kalender" ? "bg-ink text-paper" : "text-stone hover:text-ink")}
+            className={cn("inline-flex h-8 items-center gap-2 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-11", view === "kalender" ? "bg-ink text-paper" : "text-stone hover:text-ink")}
           >
             <Calendar size={15} /> Kalender
           </Link>
@@ -116,11 +116,11 @@ function FilterChip({ href, active, color, children }: { href: string; active: b
         scroll={false}
         aria-current={active ? "true" : undefined}
         className={cn(
-          "inline-flex h-8 items-center gap-2 rounded-lg border px-3 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10",
+          "inline-flex h-8 items-center gap-2 rounded-lg border px-3 text-[0.84rem] font-medium transition-colors pointer-coarse:h-11",
           active ? "border-ink bg-ink text-paper" : "border-line bg-white text-stone hover:border-ink/25 hover:text-ink",
         )}
       >
-        {color && <span className="size-2 rounded-full" style={{ background: active ? "var(--color-paper)" : color }} aria-hidden />}
+        {color && <span className={cn("size-2 rounded-full", !active && "utskottsprick")} style={active ? { background: "var(--color-paper)" } : ({ "--prick": color } as React.CSSProperties)} aria-hidden />}
         {children}
       </Link>
     </li>
@@ -151,9 +151,10 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
           const [y, m] = key.split("-").map(Number);
           return (
             <div key={key} className="mt-14">
-              <div className="flex items-baseline gap-4 border-b border-line pb-4">
+              {/* På telefon ryms inte antalet bredvid en lång månad. Där står det alltid under, så att raden inte bryts om när typsnittet kommer. */}
+              <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line pb-4">
                 <h2 className="display-tight text-[clamp(1.6rem,3vw,2.4rem)]">{monthLabel(y, m)}</h2>
-                <span className="kicker text-stone">
+                <span className="kicker text-stone max-sm:basis-full">
                   {events.length} evenemang
                 </span>
               </div>
@@ -185,7 +186,7 @@ async function ListView({ committeeId, committeeName }: { committeeId?: number; 
 
 /** Bläddringen i kalendern. En månad utanför gränsen skulle visa innevarande månad, så där går det inte att gå vidare. */
 function MonthStep({ month, href, label, children }: { month: string; href: string; label: string; children: React.ReactNode }) {
-  const className = "grid size-9 place-items-center rounded-lg border border-line bg-white text-stone";
+  const className = "grid size-9 place-items-center rounded-lg border border-line bg-white text-stone pointer-coarse:size-11";
   if (!calendarMonthInRange(month)) {
     return (
       <button type="button" disabled aria-label={label} className={cn(className, "opacity-40")}>
@@ -268,21 +269,23 @@ async function MonthView({
                 >
                   {Number(d.date.slice(8))}
                 </span>
+                {/* Alla dagens evenemang står i rutan, med titeln på upp till tre rader. Rutorna är runt 100 px breda på surfplatta, och på en rad syntes bara två bokstäver. */}
                 <ul className="mt-1 space-y-1">
-                  {list.slice(0, 3).map((e) => (
+                  {list.map((e) => (
                     <li key={e.id}>
                       <Link
                         href={`/evenemang/${e.slug}`}
-                        className="group block truncate rounded-md border-l-2 bg-paper-2 px-2 py-1 text-[0.78rem] font-medium leading-tight text-ink transition-colors hover:bg-paper-3"
+                        className="block rounded-md border-l-2 bg-paper-2 px-2 py-1 text-[0.78rem] font-medium leading-tight text-ink transition-colors hover:bg-paper-3"
                         style={{ borderLeftColor: e.committee?.accent ?? "var(--color-ink)" }}
                         title={e.title}
                       >
-                        <span className="font-mono font-normal text-stone">{e.all_day || e.starts_at.slice(0, 10) !== d.date ? "" : e.starts_at.slice(11, 16)} </span>
-                        {e.title}
+                        <span className="line-clamp-3 hyphens-auto [overflow-wrap:anywhere]">
+                          <span className="font-mono font-normal text-stone">{e.all_day || e.starts_at.slice(0, 10) !== d.date ? "" : e.starts_at.slice(11, 16)} </span>
+                          {e.title}
+                        </span>
                       </Link>
                     </li>
                   ))}
-                  {list.length > 3 && <li className="px-2 text-[0.72rem] text-stone">+{list.length - 3} till</li>}
                 </ul>
               </div>
             );

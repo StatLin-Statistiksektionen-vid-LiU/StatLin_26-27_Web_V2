@@ -1,20 +1,23 @@
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
+import { Suspense, type ComponentType, type ReactNode } from "react";
 import { NextMeetingNotice } from "@/components/admin/meeting-cards";
 import { TodoNow } from "@/components/admin/todo-now";
 import { WheelCards } from "@/components/admin/wheel-cards";
-import { AdminHeader, Card, Notice, StatusBadge } from "@/components/admin/ui";
+import { Card, Notice, StatusBadge } from "@/components/admin/ui";
+import { ForHand } from "@/components/content/skrivning";
+import { Emblem } from "@/components/karaktar/motiv";
 import { ArrowUpRight, Edit, Image as ImageIcon, Plus } from "@/components/icons";
 import { hasDesign } from "@/lib/auth/permissions";
 import { requireUser } from "@/lib/auth/session";
-import { listAudit } from "@/lib/data/admin";
+import { listAudit, yearInNumbers } from "@/lib/data/admin";
 import { getCommitteeById } from "@/lib/data/content";
 import { listEventsForAdmin } from "@/lib/data/events";
+import { kontoKaraktar } from "@/lib/data/karaktar";
 import { listNewsForAdmin } from "@/lib/data/news";
 import { formatTimestamp, nowLocal, parts } from "@/lib/dates";
 import { committeeHref } from "@/lib/navigation";
 import { ROLE_LABELS, type EventItem, type SessionUser } from "@/lib/types";
-import { cn, initials, simplify } from "@/lib/utils";
+import { cn, simplify } from "@/lib/utils";
 
 const ENTITY_LABELS: Record<string, string> = {
   event: "evenemang",
@@ -25,6 +28,8 @@ const ENTITY_LABELS: Record<string, string> = {
   page: "sida",
   document: "dokument",
   resource: "hjälpmedel",
+  link: "länk",
+  innehall: "sajtens texter",
   partner: "partner",
   star_company: "STAR-företag",
   star_page: "STAR-sidan",
@@ -39,6 +44,7 @@ const ENTITY_LABELS: Record<string, string> = {
   question_box: "frågelådan",
   meeting: "styrelsemötet",
   meeting_item: "en punkt på dagordningen",
+  chat_message: "ett meddelande i chatten",
 };
 const ACTION_LABELS: Record<string, string> = {
   create: "skapade",
@@ -49,6 +55,7 @@ const ACTION_LABELS: Record<string, string> = {
   uncheck: "ångrade granskningen av",
   status: "ändrade status på",
   claim: "tog",
+  release: "släppte",
   cover: "bytte omslag på",
   logo: "bytte logga på",
   prune: "rensade",
@@ -83,15 +90,8 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
   const [upcoming, latestNews] = await Promise.all([committee ? listEventsForAdmin(committee.id, { since: now, limit: 5 }) : [], committee ? listNewsForAdmin(committee.id, { limit: 4 }) : []]);
   const nowIso = new Date().toISOString();
 
-  // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) visas med sin post och har ingen egen sida.
+  // Styrelseposter utan eget utskott (kassör, grafiskt ansvarig …) har ingen egen sida att redigera.
   const board = committee?.kind === "styrelse";
-  const title = board ? user.post || user.name : (committee?.short_name ?? user.name);
-  const subtitle = !board && committee && simplify(committee.name) !== simplify(title) ? committee.name : null;
-  const postIsName = [committee?.short_name, committee?.name].some((n) => n && simplify(n) === simplify(user.post));
-  const kicker = board ? "Styrelsen" : user.post && !postIsName ? user.post : committee?.kind === "utskott" ? "Utskott" : "Post";
-  const publicHref = committee ? committeeHref(committee) : null;
-  const accent = committee?.accent ?? "#ff0707";
-
   const actions = [
     ...(design ? [{ href: "/admin/bilder", label: "Bilder och omslag", Icon: ImageIcon }] : []),
     { href: "/admin/evenemang/ny", label: "Nytt evenemang", Icon: Plus },
@@ -102,44 +102,8 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
   return (
     <>
       {!committee && <Notice tone="warning">Ditt konto är inte kopplat till något utskott. Be en administratör koppla det under Konton.</Notice>}
-      {/* Kortet är ritat för vit text på utskottets färg, så det behåller ljusa lägets färger även i mörkt läge. Kanten skiljer det från den mörka sidan. */}
-      <header className="noise tema-fast relative overflow-hidden rounded-[1.5rem] bg-ink p-4 text-white ring-1 ring-white/10 md:px-6 md:py-5">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 -top-40 size-[30rem] rounded-full opacity-60 blur-3xl"
-          style={{ background: `radial-gradient(closest-side, ${accent}, transparent)` }}
-        />
-        <div className="relative flex min-w-0 items-center gap-4">
-            <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-white p-1.5 md:size-14">
-              {committee?.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={committee.logo_url} alt="" className="size-full object-contain" />
-              ) : (
-                <span className="display-tight text-lg" style={{ color: accent }}>
-                  {initials(title)}
-                </span>
-              )}
-            </span>
-            <div className="min-w-0">
-              <p className="kicker text-[0.62rem] text-white/50">{kicker}</p>
-              <h1 className="display-tight truncate text-[clamp(1.5rem,4vw,2.25rem)] normal-case">{title}</h1>
-              {subtitle && <p className="truncate text-sm text-white/60">{subtitle}</p>}
-            </div>
-        </div>
-      </header>
+      <Welcome user={user} committee={committee} actions={actions} publicHref={committee ? committeeHref(committee) : null} />
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {actions.map(({ href, label, Icon }, i) => (
-          <Link key={href} href={href} className={cn("btn btn-sm gap-1.5", i === 0 ? "btn-red" : "btn-ghost bg-white")}>
-            <Icon size={15} /> {label}
-          </Link>
-        ))}
-        {publicHref && (
-          <Link href={publicHref} target="_blank" className="tryck ml-1 inline-flex items-center gap-1 py-1.5 text-sm font-semibold text-stone hover:text-ink pointer-coarse:py-3">
-            Visa vår sida <ArrowUpRight size={14} />
-          </Link>
-        )}
-      </div>
 
       <NextMeetingNotice />
 
@@ -194,23 +158,16 @@ async function CommitteeDashboard({ user }: { user: SessionUser }) {
 
 async function EditorDashboard({ user }: { user: SessionUser }) {
   const [upcoming, audit] = await Promise.all([listEventsForAdmin(null, { since: nowLocal(), limit: 5 }), listAudit(6)]);
-  const first = user.name.split(" ")[0];
 
   return (
     <>
-      <AdminHeader
-        kicker={ROLE_LABELS[user.role]}
-        title={`Hej ${first}`}
-        actions={
-          <>
-            <Link href="/admin/nyheter/ny" className="btn btn-ghost bg-white">
-              <Plus size={18} /> Ny nyhet
-            </Link>
-            <Link href="/admin/evenemang/ny" className="btn btn-red">
-              <Plus size={18} /> Nytt evenemang
-            </Link>
-          </>
-        }
+      <Welcome
+        user={user}
+        actions={[
+          { href: "/admin/evenemang/ny", label: "Nytt evenemang", Icon: Plus },
+          { href: "/admin/nyheter/ny", label: "Ny nyhet", Icon: Plus },
+          { href: "/admin/uppdrag/ny", label: "Nytt uppdrag", Icon: Plus },
+        ]}
       />
 
       <NextMeetingNotice />
@@ -253,6 +210,93 @@ async function EditorDashboard({ user }: { user: SessionUser }) {
             </ol>
           )}
         </Card>
+      </div>
+    </>
+  );
+}
+
+/** Hälsningen efter klockan i Stockholm. */
+const greeting = (now: string) => {
+  const hour = Number(now.slice(11, 13));
+  return hour < 5 ? "Uppe sent" : hour < 10 ? "God morgon" : hour < 18 ? "Hej" : "God kväll";
+};
+
+/**
+ * Överst på översikten: en hälsning med förnamnet skrivet för hand, posten, och vad sektionen har hunnit med under verksamhetsåret.
+ * Kortet är ritat för vit text på utskottets färg (sektionens röda för konton utan utskott), så det behåller ljusa lägets färger
+ * även i mörkt läge. Kanten skiljer det från den mörka sidan. Under kortet står det man oftast gör härnäst.
+ */
+async function Welcome({
+  user,
+  committee,
+  actions,
+  publicHref,
+}: {
+  user: SessionUser;
+  committee?: Awaited<ReturnType<typeof getCommitteeById>>;
+  actions: { href: string; label: string; Icon: ComponentType<{ size?: number }> }[];
+  publicHref?: string | null;
+}) {
+  const [year, eget] = await Promise.all([yearInNumbers(), kontoKaraktar(user.post, user.committee_id)]);
+  const group = committee?.short_name ?? ROLE_LABELS[user.role];
+  const [first, ...rest] = user.name.trim().split(/\s+/);
+  const numbers = [
+    [year.events, "evenemang"],
+    [year.news, year.news === 1 ? "nyhet" : "nyheter"],
+    [year.tasks, "klara uppdrag"],
+  ] as const;
+  return (
+    <>
+      <header className="noise tema-fast relative overflow-hidden rounded-[1.5rem] bg-ink p-5 text-white ring-1 ring-white/10 md:px-7 md:py-8">
+        <div
+          aria-hidden
+          // På telefon ligger skenet i nedre hörnet, så att det inte hamnar bakom namnet.
+          className="pointer-events-none absolute -bottom-32 -right-20 size-[16rem] rounded-full opacity-55 blur-3xl md:-right-24 md:-top-40 md:bottom-auto md:size-[30rem]"
+          style={{ background: "radial-gradient(closest-side, var(--egen-ljus), transparent)" }}
+        />
+        {/* Loggan med postens motiv runt om (src/lib/karaktar.ts). På telefon står den i övre hörnet, och kortet skär av den. */}
+        <Emblem motiv={eget.motiv} logo={eget.logo} className="pointer-events-none absolute -right-6 -top-6 w-36 text-white/45 [--motiv:var(--egen-ljus)] md:-right-1 md:top-1/2 md:w-44 md:-translate-y-1/2" />
+        <div className="relative flex flex-wrap items-end gap-x-10 gap-y-5 md:pr-44">
+          <div className="min-w-0 pr-24 md:pr-0">
+            <p className="kicker text-[0.62rem] text-white/55">{[user.post, simplify(user.post).includes(simplify(group)) ? null : group].filter(Boolean).join(" · ")}</p>
+            <h1 className="display-tight text-[clamp(1.5rem,4vw,2.25rem)] normal-case">
+              {greeting(nowLocal())},{" "}
+              {eget.smeknamn ? (
+                <>
+                  {first} <ForHand text={eget.smeknamn} rod /> {rest.join(" ")}
+                </>
+              ) : (
+                <ForHand text={first} rod />
+              )}
+            </h1>
+          </div>
+          {numbers.some(([n]) => n > 0) && (
+            <div className="md:ml-auto">
+              <p className="kicker text-[0.58rem] text-white/45">Sektionen {year.label}</p>
+              <dl className="mt-2 flex gap-7">
+                {numbers.map(([n, label]) => (
+                  <div key={label} className="flex flex-col-reverse">
+                    <dt className="mt-1 text-xs text-white/60">{label}</dt>
+                    <dd className="text-2xl font-bold leading-none tabular">{n}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+        </div>
+      </header>
+
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {actions.map(({ href, label, Icon }, i) => (
+          <Link key={href} href={href} className={cn("btn btn-sm gap-1.5", i === 0 ? "btn-red" : "btn-ghost bg-white")}>
+            <Icon size={15} /> {label}
+          </Link>
+        ))}
+        {publicHref && (
+          <Link href={publicHref} target="_blank" className="tryck ml-1 inline-flex items-center gap-1 py-1.5 text-sm font-semibold text-stone hover:text-ink pointer-coarse:py-3">
+            Visa vår sida <ArrowUpRight size={14} />
+          </Link>
+        )}
       </div>
     </>
   );

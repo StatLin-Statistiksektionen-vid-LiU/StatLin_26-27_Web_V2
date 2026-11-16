@@ -244,6 +244,20 @@ export const MessageCircle = (p: IconProps) => (
     <path d="M20 11.5a7.5 7.5 0 0 1-11 6.6L4.5 19.5l1.4-4A7.5 7.5 0 1 1 20 11.5Z" />
   </svg>
 );
+/** Klockan för aviseringarna i portalen. */
+export const Bell = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15l1.5-2Z" />
+    <path d="M10 21h4" />
+  </svg>
+);
+/** Två pratbubblor, för chatten. MessageCircle är frågelådans. */
+export const Chat = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4.5 4.5h9A1.5 1.5 0 0 1 15 6v5a1.5 1.5 0 0 1-1.5 1.5H8.5L5 15.5v-3h-.5A1.5 1.5 0 0 1 3 11V6a1.5 1.5 0 0 1 1.5-1.5Z" />
+    <path d="M18 9h1.5A1.5 1.5 0 0 1 21 10.5v5a1.5 1.5 0 0 1-1.5 1.5H19v3l-3.5-3H11" />
+  </svg>
+);
 export const Search = (p: IconProps) => (
   <svg {...base(p)}>
     <circle cx="11" cy="11" r="7" />

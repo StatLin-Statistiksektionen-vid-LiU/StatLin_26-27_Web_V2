@@ -4,7 +4,7 @@ import "@fontsource-variable/jetbrains-mono/index.css";
 import "./globals.css";
 import { SITE_ALTERNATES, SITE_OG } from "@/lib/site-metadata";
 import { SCROLL_RESTORE_SCRIPT } from "@/lib/scroll-restore";
-import { TEMA_KAKA } from "@/lib/tema";
+import { TEMA_FARG, TEMA_KAKA } from "@/lib/tema";
 import { NavProgress } from "@/components/layout/nav-progress";
 import { ARCHIVO_FONT_FACES, ARCHIVO_LATIN } from "./fonts";
 
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 
 // Mörkt läge om inget annat valts, se THEME_SCRIPT. Skriptet byter adressfältets färg när sidan blir ljus.
 export const viewport: Viewport = {
-  themeColor: "#121211",
+  themeColor: TEMA_FARG.mork,
   colorScheme: "dark",
 };
 
@@ -38,7 +38,7 @@ export const viewport: Viewport = {
  * "ljust" eller "mork" (se theme-toggle.tsx). Annars gäller standardläget från Admin, som proxy.ts lägger i en kaka (se src/lib/tema.ts):
  * datorns läge när sidomenyn syns (lg, 64rem) och telefonens annars. Utan kaka blir det mörkt.
  */
-const THEME_SCRIPT = `var t,c;try{t=localStorage.getItem('statlin-tema')}catch(e){}if(t!=='ljust'&&t!=='mork'){try{c=/(?:^|; )${TEMA_KAKA}=(mork|ljust)\\.(mork|ljust)/.exec(document.cookie);if(c)t=matchMedia('(min-width: 64rem)').matches?c[1]:c[2]}catch(e){}}if(t==='ljust'){var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content','#f9f8f5')}else document.documentElement.dataset.tema='mork'`;
+const THEME_SCRIPT = `var t,c;try{t=localStorage.getItem('statlin-tema')}catch(e){}if(t!=='ljust'&&t!=='mork'){try{c=/(?:^|; )${TEMA_KAKA}=(mork|ljust)\\.(mork|ljust)/.exec(document.cookie);if(c)t=matchMedia('(min-width: 64rem)').matches?c[1]:c[2]}catch(e){}}if(t==='ljust'){var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content','${TEMA_FARG.ljust}')}else document.documentElement.dataset.tema='mork'`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   // Typsnitt hämtas alltid med CORS, så utan crossOrigin skulle webbläsaren inte använda filen och hämta den en gång till. Se fonts.ts.

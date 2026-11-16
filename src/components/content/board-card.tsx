@@ -22,7 +22,7 @@ export function BoardCard({ member }: { member: BoardMember }) {
         <p className="text-lg font-bold tracking-tight">{name}</p>
         {member.bio && <p className="mt-1.5 text-[0.93rem] leading-relaxed text-stone">{member.bio}</p>}
         {member.email && (
-          <a href={`mailto:${member.email}`} aria-label={member.email} className="mt-auto inline-flex items-center gap-2 pt-3 text-sm font-semibold text-red-deep">
+          <a href={`mailto:${member.email}`} aria-label={member.email} className="mt-auto inline-flex items-center gap-2 pt-3 text-sm font-semibold text-red-deep pointer-coarse:-mb-3 pointer-coarse:pb-3">
             <Mail size={15} className="shrink-0" />
             <EmailText email={member.email} />
           </a>

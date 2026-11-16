@@ -12,7 +12,6 @@ const ANDRA_TEXTER: Record<string, TextRegel> = {
   hero_kicker: { etikett: "Startsidan: raden ovanför rubriken", max: 80 },
   hero_title: { etikett: "Startsidan: rubriken", max: 140, kravs: true },
   hero_text: { etikett: "Startsidan: ingressen", max: 300 },
-  home_intro: { etikett: "Startsidan: texten om sektionen", max: 400, kravs: true },
   footer_slogan: { etikett: "Sidfoten: sloganen", max: 120 },
 };
 

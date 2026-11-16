@@ -21,6 +21,7 @@ export default function AccountPage(props: PageProps<"/admin/konto">) {
 async function Account({ searchParams }: { searchParams: PageProps<"/admin/konto">["searchParams"] }) {
   const user = await requireUser({ allowTemporaryPassword: true });
   const [sp, sessions] = await Promise.all([searchParams, sessionCount(user.id)]);
+  const board = user.role === "committee" && user.committee_kind === "styrelse";
   return (
     <>
       {sp.byt && user.must_change_password && <Notice tone="warning">Välj ett eget lösenord för att komma igång.</Notice>}
@@ -59,10 +60,12 @@ async function Account({ searchParams }: { searchParams: PageProps<"/admin/konto
           <Card className="p-6">
             <p className="kicker text-stone">Din roll</p>
             <p className="mt-2 text-xl font-bold">
-              {ROLE_LABELS[user.role]}
-              {user.committee_name && <span className="text-stone"> · {user.committee_name}</span>}
+              {board ? "Styrelsepost" : ROLE_LABELS[user.role]}
+              {user.committee_name && !board && <span className="text-stone"> · {user.committee_name}</span>}
             </p>
-            <p className="mt-2 text-sm text-stone">{ROLE_DESCRIPTIONS[user.role]}</p>
+            <p className="mt-2 text-sm text-stone">
+              {board ? "Styrelsens evenemang, nytt och bilder. Uppdragstavlan, projektplanerna och årshjulet delas med alla poster." : ROLE_DESCRIPTIONS[user.role]}
+            </p>
           </Card>
           <Card className="p-6">
             <p className="kicker text-stone">Inloggade enheter</p>

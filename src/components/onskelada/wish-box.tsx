@@ -114,7 +114,7 @@ export function WishBox({ slug, name, spel }: { slug: string; name: string; spel
               <div className="grid gap-4">
                 <div>
                   <label htmlFor="onskemal-spel" className="text-sm font-semibold">
-                    Vilket spel?
+                    Vilket spel eller vilken film?
                   </label>
                   <input
                     ref={spelRef}

@@ -29,7 +29,7 @@ function SponsorTile({ partner }: { partner: Partner }) {
     partner.url && "hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-12px_rgba(20,20,19,0.35)]",
   );
   const content = partner.logo ? (
-    <SmartImage image={partner.logo} sizes="120px" alt={partner.name} className="max-h-7 w-auto max-w-full object-contain" />
+    <SmartImage image={partner.logo} contain sizes="120px" alt={partner.name} className="max-h-7 w-auto max-w-full" />
   ) : (
     <span className="min-w-0 max-w-full text-center text-[0.8rem] font-semibold leading-tight [overflow-wrap:anywhere]">{partner.name}</span>
   );
@@ -60,8 +60,8 @@ export async function MenuSponsors({ className }: { className?: string }) {
 }
 
 /**
- * En logga i sidfotens list, utan egen platta: listen är vit. Ingen platshållarfärg bakom, eftersom loggor ofta är
- * genomskinliga. Utan logga står namnet där.
+ * En logga i sidfotens rad, på en liten vit platta som i menyn, så att den syns lika bra i ljust och mörkt läge. Ingen
+ * platshållarfärg bakom, eftersom loggor ofta är genomskinliga. Utan logga står namnet där.
  */
 function SponsorLogo({ partner }: { partner: Partner }) {
   const content = partner.logo ? (
@@ -75,34 +75,40 @@ function SponsorLogo({ partner }: { partner: Partner }) {
       alt={partner.name}
       loading="lazy"
       decoding="async"
-      className="h-6 w-auto max-w-[7.5rem] object-contain sm:h-7 sm:max-w-[9rem]"
+      className="h-5 w-auto max-w-[7rem] object-contain sm:h-6 sm:max-w-[8.5rem]"
     />
   ) : (
-    <span className="text-[0.85rem] font-semibold leading-tight">{partner.name}</span>
+    <span className="text-[0.82rem] font-semibold leading-tight">{partner.name}</span>
   );
-  const klass = "flex h-11 items-center rounded-md px-1 transition-opacity focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#141413]";
+  const klass = "flex h-11 items-center rounded-lg bg-[#fff] px-3.5 text-[#141413] ring-1 ring-line transition-[box-shadow,transform] duration-300";
   if (!partner.url) return <span className={klass}>{content}</span>;
   return (
-    <a href={partner.url} target="_blank" rel="noopener noreferrer" title={partner.name} className={cn(klass, "hover:opacity-70")}>
+    <a
+      href={partner.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={partner.name}
+      className={cn(klass, "hover:-translate-y-0.5 hover:shadow-[0_8px_20px_-12px_rgba(20,20,19,0.35)]")}
+    >
       {content}
     </a>
   );
 }
 
 /**
- * Sidfoten på alla sidor: en smal vit list med loggorna, lika i ljust och mörkt läge. Under lg finns ingen sidomeny,
- * så där står huvudsponsorerna först i listen. Står alla vid sidan blir listen bara kvar på telefonen och plattan.
+ * Sidfoten på alla sidor: en rad med loggorna på sidans egen yta, var och en på en vit platta. Under lg finns ingen
+ * sidomeny, så där står huvudsponsorerna först i raden. Står alla vid sidan blir raden bara kvar på telefonen och plattan.
  */
 export async function FooterSponsors() {
   const { side, rest } = await placedSponsors();
   if (side.length + rest.length === 0) return null;
   return (
-    <section aria-labelledby="sponsorer-sidfot" className={cn("border-b border-line bg-[#fff] text-[#141413]", rest.length === 0 && "lg:hidden")}>
-      <div className="container-site flex flex-wrap items-center gap-x-8 gap-y-1 py-2.5">
-        <h2 id="sponsorer-sidfot" className="kicker w-full shrink-0 pt-1.5 text-[0.62rem] text-[#141413]/55 sm:w-auto sm:pt-0">
+    <section aria-labelledby="sponsorer-sidfot" className={cn("border-b border-line", rest.length === 0 && "lg:hidden")}>
+      <div className="container-site flex flex-wrap items-center gap-x-6 gap-y-2.5 py-4">
+        <h2 id="sponsorer-sidfot" className="kicker w-full shrink-0 text-stone sm:w-auto">
           Sponsorer
         </h2>
-        <ul className="flex flex-1 flex-wrap items-center gap-x-8 gap-y-1">
+        <ul className="flex flex-1 flex-wrap items-center gap-2">
           {side.map((p) => (
             <li key={p.id} className="lg:hidden">
               <SponsorLogo partner={p} />

@@ -64,35 +64,14 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await p.getByRole("heading", { name: wanted }).waitFor();
   };
 
-  await step("Startsidans band: kalendern kommer direkt efter heron och före genvägarna, vitt är förval och färgen väljs under Inställningar", async () => {
-    await switchAccount(page, ADMIN);
+  await step("Startsidans genvägar kommer före kalendern", async () => {
     const { page: p, context } = await visit();
-    const bandColor = async () => {
-      await p.goto(`${BASE}/`);
-      // Platshållaren har samma klass men ingen färg, och den står kvar tills bandet har strömmats in.
-      const band = p.locator(".tidsaxel[data-farg]");
-      await band.waitFor({ state: "attached" });
-      return band.getAttribute("data-farg");
-    };
-    const choose = async (color) => {
-      await page.goto(`${BASE}/admin/installningar`);
-      const field = page.locator("#band_color");
-      await field.waitFor();
-      await waitForHydration(page, field);
-      await field.selectOption(color);
-      await page.getByRole("button", { name: "Spara", exact: true }).click();
-      await page.getByText("Inställningarna är sparade.").waitFor();
-    };
-    assert.equal(await bandColor(), "vit");
+    await p.goto(`${BASE}/`);
+    const kalender = p.locator("section", { has: p.getByRole("heading", { name: "Kommande evenemang" }) });
+    await kalender.waitFor();
     const row = p.locator('section[aria-labelledby="genvagar-start"]');
     await row.waitFor();
-    assert.ok(await row.evaluate((el) => Boolean(el.compareDocumentPosition(document.querySelector(".tidsaxel[data-farg]")) & Node.DOCUMENT_POSITION_PRECEDING)), "Bandet ska ligga före genvägarna");
-    await choose("natt");
-    assert.equal(await bandColor(), "natt");
-    await choose("rod");
-    assert.equal(await bandColor(), "rod");
-    await choose("vit");
-    assert.equal(await bandColor(), "vit");
+    assert.ok(await row.evaluate((el, k) => Boolean(el.compareDocumentPosition(k) & Node.DOCUMENT_POSITION_FOLLOWING), await kalender.elementHandle()), "Genvägarna ska ligga före kalendern");
     await context.close();
   });
 

@@ -2,7 +2,8 @@ import "server-only";
 import { z } from "zod";
 
 /**
- * Anteckningarna för hand med en pil mot ett ord, som någon har skrivit i marginalen (src/components/content/anteckning-lager.tsx).
+ * Anteckningarna för hand med en pil mot ett ord, som någon har skrivit i marginalen. De visas inte längre på sajten, och blocket
+ * ligger kvar bara för det som redan är sparat.
  * Varje anteckning står på en sida och pekar på ett ord där, eller på slutet av rubriken när ordet är tomt. nr är vilken av
  * ordets förekomster på sidan, räknat från 0. x och y är var anteckningen står i förhållande till ordet, i pixlar, sedan den
  * dragits dit i redigeringsläget. Utan dem väljs en plats kring ordet, som från början.

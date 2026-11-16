@@ -235,12 +235,14 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
     await p.getByText("Tack, nu har SASU er anmälan").waitFor();
     await p.getByText("hitta en tid för mötet").waitFor();
 
-    // Samma anmälan en gång till blir ingen ny rad.
+    // Samma anmälan en gång till blir ingen ny rad. Alla fält jämförs, så mötet och tiden fylls i som förra gången.
     await p.goto(`${BASE}${invitePath}`);
     await waitForHydration(p, submit);
     await p.fill('input[name="foretag"]', company);
     await p.fill('input[name="kontakt_namn"]', "Alex Exempel");
     await p.fill('input[name="epost"]', "alex@example.com");
+    await p.getByText("Vi vill boka ett möte").click();
+    await p.locator('input[name="moteforslag"]').fill("Tisdagar efter lunch");
     await p.fill('textarea[name="meddelande"]', "Vi söker exjobbare.");
     await submit.click();
     await p.waitForURL(/tack=/);
@@ -301,6 +303,9 @@ export default async function foretagSteg({ BASE, browser, page, step, switchAcc
     await waitForHydration(sasu.page, moveBack);
     await moveBack.click();
     await sasu.page.getByText("Anmälan ligger bland de nya igen.").waitFor();
+    // Man står kvar under Hanterade, där knappen stod. Anmälan ligger nu under Nya.
+    await sasu.page.locator("main").getByRole("link", { name: /^Nya/ }).click();
+    await sasu.page.waitForURL(/flik=nya/);
     const remove = sasu.page.locator("li", { hasText: company }).getByRole("button", { name: "Ta bort" });
     await waitForHydration(sasu.page, remove);
     await remove.click();

@@ -123,6 +123,7 @@ export async function changePassword(_prev: FormState, fd: FormData): Promise<Fo
     revalidatePath("/admin", "layout");
     redirect("/admin?valkommen=1");
   }
+  revalidatePath("/admin/konto");
   return { ok: true, message: "Lösenordet är bytt. Andra inloggade enheter har loggats ut." };
 }
 
@@ -146,5 +147,7 @@ export async function logoutOtherSessions(): Promise<FormState> {
   const user = await actionUser({ allowTemporaryPassword: true });
   if ("error" in user) return user;
   destroyAllSessionsForUser(user.id, await currentToken());
+  // Antalet inloggade enheter på kontosidan ska visa en.
+  revalidatePath("/admin/konto");
   return { ok: true, message: "Alla andra enheter har loggats ut." };
 }

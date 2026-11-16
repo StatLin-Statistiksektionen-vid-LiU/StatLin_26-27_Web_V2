@@ -2,7 +2,7 @@ import "server-only";
 import { parseCommitteeRef, readDb } from "./db";
 import { canFormatLocal, nowLocal } from "@/lib/dates";
 import { MEDIA_JSON_COLUMNS, parseMediaJson, toImageRef } from "@/lib/media-url";
-import type { EventImage, EventItem, Media } from "@/lib/types";
+import type { EventImage, EventItem, ImageRef, Media } from "@/lib/types";
 
 type Row = Omit<EventItem, "committee" | "cover" | "published" | "all_day"> & { published: number; all_day: number; committee_json: string | null; cover_json: string | null };
 
@@ -59,13 +59,6 @@ export async function listUpcomingEvents(limit = 50, committeeId?: number): Prom
   return mapShown(rows);
 }
 
-/** Antalet kommande evenemang, utan listans tak. Samma urval som listUpcomingEvents. */
-export async function countUpcomingEvents(): Promise<number> {
-  const db = await readDb();
-  const row = db.prepare(`SELECT COUNT(*) AS n FROM events e WHERE e.published = 1 AND ${EVENT_END} >= @now`).get({ now: nowLocal() }) as { n: number };
-  return row.n;
-}
-
 export async function listPastEvents(limit = 24, committeeId?: number): Promise<EventItem[]> {
   const db = await readDb();
   const now = nowLocal();
@@ -80,12 +73,13 @@ export async function listPastEvents(limit = 24, committeeId?: number): Promise<
   return mapShown(rows);
 }
 
+/** Evenemang som pågår någon gång från fromDate till toDate, båda minuterna inräknade. */
 export async function listEventsBetween(fromDate: string, toDate: string): Promise<EventItem[]> {
   const db = await readDb();
   const rows = db
     .prepare(
       `${SELECT}
-       WHERE e.published = 1 AND e.starts_at < @to AND COALESCE(e.ends_at, e.starts_at) >= @from
+       WHERE e.published = 1 AND e.starts_at <= @to AND COALESCE(e.ends_at, e.starts_at) >= @from
        ORDER BY e.starts_at ASC`,
     )
     .all({ from: fromDate, to: toDate }) as Row[];
@@ -189,6 +183,32 @@ export async function listEventImages(eventId: number): Promise<EventImage[]> {
   return rows.flatMap(({ media_json, ...r }) => {
     const image = toImageRef(parseMediaJson(media_json));
     return image ? [{ ...r, image }] : [];
+  });
+}
+
+export interface CommitteeImage {
+  id: number;
+  caption: string;
+  image: ImageRef;
+  event: { slug: string; title: string; starts_at: string };
+}
+
+/** Bilder från utskottets evenemang till utskottets sida: högst tre per evenemang, det senaste evenemanget först. */
+export async function listCommitteeImages(committeeId: number, limit: number): Promise<CommitteeImage[]> {
+  const db = await readDb();
+  const rows = db
+    .prepare(
+      `SELECT * FROM (
+         SELECT ei.id, ei.caption, e.slug, e.title, e.starts_at, ${MEDIA_JSON_COLUMNS("m")} AS media_json,
+           ROW_NUMBER() OVER (PARTITION BY ei.event_id ORDER BY ei.sort_order, ei.id) AS n
+         FROM event_images ei JOIN events e ON e.id = ei.event_id JOIN media m ON m.id = ei.media_id
+         WHERE e.committee_id = ? AND e.published = 1
+       ) WHERE n <= 3 ORDER BY starts_at DESC, n LIMIT ?`,
+    )
+    .all(committeeId, limit) as { id: number; caption: string; slug: string; title: string; starts_at: string; media_json: string }[];
+  return rows.flatMap(({ media_json, id, caption, ...event }) => {
+    const image = toImageRef(parseMediaJson(media_json));
+    return image && canFormatLocal(event.starts_at) ? [{ id, caption, image, event }] : [];
   });
 }
 

@@ -31,7 +31,7 @@ export function TaskForm({
         <div className="space-y-6 lg:col-span-2">
           <FormSection title="Uppdraget">
             <Field label="Vad behöver göras?" name="title" required>
-              <TextInput name="title" defaultValue={task?.title ?? defaults?.title} maxLength={140} required placeholder="Affisch till höstsittningen" />
+              <TextInput name="title" defaultValue={task?.title ?? defaults?.title} maxLength={140} required placeholder="Affisch till höstsittningen" autoFocus={!task} />
             </Field>
             <Field label="Beskrivning" name="description" hint="Länka gärna till utkast i Canva eller Drive. **Fet text** och listor fungerar.">
               <TextArea name="description" defaultValue={task?.description} rows={6} maxLength={4000} placeholder="Format, text som ska med, deadline …" />

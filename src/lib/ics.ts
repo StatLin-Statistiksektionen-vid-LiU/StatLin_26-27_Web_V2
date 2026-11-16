@@ -100,16 +100,16 @@ function addHours(localStr: string, h: number): string {
 }
 
 export function googleCalendarUrl(e: EventItem, siteUrl: string): string {
-  const fmt = (s: string) => s.replace(/[-:]/g, "").slice(0, 13) + "00";
   const dates = e.all_day
     ? `${dateOnly(e.starts_at)}/${nextDay(e.ends_at ?? e.starts_at)}`
-    : `${fmt(e.starts_at)}/${fmt(e.ends_at ?? addHours(e.starts_at, 2))}`;
+    : `${local(e.starts_at)}/${local(e.ends_at ?? addHours(e.starts_at, 2))}`;
   const params = new URLSearchParams({
     action: "TEMPLATE",
     text: e.title,
     dates,
     ctz: "Europe/Stockholm",
-    details: `${e.summary}\n\n${siteUrl.replace(/\/$/, "")}/evenemang/${e.slug}`,
+    // Utan sammanfattning börjar beskrivningen med länken, inte med två tomma rader.
+    details: [e.summary, `${siteUrl.replace(/\/$/, "")}/evenemang/${e.slug}`].filter(Boolean).join("\n\n"),
     location: e.location,
   });
   return `https://calendar.google.com/calendar/render?${params}`;

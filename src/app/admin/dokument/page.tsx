@@ -49,7 +49,8 @@ async function Documents({ searchParams }: { searchParams: PageProps<"/admin/dok
               <li key={d.id} className="flex items-center gap-4 px-5 py-4">
                 <FileText size={20} className="shrink-0 text-red" />
                 <Link href={`/admin/dokument/${d.id}`} className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{d.title}</span>
+                  {/* På telefon tar statusen halva raden, och en avkortad titel lämnade bara några bokstäver kvar. */}
+                  <span className="block font-semibold [overflow-wrap:anywhere] sm:truncate">{d.title}</span>
                   <span className="block text-xs text-stone">
                     {DOCUMENT_CATEGORIES[d.category]} {d.doc_date && `· ${formatDate(d.doc_date, true)}`}
                   </span>

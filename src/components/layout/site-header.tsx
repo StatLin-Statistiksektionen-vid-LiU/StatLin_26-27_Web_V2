@@ -136,15 +136,17 @@ function HeaderView({ pathname, sponsors, meny }: { pathname: string | null; spo
       </a>
 
       {/* Datorn: sidomenyn */}
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-[var(--sidebar-w)] flex-col border-r border-line bg-paper lg:flex print:hidden">
+      <aside aria-label="Sidomeny" className="fixed inset-y-0 left-0 z-40 hidden w-[var(--sidebar-w)] flex-col border-r border-line bg-paper lg:flex print:hidden">
         <div className="px-4 pb-3 pt-5">
           <Brand subtitle />
         </div>
         <div className="px-3">
+          {/* Namnet är texten som syns, så att röststyrning hittar länken på det man läser. */}
           <Link
             {...searchProps}
+            aria-label="Sök på sajten"
             className={cn(
-              "flex h-9 w-full items-center gap-2 rounded-lg border bg-white px-2.5 text-[0.84rem] text-stone transition-colors hover:border-ink/25 hover:text-ink",
+              "flex h-9 w-full items-center gap-2 rounded-lg border bg-white px-2.5 text-[0.84rem] text-stone transition-colors hover:border-ink/25 hover:text-ink pointer-coarse:h-11",
               onSearch ? "border-ink/25 text-ink" : "border-line",
             )}
           >
@@ -160,12 +162,12 @@ function HeaderView({ pathname, sponsors, meny }: { pathname: string | null; spo
         </nav>
         {sponsors?.sidebar}
         <div className="flex items-center gap-1 border-t border-line px-3 py-2.5 text-[0.8rem] text-stone">
-          {languageLinks("inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium transition-colors hover:bg-ink/[0.05] hover:text-ink")}
-          <ThemeToggle className="h-8 w-8 rounded-md transition-colors hover:bg-ink/[0.05] hover:text-ink" />
+          {languageLinks("inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium transition-colors hover:bg-ink/[0.05] hover:text-ink pointer-coarse:h-11")}
+          <ThemeToggle className="h-8 w-8 rounded-md transition-colors hover:bg-ink/[0.05] hover:text-ink pointer-coarse:size-11" />
           <Link
             href="/admin"
             title="Logga in som post"
-            className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium transition-colors hover:bg-ink/[0.05] hover:text-ink"
+            className="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md px-2 font-medium transition-colors hover:bg-ink/[0.05] hover:text-ink pointer-coarse:h-11"
           >
             <Key size={15} />
             Poster
@@ -183,20 +185,20 @@ function HeaderView({ pathname, sponsors, meny }: { pathname: string | null; spo
           <Link
             {...searchProps}
             className={cn(
-              "grid size-10 place-items-center rounded-lg border text-stone transition-colors hover:text-ink",
+              "grid size-10 place-items-center rounded-lg border text-stone transition-colors hover:text-ink pointer-coarse:size-11",
               onSearch ? "border-ink/25 text-ink" : "border-line",
             )}
           >
             <Search size={18} />
           </Link>
           {/* Utan JavaScript går menyn inte att öppna. Sidfoten har samma länkar. */}
-          <a href="#sidfot" aria-label="Alla sidor, i sidfoten" className="meny-utan-js size-10 place-items-center rounded-lg border border-line">
+          <a href="#sidfot" aria-label="Alla sidor, i sidfoten" className="meny-utan-js size-10 place-items-center rounded-lg border border-line pointer-coarse:size-11">
             <Menu size={18} />
           </a>
           <button
             ref={toggleRef}
             type="button"
-            className="meny-knapp grid size-10 place-items-center rounded-lg border border-line"
+            className="meny-knapp grid size-10 place-items-center rounded-lg border border-line pointer-coarse:size-11"
             aria-label={open ? "Stäng meny" : "Öppna meny"}
             aria-expanded={open}
             aria-controls="mobilmeny"
@@ -234,7 +236,12 @@ function HeaderView({ pathname, sponsors, meny }: { pathname: string | null; spo
 
 function Brand({ subtitle }: { subtitle?: boolean }) {
   return (
-    <Link href="/" className="group flex items-center gap-2.5" aria-label="StatLin, startsida">
+    <Link
+      href="/"
+      className="group flex items-center gap-2.5 pointer-coarse:min-h-11"
+      // Namnet börjar med texten som syns, ordagrant och utan skiljetecken emellan, även underraden i sidomenyn.
+      aria-label={subtitle ? "StatLin Statistiksektionen i Linköping, startsida" : "StatLin, startsida"}
+    >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/brand/statlin.svg"
@@ -247,6 +254,8 @@ function Brand({ subtitle }: { subtitle?: boolean }) {
         <span className="block text-[0.98rem] font-semibold tracking-[-0.01em]" translate="no">
           StatLin
         </span>
+        {/* Mellanrummet syns inte mellan två rader, men gör att texten läses som två ord och stämmer med länkens namn. */}
+        {subtitle && " "}
         {subtitle && <span className="block text-[0.72rem] text-stone">Statistiksektionen i Linköping</span>}
       </span>
     </Link>

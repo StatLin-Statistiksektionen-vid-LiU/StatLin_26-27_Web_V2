@@ -31,7 +31,7 @@ export function WheelItemForm({
       {item && <input type="hidden" name="id" value={item.id} />}
       {onlyOurs && <input type="hidden" name="vara" value="1" />}
       <Field label="Rubrik" name="title" required>
-        <TextInput name="title" defaultValue={item?.title} maxLength={140} />
+        <TextInput name="title" defaultValue={item?.title} maxLength={140} autoFocus={!item} />
       </Field>
       <Field label="När på året" name="month" required hint="Vet ni inte exakt, välj bara en termin.">
         <Select name="month" defaultValue={item?.month ?? item?.term ?? defaultMonth ?? ""}>

@@ -32,12 +32,12 @@ export function Lank({ href, className, children }: { href: string; className: s
   );
 }
 
-/** En knapp på startsidan. Den första i raden är svart med en pil, resten är ljusa. */
-function KnappLank({ knapp, forsta, stor }: { knapp: Knapp; forsta: boolean; stor: boolean }) {
+/** En knapp i heron, i samma storlek som genvägarna under den. Den första i raden är svart med en pil, resten är ljusa. */
+function KnappLank({ knapp, forsta }: { knapp: Knapp; forsta: boolean }) {
   return (
-    <Lank href={knapp.href} className={cn("btn", forsta ? "btn-ink group" : "btn-ghost")}>
+    <Lank href={knapp.href} className={cn("btn btn-sm", forsta ? "btn-ink group" : "btn-ghost")}>
       {knapp.text}
-      {forsta && <ArrowRight size={stor ? 18 : 16} className={cn("transition-transform group-hover:translate-x-0.5", stor ? "duration-500" : "duration-300")} />}
+      {forsta && <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />}
     </Lank>
   );
 }
@@ -91,35 +91,34 @@ export function StartKort({ start, vilket, live = false, className, children }: 
 }
 
 /**
- * Knapparna i heron och under texten om sektionen. De hör till startsidans block (src/lib/innehall/block/start.ts) och går
+ * Knapparna i heron. De hör till startsidans block (src/lib/innehall/block/start.ts) och går
  * att ändra, lägga till, ta bort och dra om i redigeringsläget. En knapp utan text syns bara där.
  */
-export function StartKnappar({ start, vilka, className }: { start: Start; vilka: "hero" | "om"; className?: string }) {
+export function StartKnappar({ start, className }: { start: Start; className?: string }) {
   const { varde, aktiv, andra } = useBlock("b:start", start);
-  const knappar = aktiv ? varde[vilka] : varde[vilka].filter((k) => k.text.trim());
-  const stor = vilka === "om";
+  const knappar = aktiv ? varde.hero : varde.hero.filter((k) => k.text.trim());
   return (
     <RLista
       aktiv={aktiv}
       items={knappar}
       onChange={(nya) =>
         andra((k) => {
-          k[vilka] = nya;
+          k.hero = nya;
         })
       }
       etikett="knapp"
       as="div"
-      className={cn("flex flex-wrap items-center", stor ? "gap-3" : "gap-2.5", className)}
+      className={cn("flex flex-wrap items-center gap-2.5", className)}
       itemAs="div"
       itemClassName="flex rounded-full"
       falt={FALT}
       ny={() => ({ text: "Ny knapp", href: "/" })}
-      max={vilka === "hero" ? 4 : 3}
+      max={4}
       render={(knapp, i) =>
         knapp.text.trim() ? (
-          <KnappLank knapp={knapp} forsta={i === 0} stor={stor} />
+          <KnappLank knapp={knapp} forsta={i === 0} />
         ) : (
-          <span className="btn btn-ghost border-dashed opacity-60" title="Knappen har ingen text och syns inte för besökare.">
+          <span className="btn btn-sm btn-ghost border-dashed opacity-60" title="Knappen har ingen text och syns inte för besökare.">
             Dold knapp
           </span>
         )

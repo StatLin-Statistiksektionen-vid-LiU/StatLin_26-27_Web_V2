@@ -7,6 +7,9 @@
  */
 export const TEMA_KAKA = "statlin-tema-standard";
 
+/** Sidans bakgrund i båda lägena, --color-paper i globals.css. Webbläsarens adressfält på telefon får samma färg. */
+export const TEMA_FARG = { ljust: "#ece8df", mork: "#121211" };
+
 /** Kakans värde utan något val, mörkt på båda. */
 export const TEMA_STANDARD = "mork.mork";
 

@@ -79,8 +79,11 @@ const nextConfig: NextConfig = {
       { source: "/fonts/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=31536000, immutable" }] },
       // Loggorna i public/brand byts bara med en ny release. Webbläsaren använder sin kopia ett dygn utan att fråga servern, och en vecka
       // till visar den kopian medan den frågar i bakgrunden. En ändrad fil syns alltså senast efter ett dygn; ge den ett nytt namn om den
-      // måste synas direkt.
-      { source: "/brand/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }] },
+      // måste synas direkt (som loggornas lager, LAGER_V i src/lib/karaktar.ts). Under utveckling gäller regeln inte: där byts filerna
+      // medan man arbetar, och en webbläsare som har gårdagens kopia visar annars den i den nya sidan.
+      ...(process.env.NODE_ENV === "production"
+        ? [{ source: "/brand/:file*", headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }] }]
+        : []),
     ];
   },
   // Utbildning och Ny student flyttade under Studenter – gamla länkar ska fortsätta fungera.

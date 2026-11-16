@@ -186,10 +186,16 @@ export function LinkBoard({ links }: { links: LinkItem[] }) {
         <div className="mt-12 gap-6 md:columns-2 xl:columns-3">
           {groups.map((g) => (
             <section key={g.value} aria-labelledby={`grupp-${g.value}`} className="mb-6 break-inside-avoid overflow-hidden rounded-xl border border-line bg-white">
-              <h2 id={`grupp-${g.value}`} className="flex items-baseline justify-between gap-4 px-5 pb-2 pt-5">
-                <span className="display-tight text-lg">{g.label}</span>
-                <span className="kicker text-stone">{g.links.length}</span>
-              </h2>
+              {/* Antalet står bredvid rubriken, inte i den: rubriken är bara gruppens namn. */}
+              <div className="flex items-baseline justify-between gap-4 px-5 pb-2 pt-5">
+                <h2 id={`grupp-${g.value}`} className="display-tight text-lg">
+                  {g.label}
+                </h2>
+                <p className="kicker text-stone">
+                  {g.links.length}
+                  <span className="sr-only"> länkar</span>
+                </p>
+              </div>
               <ul className="divide-y divide-ink/[0.07]">
                 {g.links.map((l) => (
                   <LinkRow key={l.id} link={l} pinned={pins.includes(`l${l.id}`)} />

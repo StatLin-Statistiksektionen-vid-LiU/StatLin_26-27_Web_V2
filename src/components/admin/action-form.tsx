@@ -161,7 +161,12 @@ export function ActionForm({
     shouldReset.current = true;
     // Skyddet står kvar om något skrevs under sparningen (fälten laddas inte om efter en egen sparning).
     setDirty(!resetOnSuccess && editedSinceSubmit.current);
-    if (resetOnSuccess) formRef.current?.reset();
+    if (resetOnSuccess) {
+      formRef.current?.reset();
+      // Fälten är tomma igen. Markören ställs i det första, så att nästa punkt, steg eller kommentar kan skrivas direkt.
+      // Inte i ett lösenordsfält: där är man klar.
+      formRef.current?.querySelector<HTMLElement>("input:not([type=hidden], [type=password]), textarea")?.focus();
+    }
     // Ändrades något under sparningen (t.ex. en ny fil) står fälten kvar – isSameUpload hindrar att en sparad fil laddas upp
     // igen.
     else if (!editedSinceSubmit.current) {
@@ -230,7 +235,7 @@ export function ActionForm({
         // Skyddsnät: skickas formuläret innan sidan hydrerats hamnar fälten i en POST-kropp, aldrig i adressen.
         method="post"
         // @container: fälten radas om efter formulärets bredd, så samma formulär fungerar i redigeringspanelen.
-        className={cn("@container space-y-6", className)}
+        className={cn("@container space-y-6", !stickyFooter && "form-kort", className)}
         onChange={markDirty}
         onSubmit={(e) => {
           e.preventDefault();

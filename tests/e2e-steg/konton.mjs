@@ -95,7 +95,8 @@ export default async function kontoSteg({ BASE, browser, page, step, switchAccou
     await changeTemporaryPassword(person.page, password);
     // Bytet leder rakt in på översikten, och inget på sidan pratar om lösenordet längre än beskedet.
     await person.page.waitForURL(/\/admin\?valkommen=1$/);
-    await person.page.getByRole("heading", { name: /^Hej / }).waitFor();
+    // Hälsningen följer klockan.
+    await person.page.getByRole("heading", { name: /^(Hej|God morgon|God kväll|Uppe sent), / }).waitFor();
     assert.equal(await person.page.getByText("tillfälligt lösenord").filter({ visible: true }).count(), 0, "bannern om lösenordet ska vara borta");
     assert.equal((await person.context.request.get(`${BASE}${LOGGED_IN_API}`)).status(), 200, "redigeringens API efter bytet");
     await person.context.close();

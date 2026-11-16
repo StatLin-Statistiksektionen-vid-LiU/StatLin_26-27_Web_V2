@@ -5,7 +5,7 @@ import { saveUser } from "@/app/admin/_actions/users";
 import { ActionForm, FieldError } from "./action-form";
 import { Field, FormSection, Select, TextInput, Toggle } from "./fields";
 import type { UserListItem } from "@/lib/data/admin";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS, type Committee, type Role } from "@/lib/types";
+import { committeeLabel, ROLE_DESCRIPTIONS, ROLE_LABELS, type Committee, type Role } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export function UserForm({ user, committees }: { user?: UserListItem | null; committees: Pick<Committee, "id" | "short_name" | "name">[] }) {
@@ -36,7 +36,8 @@ export function UserForm({ user, committees }: { user?: UserListItem | null; com
               <label
                 key={r}
                 className={cn(
-                  "cursor-pointer rounded-2xl border p-3.5 transition-colors",
+                  // Radioknappen är dold, så rutan visar var tangentbordet står.
+                  "cursor-pointer rounded-2xl border p-3.5 transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink",
                   role === r ? "border-ink bg-ink text-white" : "border-ink/15 bg-white hover:border-ink/40",
                 )}
               >
@@ -53,7 +54,7 @@ export function UserForm({ user, committees }: { user?: UserListItem | null; com
             <option value="">{role === "committee" ? "Välj utskott…" : "Inget"}</option>
             {committees.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.short_name}: {c.name}
+                {committeeLabel(c)}
               </option>
             ))}
           </Select>

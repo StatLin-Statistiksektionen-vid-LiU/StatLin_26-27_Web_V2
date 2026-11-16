@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { LoginForm } from "./login-form";
+import { PekarLjus } from "./pekar-ljus";
 import { FloatingLogo } from "@/components/brand/floating-logo";
 import { HeroGrid } from "@/components/home/hero-grid";
 import { ArrowLeft } from "@/components/icons";
@@ -24,9 +25,10 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
   const { utloggad, next, fel } = await props.searchParams;
   return (
     <main className="grid min-h-dvh bg-paper text-ink lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
-      {/* Samma millimeterpapper som startsidans hero, med loggan direkt på papperet. Rollfärgerna gör att den följer båda lägena. */}
+      {/* Samma millimeterpapper som startsidans hero, med loggan direkt på papperet, och här lyser det rött kring muspekaren. Rollfärgerna gör att loggan följer båda lägena. */}
       <section className="relative isolate hidden overflow-hidden border-r border-line lg:flex lg:flex-col">
         <HeroGrid className="hero-rutnat-mitt" />
+        <PekarLjus />
         <div aria-hidden className="kicker flex justify-between px-10 pt-9 text-stone-light">
           <span>Fig. 2</span>
           <span>58.3978° N · 15.5760° E</span>
@@ -36,7 +38,7 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
         </div>
         <div className="px-10 pb-10">
           <p className="display-tight max-w-md text-[clamp(1.6rem,2.2vw,2.1rem)] leading-[1.04]">
-            För sektionens <span className="mono-accent text-red">poster</span>
+            För sektionens <span className="text-red">poster</span>
           </p>
           <p className="mt-3 max-w-md text-stone">Lägg upp evenemang och nytt, och dela upp jobbet med resten av sektionen på uppdragstavlan.</p>
         </div>
@@ -48,7 +50,7 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
           <Link href="/" className="tryck kicker inline-flex items-center gap-2 text-stone transition-colors hover:text-ink">
             <ArrowLeft size={14} /> Till startsidan
           </Link>
-          <ThemeToggle className="tryck size-9 rounded-lg border border-line bg-white text-stone transition-colors hover:border-ink/25 hover:text-ink" />
+          <ThemeToggle className="size-9 rounded-lg border border-line bg-white text-stone transition-colors hover:border-ink/25 hover:text-ink pointer-coarse:size-11" />
         </div>
         <div className="mx-auto flex w-full max-w-[25rem] flex-1 flex-col justify-center py-10">
           <div className="rounded-2xl border border-line bg-white p-7 shadow-[0_1px_2px_rgb(0_0_0/0.04),0_24px_48px_-24px_rgb(0_0_0/0.18)] [animation:fade-up_0.8s_var(--ease-out-expo)_backwards] sm:p-9">
@@ -61,7 +63,7 @@ export default async function LoginPage(props: PageProps<"/logga-in">) {
               <LoggedInRedirect />
             </Suspense>
             {utloggad && (
-              <p className="mt-6 rounded-lg border border-emerald-600/25 bg-emerald-600/[0.07] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>
+              <p role="status" className="mt-6 rounded-lg border border-emerald-600/25 bg-emerald-600/[0.07] px-4 py-3 text-sm font-medium text-emerald-900">Du är utloggad.</p>
             )}
             <LoginForm error={loginErrorText(fel)}>
               {/* Sidan man skickades från, så att man hamnar rätt efter inloggningen. */}

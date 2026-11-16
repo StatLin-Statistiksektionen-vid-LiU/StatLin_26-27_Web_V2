@@ -65,7 +65,8 @@ export default async function meddelandeSteg({ BASE, browser, page, step, switch
   await step("Meddelandet väntar tills heron är förbi, på dator och telefon, och syns direkt på andra sidor", async () => {
     await save({ announcement: notice });
 
-    for (const options of [{}, PHONE]) {
+    // Heron når ner till meddelandets plats i ett lågt fönster och på en liten telefon.
+    for (const options of [{ viewport: { width: 1440, height: 600 } }, { ...PHONE, viewport: { width: 390, height: 560 } }]) {
       const { context, page: p } = await newVisitor(browser, options);
       const pill = p.getByRole("status").filter({ hasText: notice });
 
@@ -73,7 +74,7 @@ export default async function meddelandeSteg({ BASE, browser, page, step, switch
       await p.waitForTimeout(PILL_DELAY);
       assert.equal(await pill.count(), 0, "meddelandet får inte ligga över heron");
 
-      // Heron är längre på telefonen, med texten om sektionen och siffrorna. Så länge den når ner till skärmens nederkant väntar meddelandet.
+      // Så länge heron når ner till skärmens nederkant väntar meddelandet.
       await heroBottomAt(p, 0.97);
       await p.waitForTimeout(400);
       assert.equal(await pill.count(), 0, "meddelandet får inte ligga över slutet av heron");

@@ -48,7 +48,7 @@ export function ResourceBoard({ resources, initialProgram }: { resources: Resour
                 chooseProgram(next.value);
                 document.getElementById(`flik-${next.value}`)?.focus();
               }}
-              className={cn("h-8 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-10", program === p.value ? "bg-ink text-paper" : "text-stone hover:text-ink")}
+              className={cn("h-8 rounded-md px-3.5 text-[0.84rem] font-medium transition-colors pointer-coarse:h-11", program === p.value ? "bg-ink text-paper" : "text-stone hover:text-ink")}
             >
               {p.label}
             </button>

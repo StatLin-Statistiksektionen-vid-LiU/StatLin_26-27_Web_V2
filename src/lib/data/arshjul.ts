@@ -53,10 +53,38 @@ export interface ProjectPlan {
   lessons: string;
   owner_user_id: number | null;
   wheel_item_id: number | null;
+  /** 1 när hela StatLin är med i planen och dess tråd. */
+  collab_all: number;
   created_at: string;
   updated_at: string;
   total: number;
   done: number;
+}
+
+export interface PlanCollaborator {
+  id: number;
+  label: string;
+  committee: string | null;
+}
+
+/** Kontona som har bjudits in till planen, styrelsens poster först. */
+export async function listPlanCollaborators(planId: number): Promise<PlanCollaborator[]> {
+  const db = await readDb();
+  return db
+    .prepare(
+      `SELECT u.id, COALESCE(NULLIF(u.post, ''), u.name) AS label, CASE WHEN c.kind = 'styrelse' THEN NULL ELSE c.short_name END AS committee
+       FROM plan_collaborators k JOIN users u ON u.id = k.user_id LEFT JOIN committees c ON c.id = u.committee_id
+       WHERE k.plan_id = ? AND u.active = 1
+       ORDER BY CASE c.kind WHEN 'styrelse' THEN 0 WHEN 'utskott' THEN 1 ELSE 2 END, COALESCE(c.sort_order, 999), label`,
+    )
+    .all(planId) as PlanCollaborator[];
+}
+
+/** Kontots egen inbjudan till planen: om den finns, och om kontot har sett den. */
+export async function getPlanInvite(planId: number, userId: number): Promise<{ seen: boolean } | null> {
+  const db = await readDb();
+  const row = db.prepare("SELECT seen_at FROM plan_collaborators WHERE plan_id = ? AND user_id = ?").get(planId, userId) as { seen_at: string | null } | undefined;
+  return row ? { seen: row.seen_at !== null } : null;
 }
 
 const PLAN_SELECT = `

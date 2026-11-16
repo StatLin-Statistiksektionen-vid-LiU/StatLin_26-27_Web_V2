@@ -35,6 +35,7 @@ async function Masters() {
     <ContentPage
       slug="en-masters"
       kicker="In English / Master's students"
+      // Bredvid texten: det som händer härnäst och vem man vänder sig till. Resten ligger på en egen rad under, så att spalten inte blir längre än texten.
       aside={
         <div className="sticky top-[calc(var(--header-h)+1.5rem)] space-y-4">
           <div className="rounded-xl border border-line bg-white p-6">
@@ -79,16 +80,21 @@ async function Masters() {
               </div>
             </div>
           )}
+        </div>
+      }
+    >
+      <section className="border-t border-line">
+        <div className="container-site grid items-start gap-6 py-16 md:grid-cols-2 md:py-20">
           <div className="rounded-xl border border-line bg-white p-6">
             <p className="kicker text-stone">Study resources</p>
             <p className="mt-3 leading-relaxed text-stone">Cheat sheets, GitHub links and guides for your programme, sorted by year and term. The page itself is in Swedish.</p>
-            <Link href="/studenter/hjalpmedel?program=master" className="btn btn-ink mt-5 w-full">
+            <Link href="/studenter/hjalpmedel?program=master" className="btn btn-ink mt-5">
               See the resources <ArrowRight size={18} />
             </Link>
           </div>
           <TranslateTip />
         </div>
-      }
-    />
+      </section>
+    </ContentPage>
   );
 }

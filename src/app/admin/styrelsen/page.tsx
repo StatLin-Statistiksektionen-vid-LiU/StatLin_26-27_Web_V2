@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { MoveButtons } from "@/components/admin/board-controls";
-import { AdminHeader, Notice } from "@/components/admin/ui";
+import { AdminHeader, EmptyState, Notice } from "@/components/admin/ui";
 import { Avatar } from "@/components/content/avatar";
 import { Edit, Plus } from "@/components/icons";
 import { isEditor } from "@/lib/auth/permissions";
@@ -36,23 +36,27 @@ async function Board({ searchParams }: { searchParams: PageProps<"/admin/styrels
           </Link>
         }
       />
-      <ul className="divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
-        {board.map((m, i) => (
-          <li key={m.id} className="flex items-center gap-4 px-4 py-3">
-            <MoveButtons id={m.id} first={i === 0} last={i === board.length - 1} />
-            <Avatar name={m.name || m.post} seed={`${m.id}-${m.post}`} photo={m.photo} className="size-12 shrink-0 rounded-full [&_span]:text-base" />
-            <Link href={`/admin/styrelsen/${m.id}`} className="min-w-0 flex-1">
-              <span className="block font-semibold">{m.post}</span>
-              <span className="block truncate text-sm text-stone">
-                {m.name || "Vakant"} {m.email && `· ${m.email}`}
-              </span>
-            </Link>
-            <Link href={`/admin/styrelsen/${m.id}`} className="grid size-9 place-items-center rounded-full hover:bg-paper" aria-label={`Redigera ${m.post}`}>
-              <Edit size={16} />
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {board.length === 0 ? (
+        <EmptyState title="Inga poster ännu">Lägg till styrelsens poster, så visas de på sidan Styrelsen.</EmptyState>
+      ) : (
+        <ul className="divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
+          {board.map((m, i) => (
+            <li key={m.id} className="flex items-center gap-4 px-4 py-3">
+              <MoveButtons id={m.id} name={m.post} first={i === 0} last={i === board.length - 1} />
+              <Avatar name={m.name || m.post} seed={`${m.id}-${m.post}`} photo={m.photo} className="size-12 shrink-0 rounded-full [&_span]:text-base" />
+              <Link href={`/admin/styrelsen/${m.id}`} className="min-w-0 flex-1">
+                <span className="block font-semibold">{m.post}</span>
+                <span className="block text-sm text-stone [overflow-wrap:anywhere] sm:truncate">
+                  {m.name || "Vakant"} {m.email && `· ${m.email}`}
+                </span>
+              </Link>
+              <Link href={`/admin/styrelsen/${m.id}`} className="grid size-9 place-items-center rounded-full hover:bg-paper" aria-label={`Redigera ${m.post}`}>
+                <Edit size={16} />
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </>
   );
 }
