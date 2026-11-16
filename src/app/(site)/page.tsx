@@ -1,22 +1,11 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import { Hero } from "@/components/home/hero";
-import { HomeSections } from "@/components/home/home-sections";
-import { HomeSkeleton } from "@/components/ui/skeletons";
-import { SITE_ALTERNATES } from "@/lib/site-metadata";
+import { Startsida } from "@/components/home/startsida";
+import { START_METADATA } from "@/lib/site-metadata";
 
-export const metadata: Metadata = {
-  alternates: { ...SITE_ALTERNATES, canonical: "/", languages: { sv: "/", en: "/en" } },
-};
+export const metadata: Metadata = START_METADATA;
 
+/** Startsidan med dagens hero. Har ett av förslagen valts i redigeringsläget visar proxyn i stället /hero/1 till /hero/3 här. */
 export default function HomePage() {
-  return (
-    <>
-      <Hero />
-      {/* Heron har rubriken och loggan. Under den kommer genvägarna, kalendern med nytt, utskotten och korten. */}
-      <Suspense fallback={<HomeSkeleton />}>
-        <HomeSections />
-      </Suspense>
-    </>
-  );
+  return <Startsida hero={<Hero />} val="nu" />;
 }

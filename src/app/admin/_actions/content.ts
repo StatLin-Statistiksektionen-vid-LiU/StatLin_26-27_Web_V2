@@ -25,6 +25,7 @@ import { actionUser, renewSessionIfDue } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { markSeeded } from "@/lib/db/bootstrap";
 import { DEFAULT_SETTINGS } from "@/lib/data/content";
+import { arHeroVal, HERO_NAMN, HERO_NYCKEL } from "@/lib/hero-val";
 import { SITE_TEXT_KEYS, textDef, type SiteTextKey } from "@/lib/site-texts";
 import { deleteMediaIfUnused, isSameUpload, MediaError, replaceFile, storeFile } from "@/lib/media-store";
 import { renderMarkdown } from "@/lib/markdown";
@@ -455,4 +456,16 @@ export async function saveSettings(_prev: FormState, fd: FormData): Promise<Form
   audit(user.id, "update", "settings", null, present.some((k) => k.startsWith("hero_")) ? "Startsidan" : present.some((k) => k.startsWith("text_")) ? "Texter på sajten" : "Webbplatsinställningar");
   revalidateSite();
   return { ok: true, message: "Inställningarna är sparade." };
+}
+
+/** Startsidans hero, vald med väljaren i redigeringsläget (hero-valjare.tsx). Proxyn visar den valda på startsidan, se src/lib/hero-val.ts. */
+export async function valjHero(val: string): Promise<FormState> {
+  const user = await actionUser();
+  if ("error" in user) return user;
+  if (!canManageSettings(user)) return forbidden();
+  if (!arHeroVal(val)) return { error: "Välj en hero i listan." };
+  getDb().prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(HERO_NYCKEL, val);
+  audit(user.id, "update", "settings", null, `Startsidans hero: ${HERO_NAMN[val]}`);
+  revalidateSite();
+  return { ok: true };
 }

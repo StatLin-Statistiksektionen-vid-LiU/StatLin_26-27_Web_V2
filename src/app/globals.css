@@ -2555,8 +2555,110 @@ body {
   }
 }
 
+/* Väljaren för startsidans hero, i redigeringsläget (hero-valjare.tsx). Telefon: en rad ovanför listen. Dator: en stapel vid högerkanten. */
+.hero-valjare {
+  position: fixed;
+  z-index: 64;
+  bottom: calc(max(1rem, env(safe-area-inset-bottom)) + var(--redigeringslist, 0px));
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  max-width: calc(100vw - 1rem);
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem;
+  border: 1px solid var(--color-line);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-xl);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.hero-valjare-namn {
+  padding: 0 0.5rem 0 0.7rem;
+  color: var(--color-stone);
+}
+.hero-valjare button {
+  min-width: 2.25rem;
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  color: var(--color-stone);
+  transition:
+    color 0.2s,
+    background-color 0.2s;
+}
+.hero-valjare button:hover {
+  color: var(--color-ink);
+}
+.hero-valjare button[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+.hero-valjare button:disabled {
+  cursor: progress;
+}
+.hero-valjare button:disabled:not([aria-pressed="true"]) {
+  opacity: 0.4;
+}
+/* Felet står ovanför väljaren, så att raden med knappar inte ändrar bredd. */
+.hero-valjare-fel {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 50%;
+  translate: -50% 0;
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 0.5rem 0.8rem;
+  border-radius: 0.75rem;
+  background: var(--color-red-deep);
+  color: #fff;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-transform: none;
+  white-space: normal;
+}
+@media (min-width: 64rem) {
+  .hero-valjare {
+    top: 50%;
+    right: 1rem;
+    bottom: auto;
+    left: auto;
+    translate: 0 -50%;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: 1rem;
+  }
+  .hero-valjare-namn {
+    padding: 0.4rem 0.6rem 0.25rem;
+    text-align: center;
+  }
+  .hero-valjare button {
+    border-radius: 0.75rem;
+  }
+  .hero-valjare-fel {
+    right: calc(100% + 0.5rem);
+    bottom: auto;
+    left: auto;
+    top: 50%;
+    translate: 0 -50%;
+  }
+}
+@media print {
+  .hero-valjare {
+    display: none;
+  }
+}
+
 /* ---------- Mörkt läge ---------- */
-/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 58) */
+/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 59) */
 
 /*
  * Utan genomskinlighetseffekter syns ingen oskärpa bakom något. Ytor av frostat glas (sidhuvudet på telefon, etiketter på bilder,

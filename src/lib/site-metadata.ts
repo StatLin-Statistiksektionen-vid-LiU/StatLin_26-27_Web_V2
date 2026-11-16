@@ -15,3 +15,8 @@ export const SITE_OG = {
 export const SITE_OG_EN = { ...SITE_OG, locale: "en_GB" } satisfies NonNullable<Metadata["openGraph"]>;
 
 export const SITE_ALTERNATES = { types: { "text/calendar": "/kalender.ics" } } satisfies NonNullable<Metadata["alternates"]>;
+
+/** Startsidans metadata. Den delas av / och av /hero/1 till /hero/3, som är startsidan med ett av heroförslagen (src/lib/hero-val.ts). */
+export const START_METADATA = {
+  alternates: { ...SITE_ALTERNATES, canonical: "/", languages: { sv: "/", en: "/en" } },
+} satisfies Metadata;

@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getDb } from "@/lib/db";
 import { normalizeCourseCode } from "@/lib/exam-stats";
+import { HERO_NYCKEL, heroVag } from "@/lib/hero-val";
 import { TEMA_KAKA, TEMA_STANDARD, temaKaka } from "@/lib/tema";
 
 /**
- * Tre saker:
+ * Fyra saker:
+ * - Startsidan: visar heron som valts i redigeringsläget, se startsida nedan.
  * - Admin: utan sessionskaka skickas besökare direkt till inloggningen. Det är en optimistisk kontroll –
  *   den riktiga behörighetskontrollen görs mot databasen i varje sida och server action.
  * - Tentastatistik: kurssidorna har alltid koden med versaler (/tentastatistik/732g33 → 732G33), och
@@ -17,6 +19,7 @@ export function proxy(request: NextRequest) {
 
 function svar(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
+  if (pathname === "/") return startsida(request);
   if (pathname === "/tentastatistik" || pathname.startsWith("/tentastatistik/")) {
     return examStatsRedirect(request) ?? NextResponse.next();
   }
@@ -34,6 +37,25 @@ function svar(request: NextRequest): NextResponse {
   const headers = new Headers(request.headers);
   headers.set("x-pathname", requested);
   return NextResponse.next({ request: { headers } });
+}
+
+/**
+ * Startsidan visar heron som valts i redigeringsläget, se src/lib/hero-val.ts. Dagens hero är sidan själv. Förslagen ligger på
+ * /hero/1 till /hero/3 och visas här utan att adressen ändras. Det gäller alla anrop till startsidan, också sidbyten i klienten
+ * och server actions, så att servern och webbläsaren är överens om vilken sida som visas. Går databasen inte att läsa visas dagens.
+ */
+function startsida(request: NextRequest): NextResponse {
+  let vag: string | null;
+  try {
+    const rad = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(HERO_NYCKEL) as { value: string } | undefined;
+    vag = heroVag(rad?.value);
+  } catch {
+    return NextResponse.next();
+  }
+  if (!vag) return NextResponse.next();
+  const url = request.nextUrl.clone();
+  url.pathname = vag;
+  return NextResponse.rewrite(url);
 }
 
 /**
