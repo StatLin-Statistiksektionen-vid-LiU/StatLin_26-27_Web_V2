@@ -75,7 +75,7 @@ Ett konto per post i styrelsen, 13 stycken, som `create-accounts` skapar (`scrip
 | `master@statlin.se` | Utskott (styrelsen) | Masteransvarig |
 | `ubu@statlin.se` | Utskott (UBU) | Utbildningsbevakare |
 | `sasu@statlin.se` | Utskott (SASU) | SASU |
-| `scb@statlin.se` | Utskott (SCB) | Mästerichef |
+| `shaf@scbmasteri.com` | Utskott (SCB) | Mästerichef |
 | `statpub@statlin.se` | Utskott (StatPub) | Pub |
 | `stig@statlin.se` | Utskott (STIG) | STIG |
 | `estig@statlin.se` | Utskott (eSTIG) | e-STIG |

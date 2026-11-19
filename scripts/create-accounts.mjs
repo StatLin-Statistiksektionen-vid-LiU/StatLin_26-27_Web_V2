@@ -28,7 +28,8 @@ const ACCOUNTS = [
   ["master@statlin.se", "Masteransvarig", "Masteransvarig", "committee", "styrelsen"],
   ["ubu@statlin.se", "UBU", "Utbildningsbevakare", "committee", "ubu"],
   ["sasu@statlin.se", "SASU", "SASU", "committee", "sasu"],
-  ["scb@statlin.se", "SCB", "Mästerichef", "committee", "scb"],
+  // Mästerichefen loggar in med mästeriets egen adress, inte en @statlin.se.
+  ["shaf@scbmasteri.com", "SCB", "Mästerichef", "committee", "scb"],
   ["statpub@statlin.se", "StatPub", "Pub", "committee", "statpub"],
   ["stig@statlin.se", "STIG", "STIG", "committee", "stig"],
   ["estig@statlin.se", "eSTIG", "e-STIG", "committee", "estig"],
