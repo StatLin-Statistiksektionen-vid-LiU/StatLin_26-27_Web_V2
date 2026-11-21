@@ -151,11 +151,18 @@ function HeaderView({ pathname, meny, sponsors }: { pathname: string | null; men
     if (lastPath !== null) setOpen(false);
   }
 
+  // Den öppna panelen låser sidans scroll. Låset släpps i städningen och inte i nästa ritning: när en länk i panelen leder ut ur
+  // sajten, som den till inloggningen, lämnar sidhuvudet skärmen med panelen öppen, och någon ritning med stängd panel kommer aldrig.
+  // Låset satt då kvar på inloggningssidan och i adminpanelen, som inte gick att scrolla på telefon förrän sidan laddades om.
   useEffect(() => {
-    document.documentElement.style.overflow = open ? "hidden" : "";
+    if (!open) return;
+    document.documentElement.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    return () => {
+      document.documentElement.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   // Listen ligger ovanpå panelen och har stängknappen, så den hör till lagret. Resten av sidan blir inert, utom
@@ -289,7 +296,8 @@ function HeaderView({ pathname, meny, sponsors }: { pathname: string | null; men
           <div className="mt-6 grid grid-cols-2 gap-2 border-t border-line px-1 pt-6 text-[0.9rem] lg:hidden">
             {languageLinks("btn btn-ghost")}
             <ThemeToggle withLabel className="btn btn-ghost" />
-            <Link href="/admin" className="btn btn-ghost col-span-2">
+            {/* Länken leder ut ur sajten, så sidhuvudet får aldrig den nya sökvägen som annars stänger panelen. Den stängs vid trycket, som i trädet. */}
+            <Link href="/admin" onClick={() => setOpen(false)} className="btn btn-ghost col-span-2">
               <Key size={16} /> Logga in som post
             </Link>
           </div>

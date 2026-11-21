@@ -43,6 +43,41 @@ export default async function tillganglighetSteg({ BASE, browser, page, step, sw
     await context.close();
   });
 
+  await step("Mobilmenyn släpper sidan när länken till inloggningen leder ut ur sajten", async () => {
+    const { context, page: phone } = await newVisitor(browser, PHONE);
+    // Länken går till /admin, som skickar den som inte är inloggad vidare till inloggningen. Sajten ber webbläsaren hämta allt över
+    // https (upgrade-insecure-requests), och det gäller också det hoppet. Provservern har ingen https, så hoppet misslyckas där och
+    // Next laddar då om hela sidan, vilket döljer felet som steget letar efter. Utan den raden går sidbytet som på den riktiga sajten.
+    await context.route("**/*", async (route) => {
+      if (route.request().resourceType() !== "document") return route.fallback();
+      const response = await route.fetch({ maxRedirects: 0 });
+      const headers = { ...response.headers() };
+      if (headers["content-security-policy"]) headers["content-security-policy"] = headers["content-security-policy"].replace(/upgrade-insecure-requests;?/g, "");
+      await route.fulfill({ response, headers });
+    });
+    const until = (fn, message) => phone.waitForFunction(fn, null, { timeout: 5000 }).catch(() => assert.fail(message));
+    await phone.goto(`${BASE}/`);
+    const toggle = phone.getByRole("button", { name: "Öppna meny" });
+    await waitForHydration(phone, toggle);
+    await toggle.tap();
+    const menu = phone.getByRole("navigation", { name: "Mobilmeny" });
+    await menu.waitFor();
+    assert.equal(await phone.evaluate(() => document.documentElement.style.overflow), "hidden", "sidan bakom den öppna menyn ska inte gå att scrolla");
+    // Märket försvinner om webbläsaren laddar om sidan. Då har steget inte provat sidbytet som det är till för.
+    await phone.evaluate(() => (window.sammaDokument = true));
+    await Promise.all([phone.waitForURL(/\/logga-in/), menu.getByRole("link", { name: "Logga in som post" }).tap()]);
+    await phone.getByRole("heading", { name: "Logga in" }).waitFor();
+    assert.equal(await phone.evaluate(() => window.sammaDokument === true), true, "sidbytet ska ske utan omladdning");
+    // Låset satt förut kvar. Inloggningssidan och adminpanelen efter den gick då inte att scrolla på telefon förrän sidan laddades om.
+    await until(() => document.documentElement.style.overflow === "", "låset på sidans scroll ska släppas när menyn lämnar skärmen");
+    // Tillbaka på startsidan är menyn stängd, som efter menyns andra länkar.
+    await Promise.all([phone.waitForURL((url) => url.pathname === "/"), phone.getByRole("link", { name: "Till startsidan" }).tap()]);
+    await phone.locator("header.sidhuvud").waitFor();
+    await until(() => document.querySelector("header.sidhuvud button.meny-knapp")?.getAttribute("aria-expanded") === "false", "menyn ska vara stängd när man kommer tillbaka");
+    await until(() => document.documentElement.style.overflow === "" && !document.querySelector("main#innehall")?.closest("[inert]"), "startsidan ska gå att scrolla och trycka på");
+    await context.close();
+  });
+
   await step("Galleriet: bilder går att flytta med tangentbordet, och fokus och ordningen består", async () => {
     await page.goto(`${BASE}/admin/evenemang/ny`);
     await waitForHydration(page, page.locator('input[name="title"]'));
