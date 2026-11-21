@@ -88,7 +88,7 @@ export default async function StarInvitation(props: PageProps<"/star/inbjudan/[k
       <StarHimmel />
       <StarRorelse />
 
-      <StarHero subtitle={`Inbjudan till ${settings.star_subtitle || STAR_COPY.subtitle}`} withBar={false}>
+      <StarHero subtitle={`Inbjudan till ${settings.star_subtitle || STAR_COPY.subtitle}`} withBar={false} vidare="#kompetens">
         <div className="md:col-span-8">
           <p className="star-type max-w-3xl text-[clamp(2rem,5vw,3.5rem)] font-light leading-[1.1]">Era nästa statistiker sitter redan i Linköping</p>
           {event ? <EventFacts event={event} className="mt-4" /> : <p className="mono-accent mt-4 text-sm text-white/85 md:text-base">Datum kommer snart</p>}

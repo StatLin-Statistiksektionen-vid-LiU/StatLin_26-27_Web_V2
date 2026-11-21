@@ -3,6 +3,11 @@ import { narrowMap, wideMap, type StarMap as Layout } from "@/lib/star-map";
 import "./star.css";
 
 const LINE = { stroke: "#fff", strokeOpacity: 0.32, strokeWidth: 1 };
+/**
+ * Kartans bredd i dess egna mått på surfplatta och dator. Den står i avsnittets spalt, som är omkring så bred i pixlar, och då
+ * får namnen på kartan sin riktiga storlek (star.css håller kartan under 52rem).
+ */
+const KARTA_BREDD = 760;
 
 /** Stjärnan: huvudsponsorn med en tunn ring, som en ljusstark stjärna på en stjärnkarta, sponsorer större än utställare. */
 function StarShape({ x, y, role }: { x: number; y: number; role: StarCompany["role"] }) {
@@ -73,7 +78,7 @@ function Map({ layout, companies, size, className }: { layout: Layout; companies
 export function StarMap({ companies }: { companies: StarCompany[] }) {
   return (
     <>
-      <Map layout={wideMap(companies)} companies={companies} size="wide" className="hidden md:block" />
+      <Map layout={wideMap(companies, KARTA_BREDD)} companies={companies} size="wide" className="hidden md:block" />
       <Map layout={narrowMap(companies)} companies={companies} size="narrow" className="md:hidden" />
     </>
   );

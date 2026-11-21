@@ -66,6 +66,12 @@ test("alla stjärnor binds ihop och ligger innanför kartan, också många", () 
     assert.equal(map.stars.length, n);
     assert.equal(map.lines.length, n - 1);
     for (const s of map.stars) assert.ok(s.x >= 0 && s.x <= map.width && s.y >= 0 && s.y <= map.height);
+    // Kartan i avsnittets spalt är smalare och lika mycket högre.
+    const smal = wideMap(companies(n), 760);
+    assert.equal(smal.width, 760);
+    assert.equal(smal.height, Math.round((map.height * 1000) / 760));
+    assert.equal(smal.stars.length, n);
+    for (const s of smal.stars) assert.ok(s.x >= 0 && s.x <= smal.width && s.y >= 0 && s.y <= smal.height);
   }
   assert.equal(wideMap([]).stars.length, 0);
   assert.equal(narrowMap([]).stars.length, 0);

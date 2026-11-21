@@ -1,27 +1,44 @@
 import type { ReactNode } from "react";
+import { HeroTopp } from "@/components/layout/hero-topp";
 import { formatDateLong, formatTimeRange } from "@/lib/dates";
 import { STAR_COPY } from "@/lib/seed-content";
 import { cn } from "@/lib/utils";
 
-/** Ordet STAR och den röda linjen har samma storlek. Telefonens bredd styr, så att ordet aldrig går utanför sidans marginal. */
-const WORD_SIZE = "text-[clamp(4.5rem,min(28vw,35svh),23rem)]";
+/** Ordet STAR och den röda linjen har samma storlek. Den följer både bredden och höjden, se .star-ordstorlek i star.css. */
+const WORD_SIZE = "star-ordstorlek";
 
-/** Heron på STAR-sidan och inbjudan: loggan i sidans storlek, med bokstäverna, den röda linjen genom dem och grafen uppför himlen. */
-export function StarHero({ subtitle, withBar, children }: { subtitle: string; withBar: boolean; children: ReactNode }) {
+/**
+ * Heron på STAR-sidan och inbjudan: loggan i sidans storlek, med bokstäverna, den röda linjen genom dem och grafen uppför himlen.
+ * Samma princip som startsidans hero: den fyller precis en skärm, listen överst är genomskinlig högst upp (data-hero-yta och
+ * HeroTopp), och på datorn står en scrollmarkör längst ner till höger som leder till `vidare`. Här får listen sin bakgrund
+ * tidigt, när raden med STAR-loggan når den.
+ */
+export function StarHero({ subtitle, withBar, vidare, children }: { subtitle: string; withBar: boolean; vidare?: string; children: ReactNode }) {
   return (
-    <section className={cn("relative isolate flex flex-col justify-end overflow-hidden pb-12 md:pb-10", withBar ? "min-h-[calc(100svh-var(--header-h))] pt-8" : "min-h-svh pt-[calc(var(--header-h)+1.5rem)]")}>
+    <section data-hero-yta className={cn("star-hero relative isolate flex flex-col justify-end overflow-hidden pb-12 md:pb-10", withBar ? "min-h-[calc(100svh-var(--header-h))] pt-8" : "min-h-svh pt-[calc(var(--header-h)+1.5rem)]")}>
+      <HeroTopp logga="star" />
       <div className="container-site">
-        <div className="flex items-center gap-4">
+        {/* När den här raden når listen överst får listen sin bakgrund och STAR-loggan flyttar upp i den (data-hero-grans). */}
+        <div data-hero-grans className="flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/brand/utskott/star.webp" alt="" width={360} height={356} className="size-14 md:size-16" />
           <p className="kicker text-white/85">{subtitle}</p>
         </div>
-        <div className="relative mt-6 md:mt-8">
+        <div className="star-hero-ord relative mt-6 md:mt-8">
           <div className={cn("star-linje absolute left-1/2 top-[56%] h-[max(2px,0.016em)] w-screen -translate-x-1/2", WORD_SIZE)} aria-hidden />
           <HeroGraph />
           <h1 className={cn("star-type star-ord relative -mr-[0.2em] font-light uppercase leading-[1.05] tracking-[0.2em]", WORD_SIZE)}>{STAR_COPY.title}</h1>
         </div>
-        <div className="star-upp mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end">{children}</div>
+        <div className="star-upp mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:items-end">
+          {children}
+          {vidare && (
+            <a href={vidare} aria-label="Scrolla vidare" className="star-scroll">
+              <span className="star-scroll-spar">
+                <span className="star-scroll-lopare" />
+              </span>
+            </a>
+          )}
+        </div>
       </div>
     </section>
   );

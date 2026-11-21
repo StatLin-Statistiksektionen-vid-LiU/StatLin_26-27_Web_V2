@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { MorkTopp } from "@/components/layout/mork-topp";
 
 const VARV = Math.PI * 2;
 /** Stjärnorna tänds i några lager efter varandra. Lagren tonas av grafikkortet, så att det inte hackar medan sidan laddar. */
@@ -108,7 +109,8 @@ function ritaStjarnor(ctx: CanvasRenderingContext2D, stjarnor: Stjarna[]) {
 /**
  * Natthimlen bakom STAR-sidan: stjärnorna kommer fram när sidan öppnas, och då och då faller en stjärna. Efter att himlen tänts ritas
  * ingenting mer, så scrollningen kostar lika lite som över en stillbild. Stjärnfallet och de få stjärnor som andas är bara transform
- * och opacitet på små element, och utan rörelse syns en färdig himmel direkt. Utan JavaScript syns den enklare himlen i bakgrunden.
+ * och opacitet på små element. Utan JavaScript syns den enklare himlen i bakgrunden. Himlen tänds och rör sig också för den som
+ * har valt bort rörelse i sin enhet, som startsidans hero: sektionen vill ha det så. Sidans text står still för dem.
  */
 export function StarHimmel() {
   const ytaRef = useRef<HTMLDivElement>(null);
@@ -118,7 +120,6 @@ export function StarHimmel() {
     const yta = ytaRef.current;
     const fall = fallRef.current;
     if (!yta || !fall) return;
-    const lugn = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let bredd = 0;
     let hojd = 0;
     let klar: ReturnType<typeof setTimeout> | undefined;
@@ -129,7 +130,7 @@ export function StarHimmel() {
       // Tak för antalet bildpunkter: en stor skärm med hög upplösning ska inte behöva hundratals megabyte för några stjärnor.
       const dpr = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(6_000_000 / (bredd * hojd)));
       const stjarnor = skapaHimmel(bredd, hojd);
-      const ljusa = lugn ? [] : valjLjusa(stjarnor, bredd < 768 ? 7 : 14, Math.hypot(bredd, hojd) * 0.11);
+      const ljusa = valjLjusa(stjarnor, bredd < 768 ? 7 : 14, Math.hypot(bredd, hojd) * 0.11);
       const rest = stjarnor.filter((s) => !ljusa.includes(s)).sort((a, b) => b.ordning - a.ordning);
       const antalLager = toning === "lang" ? LAGER : 1;
       const dukar: HTMLCanvasElement[] = [];
@@ -210,7 +211,7 @@ export function StarHimmel() {
         planera(Math.random() < 0.12 ? 1400 + Math.random() * 1200 : (telefon ? 9000 : 7000) + Math.random() * (telefon ? 15000 : 13000));
       }, ms);
     };
-    if (!lugn) planera(tandSedd ? 3000 : 4500 + Math.random() * 1500);
+    planera(tandSedd ? 3000 : 4500 + Math.random() * 1500);
 
     // Bara när storleken verkligen ändras: 100lvh står stilla när adressfältet på telefonen försvinner. Dold sida har storleken noll.
     let vantar: ReturnType<typeof setTimeout> | undefined;
@@ -222,7 +223,7 @@ export function StarHimmel() {
       bredd = w;
       hojd = h;
       clearTimeout(vantar);
-      if (forsta) rita(lugn ? "ingen" : tandSedd ? "kort" : "lang");
+      if (forsta) rita(tandSedd ? "kort" : "lang");
       else vantar = setTimeout(() => rita("ingen"), 200);
     });
     matt.observe(yta);
@@ -238,6 +239,8 @@ export function StarHimmel() {
 
   return (
     <div className="star-himmel" aria-hidden>
+      {/* Himlen är mörk i båda lägena, så listen överst får mörka lägets färger över den. */}
+      <MorkTopp />
       <noscript>
         <div className="star-himmel-reserv" />
       </noscript>

@@ -31,7 +31,8 @@ export async function generateMetadata(): Promise<Metadata> {
 // Företagen, kartan och filtret fungerar utan JavaScript, så sidan renderas hel vid varje anrop i stället för med ett skelett.
 export const instant = false;
 
-const H2 = "star-type text-[clamp(2.4rem,6vw,4.5rem)] font-light uppercase leading-none tracking-[0.08em]";
+/** Stjärnkartan är ett komplement till korten. Med färre företag än så här är den mest tom himmel, och då visas bara korten. */
+const KARTA_FRAN = 6;
 export default async function StarPage(props: PageProps<"/star">) {
   const [companies, sasu, settings, user, sp] = await Promise.all([listStarCompanies({ activeOnly: true }), getCommitteeBySlug("sasu"), getSettings(), getSessionUser(), props.searchParams]);
   const event = await getStarEvent(Number(settings.star_event_id) || null);
@@ -77,22 +78,28 @@ export default async function StarPage(props: PageProps<"/star">) {
   const hasSponsors = mainSponsors.length > 0 || sponsors.length > 0;
   const tips = parseStarTips(settings.star_tips);
   const faq = parseStarFaq(settings.star_faq);
+  // Avsnitten står i den ordning en besökare frågar: vad händer under dagen, vilka kommer, hur förbereder jag mig och hur är
+  // jag med. Numren och genvägsraden följer listan, så att de stämmer också när ett avsnitt saknas.
   const sections = [
-    { href: "#vilka-kommer", label: "Vilka kommer" },
-    ...(event ? [{ href: "#dagen", label: "Dagen" }] : []),
-    ...(hasSponsors ? [{ href: "#sponsorer", label: "Sponsorer" }] : []),
-    ...(tips.length > 0 ? [{ href: "#forbered-dig", label: "Förbered dig" }] : []),
-    ...(faq.length > 0 ? [{ href: "#fragor", label: "Frågor" }] : []),
-    { href: "#vara-med", label: "Vara med" },
+    ...(event ? [{ id: "dagen", label: "Dagen" }] : []),
+    { id: "vilka-kommer", label: "Vilka kommer" },
+    ...(hasSponsors ? [{ id: "sponsorer", label: "Sponsorer" }] : []),
+    ...(tips.length > 0 || faq.length > 0 ? [{ id: "infor-dagen", label: "Inför dagen" }] : []),
+    { id: "vara-med", label: "Vara med" },
   ];
+  const nr = (id: string) => sections.findIndex((s) => s.id === id) + 1;
+  const visaKarta = companies.length >= KARTA_FRAN;
+  const harFilter = companies.some((c) => parseSeeks(c.seeks).length > 0);
 
   return (
     <div data-star-rot className="star-sky star-sida text-white">
       <StarHimmel />
       <StarRorelse />
+      {/* Genvägarna ligger fast under sidhuvudet hela vägen. De står först, så att tangentbordet når dem i den ordning de syns. */}
+      <SectionNav items={sections.map((s) => ({ href: `#${s.id}`, label: s.label }))} />
       {(canEdit || asVisitor) && <OwnerBar live={live} asVisitor={asVisitor} />}
       {/* Heron är loggan i sidans storlek: bokstäverna, den röda linjen genom dem och grafen uppför himlen. */}
-      <StarHero subtitle={settings.star_subtitle || STAR_COPY.subtitle} withBar={canEdit || asVisitor}>
+      <StarHero subtitle={settings.star_subtitle || STAR_COPY.subtitle} withBar={canEdit || asVisitor} vidare={`#${sections[0].id}`}>
         <div className="md:col-span-7">
           {event ? <CountdownFacts event={event} /> : <p className="star-type text-[clamp(2rem,5vw,3.5rem)] font-light leading-tight">Datum kommer snart</p>}
           <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-xl">
@@ -110,6 +117,12 @@ export default async function StarPage(props: PageProps<"/star">) {
               </a>
             )}
           </div>
+          {/* Företagen är sidans andra publik. Deras väg in står här uppe, inte bara längst ner på sidan. */}
+          <p className="mt-4 md:text-right">
+            <a href="#vara-med" className="tryck link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
+              För företag: var med på STAR <ArrowRight size={15} />
+            </a>
+          </p>
           {companies.length > 0 && (
             <p className="kicker mt-6 text-white/65 md:text-right">
               <span className="text-white tabular">{companies.length}</span> företag på plats
@@ -123,13 +136,26 @@ export default async function StarPage(props: PageProps<"/star">) {
         </div>
       </StarHero>
 
-      <SectionNav items={sections} />
+      {event && (
+        <section id="dagen" className="star-avsnitt py-16 md:py-24">
+          {/* Datum, tid och plats står i heron. Här står bara programmet. */}
+          <Uppstallning nr={nr("dagen")} rubrik="Dagen">
+            <div className="star-bubbla">
+              {program.length > 0 ? <Route stops={program} /> : <p className="max-w-xl text-lg text-white/85">Programmet kommer snart.</p>}
+              <p className="mt-8">
+                <Link href={`/evenemang/${event.slug}`} className="tryck link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
+                  Mer om dagen <ArrowRight size={15} />
+                </Link>
+              </p>
+            </div>
+          </Uppstallning>
+        </section>
+      )}
 
       <section id="vilka-kommer" className="star-scope star-avsnitt relative isolate py-16 md:py-24">
-        <div className="container-site">
-          <h2 data-star-in className={H2}>Vilka kommer</h2>
+        <Uppstallning nr={nr("vilka-kommer")} rubrik="Vilka kommer">
           {companies.length === 0 ? (
-            <div className="relative mt-10">
+            <div className="relative">
               <EmptySky />
               <div className="mt-8 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
                 <div>
@@ -143,46 +169,34 @@ export default async function StarPage(props: PageProps<"/star">) {
             </div>
           ) : (
             <>
-              <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-2xl">
-                {settings.star_companies_intro && <p className="text-lg text-white/90">{settings.star_companies_intro}</p>}
-              </Pen>
+              {/* Den redigerbara ingressen handlar om kartan, så utan karta står en rad om filtret i stället. */}
+              {visaKarta ? (
+                <Pen on={canEdit} label="Ändra sidans texter" className="max-w-2xl">
+                  {settings.star_companies_intro && <p className="text-lg text-white/90">{settings.star_companies_intro}</p>}
+                </Pen>
+              ) : (
+                harFilter && <p className="max-w-2xl text-lg text-white/90">Välj vad du söker, så visas bara de företag som passar.</p>
+              )}
               <SeekFilter companies={companies} />
-              <div className="mt-8">
-                <StarMap companies={companies} />
-              </div>
-              <ul className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {visaKarta && (
+                <div className="mt-8">
+                  <StarMap companies={companies} />
+                </div>
+              )}
+              <ul className={cn("star-kort", visaKarta ? "mt-12" : "mt-8")}>
                 {companies.map((c, i) => (
-                  <CompanyCard key={c.id} company={c} delay={(i % 3) * 70} />
+                  <CompanyCard key={c.id} company={c} delay={(i % 2) * 70} />
                 ))}
               </ul>
             </>
           )}
-        </div>
+        </Uppstallning>
       </section>
-
-      {event && (
-        <section id="dagen" className="star-avsnitt py-16 md:py-24">
-          <div className="container-site">
-            {/* Banan klättrar från nedre vänstra hörnet, så att uppgifterna om dagen får plats i himlen ovanför den. */}
-            <div className="relative z-10 lg:max-w-[18rem]">
-              <h2 data-star-in className={H2}>Dagen</h2>
-              <EventFacts event={event} stacked className="mt-6" />
-              <p className="mt-5">
-                <Link href={`/evenemang/${event.slug}`} className="tryck link-underline inline-flex items-center gap-1.5 text-sm font-semibold">
-                  Mer om dagen <ArrowRight size={15} />
-                </Link>
-              </p>
-            </div>
-            {program.length > 0 ? <Route stops={program} /> : <p className="mt-8 max-w-xl text-lg text-white/85">Programmet kommer snart.</p>}
-          </div>
-        </section>
-      )}
 
       {hasSponsors && (
         <section id="sponsorer" className="star-avsnitt py-16 md:py-24">
-          <div className="container-site">
-            <h2 data-star-in className={H2}>Sponsorer</h2>
-            <Pen on={canEdit} label="Ändra sidans texter" className="mt-5 max-w-xl">
+          <Uppstallning nr={nr("sponsorer")} rubrik="Sponsorer">
+            <Pen on={canEdit} label="Ändra sidans texter" className="max-w-xl">
               {settings.star_sponsors_intro && <p className="text-lg text-white/90">{settings.star_sponsors_intro}</p>}
             </Pen>
             {mainSponsors.map((s) => (
@@ -197,83 +211,111 @@ export default async function StarPage(props: PageProps<"/star">) {
                 ))}
               </ul>
             )}
-          </div>
+          </Uppstallning>
         </section>
       )}
 
-      {tips.length > 0 && (
-        <section id="forbered-dig" className="star-avsnitt py-16 md:py-24">
-          <div className="container-site grid gap-10 lg:grid-cols-12">
-            <h2 data-star-in className={cn(H2, "lg:col-span-5")}>Förbered dig</h2>
-            <Pen on={canEdit} label="Ändra sidans texter" className="lg:col-span-7">
-              <ol className="star-route star-tips" data-long="">
-                {tips.map((tip, i) => (
-                  <li key={`${i}-${tip}`} data-star-in="stor" className="star-stop">
-                    <p className="text-lg leading-snug text-white/90">{tip}</p>
-                  </li>
-                ))}
-              </ol>
-            </Pen>
-          </div>
-        </section>
-      )}
-
-      {faq.length > 0 && (
-        <section id="fragor" className="star-avsnitt py-16 md:py-24">
-          <div className="container-site grid gap-10 lg:grid-cols-12">
-            <h2 data-star-in className={cn(H2, "lg:col-span-5")}>Frågor</h2>
-            <Pen on={canEdit} label="Ändra sidans texter" className="lg:col-span-7">
-              <div className="star-faq">
-                {faq.map((f, i) => (
-                  <details key={`${i}-${f.question}`}>
-                    <summary>{f.question}</summary>
-                    <p>{f.answer}</p>
-                  </details>
-                ))}
-              </div>
-            </Pen>
-          </div>
+      {(tips.length > 0 || faq.length > 0) && (
+        <section id="infor-dagen" className="star-avsnitt py-16 md:py-24">
+          <Uppstallning nr={nr("infor-dagen")} rubrik="Inför dagen">
+            {/* Tipsen och frågorna är båda det man vill veta innan man går dit. De gamla ankarna finns kvar på var sin del. */}
+            <div className={cn(tips.length > 0 && faq.length > 0 && "star-bubblor")}>
+              {tips.length > 0 && (
+                <div id="forbered-dig" className="star-ankare star-bubbla">
+                  <h3 className="star-type text-2xl font-light md:text-3xl">Förbered dig</h3>
+                  <Pen on={canEdit} label="Ändra sidans texter" className="mt-6">
+                    <ol className="star-route star-tips" data-long="">
+                      {tips.map((tip, i) => (
+                        <li key={`${i}-${tip}`} data-star-in="stor" className="star-stop">
+                          <p className="text-lg leading-snug text-white/90">{tip}</p>
+                        </li>
+                      ))}
+                    </ol>
+                  </Pen>
+                </div>
+              )}
+              {faq.length > 0 && (
+                <div id="fragor" className="star-ankare star-bubbla">
+                  <h3 className="star-type text-2xl font-light md:text-3xl">Frågor</h3>
+                  <Pen on={canEdit} label="Ändra sidans texter" className="mt-6">
+                    <div className="star-faq">
+                      {faq.map((f, i) => (
+                        <details key={`${i}-${f.question}`}>
+                          <summary>{f.question}</summary>
+                          <p>{f.answer}</p>
+                        </details>
+                      ))}
+                    </div>
+                  </Pen>
+                </div>
+              )}
+            </div>
+          </Uppstallning>
         </section>
       )}
 
       {/* Två vägar ut, under den röda linjen som bär hela sidan. */}
       <section id="vara-med" className="star-ankare pb-20 md:pb-28">
         <div data-star-in className="star-rod h-0.5 w-full" aria-hidden />
-        <div className="container-site mt-14 grid gap-10 md:mt-20 md:grid-cols-2 md:gap-16">
-          <div>
-            <p className="kicker text-white/65">För dig som student</p>
-            <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
-              {settings.star_student_title && <p className="star-type text-3xl font-light leading-tight md:text-4xl">{settings.star_student_title}</p>}
-              {settings.star_student_text && <p className="mt-4 max-w-md text-white/90">{settings.star_student_text}</p>}
-            </Pen>
-            <div className="mt-7 flex flex-wrap gap-3">
-              {event && (
-                <Link href={`/evenemang/${event.slug}`} className="btn btn-light">
-                  Om evenemanget <ArrowRight size={18} />
-                </Link>
-              )}
-              <Link href="/lunchforelasningar" className="btn btn-ghost-dark">
-                Lunchföreläsningar
-              </Link>
+        <div className="mt-14 md:mt-20">
+          <Uppstallning nr={nr("vara-med")} rubrik="Vara med">
+            <div className="star-bubblor">
+              <div className="star-bubbla star-vag">
+                <p className="kicker text-white/65">För dig som student</p>
+                <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
+                  {settings.star_student_title && <h3 className="star-type text-2xl font-light leading-tight md:text-3xl">{settings.star_student_title}</h3>}
+                  {settings.star_student_text && <p className="mt-4 max-w-md text-white/90">{settings.star_student_text}</p>}
+                </Pen>
+                <div className="flex flex-wrap gap-3">
+                  {event && (
+                    <Link href={`/evenemang/${event.slug}`} className="btn btn-light">
+                      Om evenemanget <ArrowRight size={18} />
+                    </Link>
+                  )}
+                  <Link href="/lunchforelasningar" className="btn btn-ghost-dark">
+                    Lunchföreläsningar
+                  </Link>
+                </div>
+              </div>
+              <div className="star-bubbla star-vag">
+                <p className="kicker text-white/65">För er som företag</p>
+                <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
+                  {settings.star_company_title && <h3 className="star-type text-2xl font-light leading-tight md:text-3xl">{settings.star_company_title}</h3>}
+                  {settings.star_company_text && <p className="mt-4 max-w-md text-white/90">{settings.star_company_text}</p>}
+                </Pen>
+                <div className="flex flex-wrap gap-3">
+                  <a href={companyMail} className="btn btn-red">
+                    <Mail size={18} /> {contact}
+                  </a>
+                  <Link href="/foretag" className="btn btn-ghost-dark">
+                    Fler sätt att samarbeta
+                  </Link>
+                </div>
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="kicker text-white/65">För er som företag</p>
-            <Pen on={canEdit} label="Ändra sidans texter" className="mt-4">
-              {settings.star_company_title && <p className="star-type text-3xl font-light leading-tight md:text-4xl">{settings.star_company_title}</p>}
-              {settings.star_company_text && <p className="mt-4 max-w-md text-white/90">{settings.star_company_text}</p>}
-            </Pen>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <a href={companyMail} className="btn btn-red">
-                <Mail size={18} /> {contact}
-              </a>
-              <Link href="/foretag" className="btn btn-ghost-dark">
-                Fler sätt att samarbeta
-              </Link>
-            </div>
-          </div>
+          </Uppstallning>
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Avsnittens gemensamma uppställning: numret och rubriken i en spalt till vänster och innehållet till höger. På smalare skärmar
+ * står rubriken ovanför. Måtten står i star.css.
+ */
+function Uppstallning({ nr, rubrik, children }: { nr: number; rubrik: string; children: ReactNode }) {
+  return (
+    <div className="container-site star-avsnitt-rad">
+      <header className="star-avsnitt-huvud">
+        <p className="star-avsnitt-nr" aria-hidden>
+          {String(nr).padStart(2, "0")}
+        </p>
+        <h2 data-star-in className="star-type star-avsnitt-rubrik">
+          {rubrik}
+        </h2>
+      </header>
+      <div className="star-avsnitt-innehall">{children}</div>
     </div>
   );
 }
@@ -293,7 +335,7 @@ function Pen({ on, label, className, children }: { on: boolean; label: string; c
 /** Raden överst för den som får ändra sidan: läget, knappen som ändrar det och vägen till formulären. Sidhuvudet ligger ovanpå. */
 function OwnerBar({ live, asVisitor = false }: { live: boolean; asVisitor?: boolean }) {
   return (
-    <div className={cn("relative z-10 pt-[var(--header-h)] text-white", live ? "bg-white/[0.08]" : "bg-[#8f1d1d]")}>
+    <div className={cn("star-agarrad relative z-10 pt-[var(--header-h)] text-white", live ? "bg-white/[0.08]" : "bg-[#8f1d1d]")}>
       <div className="container-site flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-3">
         <p className="text-sm font-semibold">{asVisitor ? "Du ser sidan som en besökare." : live ? "Sidan är live och syns för alla." : "Förhandsvisning: besökare ser bara att STAR kommer snart."}</p>
         <div className="flex flex-wrap items-center gap-2">
@@ -323,7 +365,7 @@ function OwnerBar({ live, asVisitor = false }: { live: boolean; asVisitor?: bool
   );
 }
 
-/** Genvägarna längs sidan. Vanliga ankarlänkar, så att de fungerar utan JavaScript, och raden stannar kvar under sidhuvudet. */
+/** Genvägarna längs sidan. Vanliga ankarlänkar, så att de fungerar utan JavaScript, och raden ligger fast under sidhuvudet (star.css). */
 function SectionNav({ items }: { items: { href: string; label: string }[] }) {
   return (
     <nav aria-label="På den här sidan" className="star-nav">
@@ -422,8 +464,8 @@ function CompanyCard({ company, delay }: { company: StarCompany; delay: number }
 
 /** Programmet som en bana uppför himlen. Stegen ligger där grafen i loggan går: uppåt åt höger, med ett hack varannan punkt. */
 function Route({ stops }: { stops: ProgramStop[] }) {
-  // Fler än sex punkter får inte plats bredvid varandra, och då blir banan en vanlig lista även på datorn.
-  const long = stops.length > 6;
+  // Fler än fem punkter får inte plats bredvid varandra i avsnittets spalt, och då blir banan en vanlig lista även på datorn.
+  const long = stops.length > 5;
   const n = stops.length;
   const points = stops.map((_, i) => {
     const x = n === 1 ? 0 : (i / n) * 100;
@@ -432,7 +474,7 @@ function Route({ stops }: { stops: ProgramStop[] }) {
     return { x, y: Math.max(2, 68 - climb + notch + 2) };
   });
   return (
-    <ol className="star-route mt-12" data-long={long ? "" : undefined}>
+    <ol className="star-route" data-long={long ? "" : undefined}>
       <svg className="star-route-line" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
         <polyline points={points.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke="#fff" strokeOpacity="0.45" strokeWidth="1" vectorEffect="non-scaling-stroke" />
       </svg>

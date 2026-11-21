@@ -31,6 +31,10 @@
  */
 .star-sida {
   position: relative;
+  /* Över sidfoten, så att raden med genvägar syns också där. Sidhuvudet och menyerna ligger högre. */
+  z-index: 1;
+  /* Radens höjd: det som står överst på sidan börjar så långt under sidhuvudet. */
+  --star-rad-h: 2.9rem;
   isolation: isolate;
   /* Himlen är ett fönster hög och kan stanna kvar överst ända tills sidans slut har passerat, så den sticker då ut över sidfoten.
      Det som sticker ut klipps här. Clip och inte hidden: hidden gör sidan till en egen scrollyta, och då stannar varken himlen
@@ -145,6 +149,70 @@
   }
 }
 
+/* ---------- Heron: precis en skärm, som startsidans ---------- */
+
+/*
+ * Ordet STAR och den röda linjen har samma storlek. Telefonens bredd styr, så att ordet aldrig går utanför sidans marginal. Från
+ * surfplatta styr också höjden, så att heron ryms på en skärm: --star-hero-fast är ungefär det som inte är ordet (luften överst,
+ * märket, texten och knapparna) när luften mellan delarna är som minst, räknat med standardtexterna. Skriver styrelsen längre
+ * texter blir heron högre än skärmen, och då scrollar man. Inget klipps. På telefonen är texten ändå högre än skärmen, så där
+ * räknas höjden inte in.
+ */
+.star-hero {
+  --star-hero-fast: 0rem;
+  --star-hero-luft: 0rem;
+}
+.star-ordstorlek {
+  font-size: clamp(4.5rem, min(28vw, 35svh, (100svh - var(--star-hero-fast) - var(--star-hero-luft)) / 1.05), 23rem);
+}
+/* Luften mellan delarna växer med skärmens höjd, upp till 3,25rem, så att heron krymper mjukt på en låg skärm. */
+@media (min-width: 48rem) {
+  .star-hero {
+    --star-hero-fast: 30.5rem;
+    --star-hero-luft: clamp(0rem, (100svh - 43rem) * 0.42, 3.25rem);
+    padding-bottom: calc(1.5rem + var(--star-hero-luft) * 0.31);
+  }
+  .star-hero-ord {
+    margin-top: calc(1rem + var(--star-hero-luft) * 0.31);
+  }
+  .star-hero .star-upp {
+    margin-top: calc(1.25rem + var(--star-hero-luft) * 0.38);
+  }
+}
+/*
+ * Scrollmarkören längst ner till höger i heron, bredvid knapparna som på startsidan: samma streck, i himlens färger, med en
+ * ljus bit som faller som ett stjärnfall. Bara på dator. Den har en egen smal spalt, så att den aldrig står över texten.
+ */
+.star-scroll {
+  display: none;
+}
+.star-scroll-spar {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 3rem;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.22);
+}
+.star-scroll-lopare {
+  position: absolute;
+  inset: 0 0 50%;
+  background: linear-gradient(to bottom, transparent, #fff);
+  animation: scroll-cue 2s ease-in-out infinite;
+}
+@media (min-width: 64rem) {
+  .star-upp:has(> .star-scroll) {
+    grid-template-columns: repeat(12, minmax(0, 1fr)) auto;
+  }
+  .star-scroll {
+    display: flex;
+    width: 1rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
 /* ---------- Rörelsen: bara transform och opacity, så att den går på grafikkortet och inte hindrar scrollningen ---------- */
 
 /*
@@ -214,53 +282,67 @@
   }
 }
 
+/*
+ * Bilden rör sig också för den som har valt bort rörelse i sin enhet: himlen, grafen, linjerna och kartan. Sektionen vill ha
+ * det så, som i startsidans hero, och de delarna är undantagna från den allmänna regeln i globals.css. Texten tvingas inte
+ * att röra sig: den har sin rörelse i blocket längre ner, som bara gäller den som inte har valt bort rörelse.
+ */
+.star-himmel::before {
+  animation: star-tona-in 3.2s ease-out 0.1s backwards;
+}
+.star-himmel-yta canvas[data-tand] {
+  animation: star-tona-in var(--t) ease-out var(--d) backwards;
+}
+.star-ljus {
+  animation: star-tona-in 1.3s ease-out var(--d) backwards;
+}
+.star-ljus > span {
+  animation: star-andas var(--t) ease-in-out calc(var(--d) + 1.3s) infinite;
+}
+.star-draw {
+  animation: star-svep-ut 2.4s var(--ease-out-expo) 0.25s backwards;
+}
+.star-draw-inre {
+  animation: star-svep-in 2.4s var(--ease-out-expo) 0.25s backwards;
+}
+.star-linje {
+  transform-origin: 25% 50%;
+  animation: star-linje 1.6s var(--ease-out-expo) backwards;
+}
+/* Texten: ordet och raderna i heron, och det som tonas in när man scrollar. Bara för den som inte har valt bort rörelse. */
 @media (prefers-reduced-motion: no-preference) {
-  .star-himmel::before {
-    animation: star-tona-in 3.2s ease-out 0.1s backwards;
-  }
-  .star-himmel-yta canvas[data-tand] {
-    animation: star-tona-in var(--t) ease-out var(--d) backwards;
-  }
-  .star-ljus {
-    animation: star-tona-in 1.3s ease-out var(--d) backwards;
-  }
-  .star-ljus > span {
-    animation: star-andas var(--t) ease-in-out calc(var(--d) + 1.3s) infinite;
-  }
-  .star-draw {
-    animation: star-svep-ut 2.4s var(--ease-out-expo) 0.25s backwards;
-  }
-  .star-draw-inre {
-    animation: star-svep-in 2.4s var(--ease-out-expo) 0.25s backwards;
-  }
-  .star-linje {
-    transform-origin: 25% 50%;
-    animation: star-linje 1.6s var(--ease-out-expo) backwards;
-  }
   .star-ord {
     animation: star-ord 1s var(--ease-out-expo) backwards;
   }
   .star-upp {
     animation: star-upp 0.9s var(--ease-out-expo) 0.45s backwards;
   }
-  /* Bara på skärmen, så att en utskrift alltid är hel. Attributen sätts av star-rorelse.tsx, och bara på det som ligger utanför bilden. */
   @media screen {
     [data-star-vantar]:not(.star-karta) {
       opacity: 0;
     }
-    .star-karta[data-star-vantar] > svg {
-      opacity: 0.25;
-    }
     [data-star-tand]:not(.star-karta) {
       animation: star-upp 0.7s var(--ease-out-expo) var(--d, 0s) backwards;
     }
-    .star-karta[data-star-tand] > svg {
-      animation: star-karta 1.6s ease-out backwards;
-    }
-    .star-rod[data-star-tand] {
-      transform-origin: left center;
-      animation: star-linje 1.4s var(--ease-out-expo) backwards;
-    }
+  }
+}
+/*
+ * Kartan och den röda linjen, för alla. Bara på skärmen, så att en utskrift alltid är hel. Attributen sätts av star-rorelse.tsx,
+ * och bara på det som ligger utanför bilden. Reglerna står efter textens, så att linjen får sin egen rörelse.
+ */
+@media screen {
+  .star-karta[data-star-vantar] > svg {
+    opacity: 0.25;
+  }
+  .star-karta[data-star-tand] > svg {
+    animation: star-karta 1.6s ease-out backwards;
+  }
+  .star-rod[data-star-vantar] {
+    opacity: 0;
+  }
+  .star-rod[data-star-tand] {
+    transform-origin: left center;
+    animation: star-linje 1.4s var(--ease-out-expo) backwards;
   }
 }
 
@@ -465,17 +547,6 @@
   }
 }
 
-/* På större skärmar ligger uppgifterna om dagen i himlen ovanför banan, som bara klättrar till höger om dem. */
-@media (min-width: 64rem) {
-  .star-route:not([data-long]) {
-    margin-top: -8rem;
-    pointer-events: none;
-  }
-  .star-route:not([data-long]) .star-stop {
-    pointer-events: auto;
-  }
-}
-
 /* ---------- Avsnitten och raden med genvägar ---------- */
 
 .star-avsnitt,
@@ -488,13 +559,172 @@
 .star-card {
   scroll-margin-top: 3.25rem;
 }
+/*
+ * Alla avsnitt har samma uppställning (Uppstallning i sidan): numret och rubriken i en spalt till vänster och innehållet till
+ * höger. På smalare skärmar står rubriken ovanför. Rubriken står still i sitt avsnitt: en rubrik som följde med medan
+ * innehållet scrollade förbi gjorde att sidan rörde sig i två takter, och det förvirrade.
+ */
+.star-avsnitt-rad {
+  display: grid;
+  gap: 2rem;
+}
+.star-avsnitt-nr {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: rgb(255 255 255 / 0.65);
+}
+.star-avsnitt-rubrik {
+  margin-top: 0.75rem;
+  font-size: clamp(2.25rem, 9vw, 3.25rem);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.star-avsnitt-innehall {
+  min-width: 0;
+}
+/* Innehållet börjar i höjd med numret, vad det än börjar med. */
+.star-avsnitt-innehall > :first-child {
+  margin-top: 0;
+}
+/* Kartan hålls så bred att namnen på den är läsliga men inte större än sidans text. */
+.star-karta {
+  max-width: 52rem;
+}
+/* Korten: två i bredd från surfplatta, tre när innehållet har hela sidans bredd, och två igen i spalten bredvid rubriken. */
+.star-kort {
+  display: grid;
+  gap: 1rem;
+}
+@media (min-width: 48rem) {
+  .star-kort {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 64rem) {
+  .star-kort {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (min-width: 80rem) {
+  .star-kort {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .star-avsnitt-rad {
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: 2.5rem;
+  }
+  .star-avsnitt-rubrik {
+    font-size: clamp(2.25rem, 3.5vw, 3.25rem);
+  }
+}
 
+/* ---------- Bubblorna ---------- */
+
+/*
+ * Samma ruta som företagskorten (rundning, tunn ljus kant och svag ljus fyllning) för de block som annars står löst mot
+ * himlen: programmet, tipsen, frågorna och de två vägarna i "Vara med". Luften inuti är också kortens, så att texten
+ * börjar lika långt in i alla rutor på sidan.
+ */
+.star-bubbla {
+  border: 1px solid rgb(255 255 255 / 0.15);
+  border-radius: 1.5rem;
+  background-color: rgb(255 255 255 / 0.04);
+  padding: 1.5rem;
+}
+/* Två bubblor i bredd från surfplatta, lika höga och med kortens mellanrum. */
+.star-bubblor {
+  display: grid;
+  gap: 1rem;
+}
+/* De två vägarna: knapparna står på samma höjd också när den ena texten är längre. */
+.star-vag {
+  display: flex;
+  flex-direction: column;
+}
+.star-vag > :last-child {
+  margin-top: auto;
+  padding-top: 1.75rem;
+}
+/* Frågorna slutar med bubblans egen kant, så listan behöver ingen linje sist. */
+.star-bubbla .star-faq details:last-child {
+  border-bottom: 0;
+}
+.star-bubbla .star-faq details:last-child:not([open]) summary {
+  padding-bottom: 0;
+}
+.star-bubbla .star-faq details:last-child p {
+  padding-bottom: 0;
+}
+@media (min-width: 48rem) {
+  .star-bubblor {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/*
+ * Raden med genvägar ligger fast under sidhuvudet hela vägen, från sidans början till sidfotens slut. Fixed och inte sticky:
+ * en sticky rad följer sin förälder, så den stod under heron när sidan öppnades, gled upp till sidhuvudet medan man scrollade
+ * och försvann igen vid sidfoten. .star-sida ligger därför ett steg över sidfoten, annars ritas sidfoten ovanpå raden.
+ */
 .star-nav {
-  position: sticky;
+  position: fixed;
+  inset-inline: 0;
   top: var(--header-h);
   z-index: 20;
   border-block: 1px solid rgb(255 255 255 / 0.12);
-  background: var(--color-star-navy);
+  background-color: var(--color-star-navy);
+  transition:
+    background-color 0.3s,
+    border-color 0.3s;
+}
+/*
+ * Samma princip som listen ovanför: raden är genomskinlig högst upp och får sin bakgrund när raden med STAR-loggan i heron når
+ * den. Den följer listens läge (data-scrollad), och före hydreringen samma tidslinje som listen (--hero-grans i globals.css).
+ * Utan JavaScript har båda alltid sin bakgrund.
+ */
+html.js:has(.sidhuvud:not([data-scrollad])) .star-nav {
+  border-block-color: transparent;
+  background-color: transparent;
+}
+@supports (timeline-scope: --hero-grans) and (animation-range: exit 0% exit 30%) {
+  html.js:has(.sidhuvud:not([data-scrollad])) .star-nav {
+    animation: star-rad-bakgrund linear both;
+    animation-timeline: --hero-grans;
+    animation-range: exit 0% exit 30%;
+  }
+}
+/* Med raden är det som ligger fast överst både listen och raden. Där når herons logga det fasta, och där byter listen läge. */
+.star-nav + .star-hero [data-hero-grans] {
+  --hero-grans-topp: calc(var(--header-h) + var(--star-rad-h));
+}
+@keyframes star-rad-bakgrund {
+  to {
+    border-block-color: rgb(255 255 255 / 0.12);
+    background-color: var(--color-star-navy);
+  }
+}
+/* Raden tar ingen plats i sidan, så det som står överst börjar under den. Med raden är det övriga i heron lite lägre. */
+.star-nav + .star-hero {
+  padding-top: calc(var(--header-h) + var(--star-rad-h) + 1rem);
+}
+@media (min-width: 48rem) {
+  .star-nav + .star-hero {
+    --star-hero-fast: 30rem;
+    padding-top: calc(var(--header-h) + var(--star-rad-h) + 1.5rem);
+  }
+}
+.star-nav + .star-agarrad {
+  padding-top: calc(var(--header-h) + var(--star-rad-h));
+}
+/* På papper skulle en fast rad komma med på varje sida. */
+@media print {
+  .star-nav {
+    display: none;
+  }
 }
 .star-nav ul {
   display: flex;

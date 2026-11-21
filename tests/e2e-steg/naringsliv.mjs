@@ -138,7 +138,8 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await p.getByRole("heading", { name: "Vilka kommer" }).waitFor();
     if ((await p.locator(".star-card").count()) === 0) await p.getByText("Företagen presenteras snart").waitFor();
     await p.getByText(/^(Om \d+ dagar|om \d+ dagar|i morgon|i dag|Pågår nu)$/i).first().waitFor();
-    await p.getByRole("heading", { name: "Dagen" }).waitFor();
+    // Exakt namn, eftersom sidan också har rubriken Inför dagen.
+    await p.getByRole("heading", { name: "Dagen", exact: true }).waitFor();
     await p.getByText("Mässan öppnar").waitFor();
     const mail = await p.getByRole("link", { name: "sasu@statlin.se" }).getAttribute("href");
     assert.match(mail, /^mailto:sasu@statlin\.se\?subject=/);
@@ -146,7 +147,7 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     await context.close();
   });
 
-  await step("STAR-sidans himmel tänds och stjärnfall passerar, och den står helt still för den som inte vill ha rörelse", async () => {
+  await step("STAR-sidans himmel tänds och stjärnfall passerar, också för den som har valt bort rörelse, och texten står då still", async () => {
     const vantaPa = async (p, vad, fraga) => {
       const slut = Date.now() + 15000;
       while (Date.now() < slut) {
@@ -168,12 +169,17 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.deepEqual(fel, [], "himlen ska inte ge fel på sidan");
     await context.close();
 
+    // Himlen rör sig också för den som har valt bort rörelse i sin enhet: sektionen vill ha bilden levande för alla, som startsidans
+    // hero. Texten tvingas inte att röra sig: ordet i heron har ingen entré, och inget av det som annars tonas in vid scroll är dolt.
     const lugn = await newVisitor(browser, { reducedMotion: "reduce" });
     await lugn.page.goto(`${BASE}/star`);
-    await vantaPa(lugn.page, "stjärnorna ska finnas även utan rörelse", () => document.querySelectorAll(".star-himmel-yta canvas").length === 1);
-    await lugn.page.waitForTimeout(700);
-    assert.equal(await lugn.page.locator(".star-ljus").count(), 0, "inga stjärnor ska andas utan rörelse");
-    assert.equal(await lugn.page.evaluate(() => document.querySelector(".star-himmel").getAnimations({ subtree: true }).length), 0, "himlen ska stå helt still");
+    await vantaPa(lugn.page, "stjärnorna ska tändas och andas även med rörelse avstängd", () => document.querySelectorAll(".star-himmel-yta canvas").length > 0 && document.querySelectorAll(".star-ljus").length > 0);
+    await vantaPa(lugn.page, "ett stjärnfall ska passera även med rörelse avstängd", () => document.querySelector(".star-stjarnfall").getAnimations().length > 0);
+    const text = await lugn.page.evaluate(() => ({
+      ord: getComputedStyle(document.querySelector(".star-ord")).animationName,
+      dolda: [...document.querySelectorAll("[data-star-in]:not(.star-karta):not(.star-rod)")].filter((el) => getComputedStyle(el).opacity !== "1").length,
+    }));
+    assert.deepEqual(text, { ord: "none", dolda: 0 }, "texten ska stå still med rörelse avstängd");
     await lugn.context.close();
   });
 
@@ -199,9 +205,12 @@ export default async function naringslivSteg({ BASE, browser, page, step, switch
     assert.equal(await card.isVisible(), true);
     await p.locator('label:has(input[value="alla"])').click();
     await otherCard.waitFor();
-    // Stjärnan leder till kortet.
-    await p.locator(`svg:visible a[aria-label="${company}, till kortet"]`).click();
-    await p.waitForURL(/#foretag-\d+$/);
+    // Stjärnkartan visas först från sex företag. Finns den leder stjärnan till kortet, annars finns bara korten.
+    const stjarna = p.locator(`svg:visible a[aria-label="${company}, till kortet"]`);
+    if ((await p.locator(".star-card").count()) >= 6) {
+      await stjarna.click();
+      await p.waitForURL(/#foretag-\d+$/);
+    } else assert.equal(await stjarna.count(), 0, "med få företag ska kartan inte visas");
     await context.close();
 
     await page.getByRole("link", { name: company }).first().click();

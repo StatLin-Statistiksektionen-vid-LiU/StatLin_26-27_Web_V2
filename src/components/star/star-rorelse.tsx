@@ -11,10 +11,13 @@ export function StarRorelse() {
   useEffect(() => {
     const rot = document.querySelector<HTMLElement>("[data-star-rot]");
     if (!rot) return;
-    const lugn = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const stada: (() => void)[] = [];
 
-    if (!lugn) {
+    const lugn = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Går också för den som har valt bort rörelse i sin enhet: kartan och den röda linjen ska komma fram för alla. Texten står då still,
+    // det sköter star.css.
+    {
       // Allt som tonas in kostar målning mitt i scrollningen. Telefonen får bara rubrikerna, kartan och linjen, de stora skärmarna även listorna.
       const urval = window.matchMedia("(min-width: 48rem)").matches ? "[data-star-in]" : "[data-star-in]:not([data-star-in='stor'])";
       const delar = [...rot.querySelectorAll<HTMLElement>(urval)];

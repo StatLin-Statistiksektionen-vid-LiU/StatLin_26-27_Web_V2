@@ -43,10 +43,12 @@ function spanningLines(stars: MapStar[]): [number, number][] {
   return lines;
 }
 
-/** Datorn: en bred himmel där namnen står bredvid stjärnorna utan att krocka. Himlen växer med antalet företag. */
-export function wideMap(companies: MapInput[]): StarMap {
-  const width = 1000;
-  const height = Math.min(1100, Math.max(460, 120 + companies.length * 34));
+/**
+ * Datorn: en bred himmel där namnen står bredvid stjärnorna utan att krocka. Himlen växer med antalet företag. En smalare
+ * himmel blir lika mycket högre, så att stjärnorna får lika mycket plats var.
+ */
+export function wideMap(companies: MapInput[], width = 1000): StarMap {
+  const height = Math.round((Math.min(1100, Math.max(460, 120 + companies.length * 34)) * 1000) / width);
   const sorted = [...companies].sort((a, b) => a.id - b.id);
   const boxes: Box[] = [];
   const stars: MapStar[] = [];
