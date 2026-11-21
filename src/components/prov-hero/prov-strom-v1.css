@@ -1,4 +1,4 @@
-/* Hero 1 av tre förslag (hero-strom-v1.tsx). Klasserna börjar på pst1-. */
+/* Hero 1 av två (hero-strom-v1.tsx). Klasserna börjar på pst1-. */
 
 /* Scenen är alltid mörk, som förr, så färgrollerna låses här oavsett tema. */
 .pst1-hero {
@@ -60,7 +60,6 @@
   align-items: center;
   padding-top: calc(var(--header-h) + 1.75rem);
   padding-bottom: 2rem;
-  text-align: center;
 }
 .pst1-rad {
   display: flex;
@@ -103,47 +102,103 @@
 
 .pst1-logga {
   position: relative;
-  width: 181px;
   aspect-ratio: 1;
-  margin-top: 1.5rem;
+}
+/*
+ * Loggan är lite större här än i hero 2 (prov-hero.css), eftersom nederdelen är lägre. Den följer skärmens höjd på
+ * samma sätt: skärmens höjd minus det som är annat än loggan sätter taket, så att heron ryms på en skärm. Annat än loggan är
+ * här, med en ingress på två rader, omkring 400 px på telefon och 365 px på bredare skärmar.
+ * Reglerna har heron framför sig för att gå före de gemensamma.
+ */
+.pr-hero.pst1-hero .pr-logga {
+  width: 216px;
+  width: clamp(140px, min(100svh - 405px, max(216px, 50svh - 126px)), 300px);
+}
+@media (min-width: 48rem) {
+  .pr-hero.pst1-hero .pr-logga {
+    width: 320px;
+    width: clamp(200px, min(100svh - 375px, max(320px, 50svh - 150px)), 420px);
+  }
+}
+@media (min-width: 64rem) and (min-height: 48rem) {
+  .pr-hero.pst1-hero .pr-logga {
+    width: 430px;
+    width: clamp(362px, min(100svh - 400px, max(430px, 40svh + 40px)), 540px);
+  }
+}
+/*
+ * En låg skärm. På en liten telefon på högkant står texten och knapparna under varandra, och annat än loggan är omkring
+ * 345 px. På en telefon på tvären står de bredvid varandra (se längst ner), och annat än loggan är omkring 250 px.
+ */
+@media (max-height: 30rem) {
+  .pr-hero.pst1-hero .pr-logga {
+    width: 110px;
+    width: clamp(96px, 100svh - 345px, 181px);
+  }
+}
+@media (max-height: 30rem) and (min-width: 30rem) {
+  .pr-hero.pst1-hero .pr-logga {
+    width: 156px;
+    width: clamp(96px, 100svh - 250px, 181px);
+  }
+}
+/* På en liten telefon på tvären är textens spalt smal, så ingressen bryts på fler rader. */
+@media (max-height: 30rem) and (min-width: 30rem) and (max-width: 43.99rem) {
+  .pr-hero.pst1-hero .pr-logga {
+    width: 104px;
+    width: clamp(96px, 100svh - 272px, 181px);
+  }
+}
+/*
+ * Nederst, som i heron före omgörningen: rubriken och ingressen till vänster, knapparna och scrollmarkören till höger, i linje
+ * med textens nederkant. På telefon står knapparna under texten.
+ */
+.pst1-botten {
+  display: grid;
+  width: 100%;
+  align-items: end;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+/*
+ * Texten håller plats för en ingress på två rader, också när ingressen är tom eller inte har kommit från databasen än. Då står
+ * platsen över rubriken, så att rubriken står kvar nederst. Utan det flyttar sig loggan när texterna kommer. Tills de har
+ * kommit ligger en osynlig kopia av standardtexterna i en egen ruta, därav den andra väljaren.
+ */
+.pst1-text,
+.pst1-text > div {
+  display: flex;
+  flex-direction: column;
 }
 .pst1-text {
-  width: 100%;
-  margin-top: 2rem;
+  min-width: 0;
   animation: fade-up 0.9s 0.08s var(--ease-out-expo) backwards;
 }
+/* På en smal telefon krymper rubriken med fönstret, så att maskininlärning ryms på en rad även vid 320 pixlar. */
 .pst1-rubrik {
-  margin-inline: auto;
-  max-width: 48rem;
-  font-size: max(min(6.2vw, 1.6rem), min(2.6vw, 2.3rem));
+  font-size: clamp(min(6.2vw, 1.4rem), 2.5vw, 2.15rem);
   line-height: 1.04;
   text-wrap: balance;
   overflow-wrap: break-word;
 }
 .pst1-ingress {
-  margin-inline: auto;
-  margin-top: 1.25rem;
-  max-width: 36rem;
-  font-size: 1.02rem;
+  margin-top: 0.75rem;
+  min-height: calc(2 * 1.625 * 0.875rem);
+  max-width: 28rem;
+  font-size: 0.875rem;
   line-height: 1.625;
   color: var(--color-stone);
 }
 .pst1-ingress:empty {
-  display: none;
+  order: -1;
+  margin: 0 0 0.75rem;
 }
 .pst1-knapprad {
-  margin-top: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
   animation: fade-up 0.9s 0.16s var(--ease-out-expo) backwards;
-}
-.pst1-knappar {
-  justify-content: center;
-}
-/* På telefon står den första knappen ensam på sin rad, och de andra under den. */
-@media (width < 40rem) {
-  .pst1-knappar > :first-child {
-    flex-basis: 100%;
-    justify-content: center;
-  }
 }
 
 @media (min-width: 48rem) {
@@ -151,24 +206,29 @@
     padding-top: calc(var(--header-h) + 2.75rem);
     padding-bottom: 2.5rem;
   }
-  .pst1-logga {
-    width: 272px;
+  /* Knapparnas spalt är så bred som knapparna på en rad, men högst 58 procent. Rubriken får resten. */
+  .pst1-botten {
+    grid-template-columns: minmax(0, 1fr) fit-content(58%);
   }
-  .pst1-ingress {
-    font-size: 1.1rem;
-  }
-}
-@media (min-width: 64rem) {
-  .pst1-logga {
-    margin-top: 2.25rem;
+  .pst1-knapprad,
+  .pst1-knappar {
+    justify-content: flex-end;
   }
 }
-/* Dator med höjd nog: större logga och rubrik. På en lägre skärm syns raden med genvägar under heron utan att man scrollar. */
-@media (min-width: 64rem) and (min-height: 48rem) {
-  .pst1-logga {
-    width: 362px;
+/*
+ * En telefon på tvären är låg. Rubriken och knapparna står då bredvid varandra redan från 30rem, med mindre luft och en
+ * rubrik som krymper med bredden, så att heron ryms på skärmen.
+ */
+@media (max-height: 30rem) and (min-width: 30rem) {
+  .pst1-botten {
+    grid-template-columns: minmax(0, 1fr) fit-content(64%);
+    gap: 0.75rem;
+  }
+  .pst1-knapprad,
+  .pst1-knappar {
+    justify-content: flex-end;
   }
   .pst1-rubrik {
-    font-size: min(2.9vw, 2.6rem);
+    font-size: min(2.8vw, 1.4rem);
   }
 }

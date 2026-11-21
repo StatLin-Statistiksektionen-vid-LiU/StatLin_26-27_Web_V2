@@ -109,10 +109,7 @@ export function FormulaRing() {
     const gradient = gradientRef.current;
     const root = layer?.closest<HTMLElement>(".floating-logo");
     if (!layer || !gradient || !root) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (window.matchMedia("(hover: none)").matches) return touchRing(layer, root);
-    // Utan rörelse visas hela ringen stilla med CSS när musen är över loggan.
-    if (reduced) return;
 
     let angle = -Math.PI / 2;
     let target = angle;

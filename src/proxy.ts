@@ -40,19 +40,19 @@ function svar(request: NextRequest): NextResponse {
 }
 
 /**
- * Startsidan visar heron som valts i redigeringsläget, och förslag 1 om inget är valt, se src/lib/hero-val.ts. Dagens hero är
- * sidan själv. Förslagen ligger på /hero/1 till /hero/3 och visas här utan att adressen ändras. Det gäller alla anrop till startsidan, också sidbyten i klienten
- * och server actions, så att servern och webbläsaren är överens om vilken sida som visas. Går databasen inte att läsa visas dagens.
+ * Startsidan visar heron som valts i redigeringsläget, och hero 1 om inget är valt, se src/lib/hero-val.ts. De två ligger på
+ * /hero/1 och /hero/2 och visas här utan att adressen ändras. Det gäller alla anrop till startsidan, också sidbyten i klienten
+ * och server actions, så att servern och webbläsaren är överens om vilken sida som visas. Går databasen inte att läsa visas
+ * startsidan som den är, med hero 1.
  */
 function startsida(request: NextRequest): NextResponse {
-  let vag: string | null;
+  let vag: string;
   try {
     const rad = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(HERO_NYCKEL) as { value: string } | undefined;
     vag = heroVag(rad?.value);
   } catch {
     return NextResponse.next();
   }
-  if (!vag) return NextResponse.next();
   // Adressen byggs från request.url, som omdirigeringarna nedan och Nexts egna exempel. Servern får inte startas med värden
   // 127.0.0.1 (next start -H 127.0.0.1): Next skriver då om värden till localhost här, ser sedan den nya adressen som en annan värd
   // och hämtar sidan över nätet från sig själv, vilket ger fel 500 bakom en proxy med https. Docker-bilden kör HOSTNAME=0.0.0.0.

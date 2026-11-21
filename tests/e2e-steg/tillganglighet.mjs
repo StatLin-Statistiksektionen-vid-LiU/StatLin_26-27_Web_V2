@@ -170,14 +170,11 @@ export default async function tillganglighetSteg({ BASE, browser, page, step, sw
     assert.equal(await bar.getAttribute("data-corner"), "top-left");
     assert.match(await grip.getAttribute("aria-label"), /uppe till vänster/, "skärmläsaren ska få veta var den hamnade");
     assert.equal(await focusedLabel(admin).then((l) => l.startsWith("Flytta bubblan")), true, "fokus ska stanna på greppet");
-    // Bubblan får inte ligga över menyn. Smala skärmar har listen överst (boundingBox ger null när den är dold),
-    // datorn har sidomenyn till vänster, så där ska de vänstra hörnen ligga bredvid den.
+    // Bubblan får inte ligga över menyn, som står i listen överst på alla skärmar.
     const header = await admin.locator("header").first().boundingBox();
-    const sidebar = await admin.locator("aside").first().boundingBox();
     await admin.waitForTimeout(400);
     const box = await bar.boundingBox();
-    if (header) assert.ok(box.y >= header.y + header.height - 1, `övre hörnen ligger under sidhuvudet, ${box.y}`);
-    if (sidebar) assert.ok(box.x >= sidebar.x + sidebar.width - 1, `vänstra hörnen ligger över sidomenyn, x = ${box.x}`);
+    assert.ok(box.y >= header.y + header.height - 1, `övre hörnen ligger under sidhuvudet, ${box.y}`);
 
     await admin.reload();
     await waitForHydration(admin, grip);
@@ -238,20 +235,19 @@ export default async function tillganglighetSteg({ BASE, browser, page, step, sw
 
   await step("Utan JavaScript leder språklänken rätt, och menyerna går att nå", async () => {
     const { context, page: plain } = await newVisitor(browser, { javaScriptEnabled: false, viewport: { width: 1280, height: 800 } });
-    // På datorn ligger språklänken i sidomenyn. Listen överst finns bara på smala skärmar, och där sitter språket i menyn.
-    const language = () => plain.locator("aside a[hreflang]").evaluateAll((all) => all.filter((a) => a.getClientRects().length).map((a) => a.getAttribute("href")));
+    // På datorn ligger språklänken i listen överst. På smala skärmar sitter språket i menypanelen.
+    const language = () => plain.locator("header a[hreflang]").evaluateAll((all) => all.filter((a) => a.getClientRects().length).map((a) => a.getAttribute("href")));
     await plain.goto(`${BASE}/`);
     assert.equal((await language()).join(), "/en", "från en svensk sida till engelska");
     await plain.goto(`${BASE}/en`);
     assert.equal((await language()).join(), "/", "från en engelsk sida tillbaka");
 
     await plain.goto(`${BASE}/`);
-    // Sidomenyns grupper är details, så de fälls ut med tangentbordet även utan JavaScript.
-    const group = plain.locator("aside .meny-grupp", { hasText: "Studenter" }).first();
+    // Utan JavaScript öppnar CSS gruppens ruta när knappen får fokus, så att Tab når länkarna.
+    const group = plain.locator(".meny-rad > li", { hasText: "Studenter" }).first();
     const list = group.locator("ul");
     assert.equal(await list.isVisible(), false);
-    await group.locator("summary").focus();
-    await plain.keyboard.press("Enter");
+    await group.locator("button").focus();
     await list.waitFor();
     await plain.keyboard.press("Tab");
     assert.ok(await plain.evaluate(() => document.activeElement?.getAttribute("href")?.startsWith("/studenter/")), "Tab ska gå in i gruppen");

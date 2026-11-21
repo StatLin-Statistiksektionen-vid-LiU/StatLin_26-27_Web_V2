@@ -36,7 +36,7 @@ export const viewport: Viewport = {
 /**
  * Sätter temat innan något ritas, så att sidan inte blinkar i fel läge. Har besökaren tryckt på knappen för läget gäller det valet,
  * "ljust" eller "mork" (se theme-toggle.tsx). Annars gäller standardläget från Admin, som proxy.ts lägger i en kaka (se src/lib/tema.ts):
- * datorns läge när sidomenyn syns (lg, 64rem) och telefonens annars. Utan kaka blir det mörkt.
+ * datorns läge när menyn står i listen överst (lg, 64rem) och telefonens annars. Utan kaka blir det mörkt.
  */
 const THEME_SCRIPT = `var t,c;try{t=localStorage.getItem('statlin-tema')}catch(e){}if(t!=='ljust'&&t!=='mork'){try{c=/(?:^|; )${TEMA_KAKA}=(mork|ljust)\\.(mork|ljust)/.exec(document.cookie);if(c)t=matchMedia('(min-width: 64rem)').matches?c[1]:c[2]}catch(e){}}if(t==='ljust'){var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content','${TEMA_FARG.ljust}')}else document.documentElement.dataset.tema='mork'`;
 

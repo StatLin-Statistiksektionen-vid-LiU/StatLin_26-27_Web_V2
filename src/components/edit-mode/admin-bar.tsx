@@ -108,8 +108,7 @@ export function AdminBar({ user }: { user: EditUser }) {
           "fixed z-[70] flex max-w-[calc(100vw-2rem)] gap-2 print:hidden",
           // --redigeringslist är listens höjd längst ner när den syns, så att bubblan står ovanför den.
           top ? "top-[calc(var(--header-h)+0.75rem)] flex-col-reverse" : "bottom-[calc(max(1rem,env(safe-area-inset-bottom))+var(--redigeringslist,0px))] flex-col",
-          // --sidebar-w är sidomenyns bredd på datorn och 0 annars, så att bubblan inte lägger sig över menyn.
-          left ? "left-[calc(var(--sidebar-w)+1rem)] items-start" : "right-4 items-end",
+          left ? "left-4 items-start" : "right-4 items-end",
         )}
       >
         {flash && (

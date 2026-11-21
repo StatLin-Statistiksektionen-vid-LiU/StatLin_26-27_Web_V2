@@ -388,7 +388,7 @@ export async function deletePartner(fd: FormData): Promise<FormState> {
 }
 
 /**
- * Pilarna under Sponsorer: sponsorn byter plats med grannen på samma ställe på sajten, vid sidan eller i sidfoten.
+ * Pilarna under Sponsorer: sponsorn byter plats med grannen i samma grupp, huvudsponsorer eller övriga.
  * Hela gruppen numreras om, så att lika tal i Plats i listan inte står i vägen.
  */
 export async function movePartner(id: number, direction: -1 | 1): Promise<{ error: string } | undefined> {

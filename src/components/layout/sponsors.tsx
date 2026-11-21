@@ -5,16 +5,14 @@ import type { Partner } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 /*
- * Sektionens sponsorer syns på varje sida, på det ställe som admin eller SASU har valt under Sponsorer i portalen.
- * Huvudsponsorerna står vid sidan av skärmen: i sidomenyn på datorn, och i menyn och sidfoten på telefonen, där det
- * inte finns någon sidomeny. De andra står i sidfoten. Varje sponsor syns alltså på ett ställe per skärm, i den
- * ordning som valts. Utan aktiva sponsorer visas ingenting.
+ * Sektionens sponsorer syns på varje sida, i raden överst i sidfoten, i den ordning som valts under Sponsorer i portalen.
+ * Huvudsponsorerna står först där, och dessutom sist i menypanelen. Utan aktiva sponsorer visas ingenting.
  */
 
-/** Så många får plats vid sidan utan att menyn trängs undan. Fler huvudsponsorer hamnar i sidfoten tills någon flyttas. */
+/** Så många huvudsponsorer får plats i menypanelen. Fler står bara i sidfoten, efter de fyra första. */
 export const SIDE_MAX = 4;
 
-/** Sponsorerna står på tre ställen på varje sida, men läses bara en gång per sidvisning. */
+/** Sponsorerna står på två ställen på varje sida, men läses bara en gång per sidvisning. */
 const placedSponsors = cache(async () => {
   // listPartners ger huvudsponsorerna först, var grupp i den ordning som valts.
   const all = await listPartners({ activeOnly: true });
@@ -41,7 +39,7 @@ function SponsorTile({ partner }: { partner: Partner }) {
   );
 }
 
-/** Sidomenyn på datorn och menyn på telefonen: huvudsponsorerna, högst fyra. Ett udda antal får den sista över hela bredden. */
+/** Menypanelen: huvudsponsorerna, högst fyra. Ett udda antal får den sista över hela bredden. */
 export async function MenuSponsors({ className }: { className?: string }) {
   const { side } = await placedSponsors();
   if (side.length === 0) return null;
@@ -95,26 +93,18 @@ function SponsorLogo({ partner }: { partner: Partner }) {
   );
 }
 
-/**
- * Sidfoten på alla sidor: en rad med loggorna på sidans egen yta, var och en på en vit platta. Under lg finns ingen
- * sidomeny, så där står huvudsponsorerna först i raden. Står alla vid sidan blir raden bara kvar på telefonen och plattan.
- */
+/** Sidfoten på alla sidor: en rad med loggorna på sidans egen yta, var och en på en vit platta, huvudsponsorerna först. */
 export async function FooterSponsors() {
   const { side, rest } = await placedSponsors();
   if (side.length + rest.length === 0) return null;
   return (
-    <section aria-labelledby="sponsorer-sidfot" className={cn("border-b border-line", rest.length === 0 && "lg:hidden")}>
+    <section aria-labelledby="sponsorer-sidfot" className="border-b border-line">
       <div className="container-site flex flex-wrap items-center gap-x-6 gap-y-2.5 py-4">
         <h2 id="sponsorer-sidfot" className="kicker w-full shrink-0 text-stone sm:w-auto">
           Sponsorer
         </h2>
         <ul className="flex flex-1 flex-wrap items-center gap-2">
-          {side.map((p) => (
-            <li key={p.id} className="lg:hidden">
-              <SponsorLogo partner={p} />
-            </li>
-          ))}
-          {rest.map((p) => (
+          {[...side, ...rest].map((p) => (
             <li key={p.id}>
               <SponsorLogo partner={p} />
             </li>

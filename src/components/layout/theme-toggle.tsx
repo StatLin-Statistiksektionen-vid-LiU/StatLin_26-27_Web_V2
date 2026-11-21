@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 /** Samma nyckel som skriptet i src/app/layout.tsx läser innan sidan ritas. */
 const KEY = "statlin-tema";
 
-// Knappen finns både i sidomenyn och i telefonens meny, så båda får veta när läget byts.
+// Knappen finns både i listen överst och i menypanelen, så båda får veta när läget byts.
 const listeners = new Set<() => void>();
 const subscribe = (cb: () => void) => {
   listeners.add(cb);

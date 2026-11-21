@@ -19,10 +19,10 @@ export function PartnerForm({ partner, nextOrder = 0 }: { partner?: Partner | nu
         <Field label="Beskrivning" name="description">
           <TextInput name="description" defaultValue={partner?.description} maxLength={300} />
         </Field>
-        <Field label="Var syns sponsorn?" name="tier" hint="Vid sidan står den som huvudsponsor: i sidomenyn på datorn, i menyn och sidfoten på telefonen. Fyra får plats där.">
+        <Field label="Var syns sponsorn?" name="tier" hint="En huvudsponsor står först i sidfoten och dessutom i menyn på telefonen, där fyra får plats.">
           <Select name="tier" defaultValue={partner?.tier ?? "partner"}>
             <option value="partner">I sidfoten</option>
-            <option value="huvudpartner">Vid sidan av skärmen</option>
+            <option value="huvudpartner">Som huvudsponsor</option>
           </Select>
         </Field>
         {partner && (

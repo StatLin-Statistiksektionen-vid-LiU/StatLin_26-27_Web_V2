@@ -16,8 +16,8 @@ export const metadata = { title: "Sponsorer" };
 
 /** De två ställena på sajten, i samma ordning som listPartners ger sponsorerna. */
 const GROUPS: { tier: Partner["tier"]; title: string; hint: string }[] = [
-  { tier: "huvudpartner", title: "Vid sidan av skärmen", hint: "Huvudsponsorerna. På datorn i sidomenyn, på telefonen i menyn och i sidfoten. Fyra får plats." },
-  { tier: "partner", title: "I sidfoten", hint: "Längst ner på varje sida, i den här ordningen." },
+  { tier: "huvudpartner", title: "Huvudsponsorer", hint: "Först i sidfoten på varje sida, och i menyn på telefonen. Fyra får plats i menyn." },
+  { tier: "partner", title: "Övriga sponsorer", hint: "Efter huvudsponsorerna i sidfoten, i den här ordningen." },
 ];
 
 export default function AdminPartners(props: PageProps<"/admin/partners">) {
@@ -42,7 +42,7 @@ async function Partners({ searchParams }: { searchParams: PageProps<"/admin/part
       {sp.raderad && <Notice>Sponsorn är borttagen.</Notice>}
       <AdminHeader
         title="Sponsorer"
-        description="Företagen som sponsrar sektionen. Välj om varje sponsor står vid sidan av skärmen eller i sidfoten, och ordna dem med pilarna. Alla syns också under För företag."
+        description="Företagen som sponsrar sektionen. Välj vilka som är huvudsponsorer och ordna dem med pilarna. Alla syns i sidfoten och under För företag."
         actions={partners.length > 0 && <JumpToForm href="#ny-partner">Ny sponsor</JumpToForm>}
       />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
@@ -64,7 +64,7 @@ async function Partners({ searchParams }: { searchParams: PageProps<"/admin/part
                   ) : (
                     <ul className="mt-3 divide-y divide-ink/10 overflow-hidden rounded-[1.5rem] border border-ink/10 bg-white">
                       {items.map((p, i) => {
-                        // Bara de första aktiva får plats vid sidan. Resten syns i sidfoten, och det ska stå här.
+                        // Bara de första aktiva får plats i menyn. Resten syns bara i sidfoten, och det ska stå här.
                         const overflow = g.tier === "huvudpartner" && p.active && ++shown > SIDE_MAX;
                         return (
                           <li key={p.id} className="flex items-center gap-3 px-4 py-3.5 sm:gap-4 sm:px-5">
@@ -79,7 +79,7 @@ async function Partners({ searchParams }: { searchParams: PageProps<"/admin/part
                             </span>
                             <Link href={`/admin/partners/${p.id}`} className="min-w-0 flex-1">
                               <span className="block truncate font-semibold">{p.name}</span>
-                              <span className="block truncate text-xs text-stone">{overflow ? "Får inte plats vid sidan, syns i sidfoten" : p.url ? host(p.url) : "Ingen webbplats"}</span>
+                              <span className="block truncate text-xs text-stone">{overflow ? "Får inte plats i menyn, syns i sidfoten" : p.url ? host(p.url) : "Ingen webbplats"}</span>
                             </Link>
                             {!p.active && <StatusBadge published={false} label="Dold" />}
                             <PartnerMoveButtons id={p.id} name={p.name} first={i === 0} last={i === items.length - 1} />

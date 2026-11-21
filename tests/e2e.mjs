@@ -212,15 +212,17 @@ async function openDeleteConfirm(page) {
       await clockCtx.close();
     });
 
-    await step("Formelringen är stilla med minskad rörelse", async () => {
+    await step("Formelringen följer musen också med minskad rörelse", async () => {
+      // Hela heron är likadan vad enheten än har valt, se regeln om prefers-reduced-motion i globals.css.
       const stillCtx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
       const still = await stillCtx.newPage();
       await still.goto(`${BASE}/`);
+      // Som i steget ovan: ringen strömmas in efter skalet och lyssnar på musen först när den har hydrerats.
+      await still.locator(".logo-formler").waitFor({ state: "attached" });
+      await waitForHydration(still, still.locator(".logo-formler"));
+      await still.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
       await moveOverLogo(still);
-      await still.waitForTimeout(3500);
-      assert.equal(await ringRadius(still), "0", "gradienten ska inte animeras");
-      const fill = await still.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill);
-      assert.match(fill, /0\.7\)$/, "musen över loggan ska visa hela ringen");
+      await still.waitForFunction(ringIsVisible, null, { timeout: 5000 });
       await stillCtx.close();
     });
 
@@ -242,15 +244,23 @@ async function openDeleteConfirm(page) {
         p.evaluate(() => {
           const css = (selector, pseudo) => getComputedStyle(document.querySelector(selector), pseudo);
           const grain = css("main a.noise", "::after");
-          const title = getComputedStyle(document.querySelector("h1").closest('[class*="fade-up"]'));
-          const buttons = getComputedStyle(document.querySelector("section[data-startsida] a.btn-ink").closest('[class*="fade-up"]'));
+          // Rubriken och knapparna har sin entré på ett omslag: närmaste förälder som har animationen fade-up.
+          const entrance = (selector) => {
+            for (let el = document.querySelector(selector); el; el = el.parentElement) {
+              const style = getComputedStyle(el);
+              if (style.animationName === "fade-up") return style;
+            }
+            return null;
+          };
+          const title = entrance("h1");
+          const buttons = entrance("section[data-startsida] a.btn-ink");
           return {
             intro: css('.floating-logo svg[role="img"]').animationName,
             signature: css(".logo-signature").animationName,
             mask: css(".floating-logo svg g[mask]").maskImage === "none" ? "none" : "url",
             grain: grain.content === "none" ? "none" : grain.mixBlendMode,
-            title: `${title.animationDelay} ${title.animationDuration}`,
-            buttons: `${buttons.animationName} ${buttons.animationDelay}`,
+            title: title ? `${title.animationDelay} ${title.animationDuration}` : "ingen entré",
+            buttons: buttons ? `${buttons.animationName} ${buttons.animationDelay}` : "ingen entré",
             sections: css(".below-fold").contentVisibility,
             titleFont: css("h1").fontFamily.includes("Archivo Reserv"),
           };
@@ -261,7 +271,7 @@ async function openDeleteConfirm(page) {
       const header = (p) =>
         p.locator("header").first().evaluate((el) => {
           const style = getComputedStyle(el);
-          return { display: style.display, backdrop: style.backdropFilter, background: style.backgroundColor };
+          return { backdrop: style.backdropFilter, background: style.backgroundColor };
         });
 
       const mobile = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
@@ -286,10 +296,12 @@ async function openDeleteConfirm(page) {
       await phone.waitForFunction(() => getComputedStyle(document.querySelector(".logo-formler")).opacity === "1", null, { timeout: 5000 });
       assert.equal(await ringFilter(phone), "none", "formlerna ska inte ha någon glöd");
       assert.equal(await phone.locator(".logo-formler radialGradient").getAttribute("r"), "0", "gradienten ska inte animeras på telefon");
-      // Listen överst är hel på telefonen, utan oskärpa bakom sig, också när sidan är scrollad. Den har pappersfärgen i mörkt läge, som är standard.
+      // Listen överst är genomskinlig högst upp på sidan. När sidan är scrollad är den hel på telefonen, utan oskärpa bakom sig, i pappersfärgen i mörkt läge, som är standard.
+      assert.equal((await header(phone)).background, "rgba(0, 0, 0, 0)", "högst upp ska listen vara genomskinlig");
       await phone.evaluate(() => window.scrollTo({ top: 1000, behavior: "instant" }));
-      await phone.waitForTimeout(300);
-      assert.deepEqual(await header(phone), { display: "flex", backdrop: "none", background: "rgb(18, 18, 17)" });
+      // Bakgrunden tonas in, så provet väntar tills den är framme.
+      await phone.waitForFunction(() => getComputedStyle(document.querySelector("header")).backgroundColor === "rgb(18, 18, 17)", null, { timeout: 5000 });
+      assert.deepEqual(await header(phone), { backdrop: "none", background: "rgb(18, 18, 17)" });
       await phone.context().close();
 
       // Heron hoppar inte under laddningen. Loggan ska stå på samma höjd i skalet (utan JS) som med rubriken på plats, både före och efter Archivo.
@@ -310,18 +322,6 @@ async function openDeleteConfirm(page) {
         assert.ok(Math.max(...tops) - Math.min(...tops) <= 1, `loggan hoppar vid ${width} px: ${tops.join(", ")}`);
       }
 
-      // Telefon med minskad rörelse: ingenting i loggan rör sig.
-      const stillPhone = await open({ ...mobile, reducedMotion: "reduce" });
-      await stillPhone.waitForTimeout(1000);
-      const moving = await stillPhone.evaluate(() =>
-        document
-          .getAnimations()
-          .filter((a) => a.playState === "running" && a.effect?.target?.closest?.(".floating-logo"))
-          .map((a) => a.animationName || a.transitionProperty),
-      );
-      assert.deepEqual(moving, [], "loggan ska stå still");
-      await stillPhone.context().close();
-
       // Sektionernas gissade höjder gäller en smal skärm. En surfplatta lägger ut allt direkt.
       const tablet = await open({ ...mobile, viewport: { width: 768, height: 1024 } });
       assert.equal((await effects(tablet)).sections, "visible");
@@ -338,17 +338,13 @@ async function openDeleteConfirm(page) {
         sections: "visible",
         titleFont: false,
       });
-      // I heron är musen en punkt i stickprovet (HeroFit): där den drar i kurvan är pekaren ett hårkors.
-      const hero = await desktop.locator("section[data-startsida]").boundingBox();
-      await desktop.mouse.move(hero.x + 200, hero.y + 200, { steps: 4 });
-      await desktop.waitForFunction(() => document.querySelector("section[data-startsida]").style.cursor === "crosshair", null, { timeout: 5000 });
       // Formlerna har ingen glöd, så ringen har inget filter när den syns.
       await moveOverLogo(desktop);
       await desktop.waitForFunction(ringIsVisible, null, { timeout: 5000 });
       assert.equal(await ringFilter(desktop), "none", "formlerna ska inte ha någon glöd");
-      // Datorn har sidomenyn i stället för listen överst. I ett smalare fönster kommer listen tillbaka, och med mus har den kvar sin oskärpa.
-      assert.equal((await header(desktop)).display, "none");
-      assert.equal(await desktop.locator("aside").first().evaluate((el) => getComputedStyle(el).display), "flex");
+      // Datorn har menyn på en rad i listen överst, och ingen menyknapp. När sidan är scrollad har listen sin oskärpa med mus, också i ett smalare fönster.
+      assert.equal(await desktop.locator('header nav[aria-label="Huvudmeny"]').isVisible(), true);
+      assert.equal(await desktop.locator("header button.meny-knapp").isVisible(), false);
       // Oskärpan finns bara när genomskinlighetseffekterna är på i systemet. Windows kan ha dem avstängda, så provet ställer in båda lägena själv.
       const cdp = await desktop.context().newCDPSession(desktop);
       const transparency = (value) => cdp.send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-transparency", value }] });
@@ -358,16 +354,9 @@ async function openDeleteConfirm(page) {
       await desktop.waitForFunction(() => getComputedStyle(document.querySelector("header")).backdropFilter.includes("blur(24px)"), null, { timeout: 5000 });
       // Utan genomskinlighet är listen hel och har ingen oskärpa.
       await transparency("reduce");
-      assert.deepEqual(await header(desktop), { display: "flex", backdrop: "none", background: "rgb(18, 18, 17)" });
+      await desktop.waitForFunction(() => getComputedStyle(document.querySelector("header")).backgroundColor === "rgb(18, 18, 17)", null, { timeout: 5000 });
+      assert.deepEqual(await header(desktop), { backdrop: "none", background: "rgb(18, 18, 17)" });
       await desktop.context().close();
-
-      // Minskad rörelse på dator: musen över loggan visar hela ringen, utan loop och utan glöd.
-      const stillDesktop = await open({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
-      await moveOverLogo(stillDesktop);
-      await stillDesktop.waitForTimeout(300);
-      assert.equal(await ringFilter(stillDesktop), "none");
-      assert.match(await stillDesktop.locator(".logo-formler text").evaluate((el) => getComputedStyle(el).fill), /0\.7\)$/);
-      await stillDesktop.context().close();
     });
 
     await step("Genvägsraden på startsidan visar genvägarna", async () => {

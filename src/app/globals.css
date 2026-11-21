@@ -94,17 +94,15 @@
 }
 
 @layer base {
-  /* --header-h är telefonens list överst, --sidebar-w datorns sidomeny. Sidorna lägger --header-h ovanför sitt innehåll. */
+  /* --header-h är listen överst, lite högre på datorn där menyn står i den. Sidorna lägger --header-h ovanför sitt innehåll. */
   :root {
     color-scheme: light;
     --header-h: 3.5rem;
-    --sidebar-w: 0rem;
     --site-max: 78rem;
   }
   @media (min-width: 64rem) {
     :root {
-      --header-h: 0rem;
-      --sidebar-w: 15.5rem;
+      --header-h: 4rem;
     }
   }
 
@@ -154,10 +152,16 @@
     border-radius: 2px;
   }
 
+  /*
+   * Den som har valt bort rörelse i sin enhet slipper animationerna. Några saker spelas ändå, för att sektionen vill ha det så:
+   * startsidans hero, som ska vara likadan för alla, emblemens entré på utskottens och posternas sidor, bilden på STAR-sidan
+   * och i inbjudan till företag (himlen, grafen, linjerna, kartan, scrollmarkören och genvägsradens bakgrund, men inte texten),
+   * och listen överst med sin meny, som byter läge och logga över de sidornas hero.
+   */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    :not(:where(.pr-hero, .pr-hero *, .emblem, .emblem *, .utskott-sken, .star-himmel, .star-himmel *, .star-draw, .star-draw *, .star-linje, .star-rod, .star-karta, .star-karta *, .star-scroll, .star-scroll *, .star-nav, .sidhuvud, .sidhuvud *, #mobilmeny, #mobilmeny *)),
+    :not(:where(.pr-hero, .pr-hero *, .emblem, .emblem *, .utskott-sken, .star-himmel, .star-himmel *, .star-draw, .star-draw *, .star-linje, .star-rod, .star-karta, .star-karta *, .star-scroll, .star-scroll *, .star-nav, .sidhuvud, .sidhuvud *, #mobilmeny, #mobilmeny *))::before,
+    :not(:where(.pr-hero, .pr-hero *, .emblem, .emblem *, .utskott-sken, .star-himmel, .star-himmel *, .star-draw, .star-draw *, .star-linje, .star-rod, .star-karta, .star-karta *, .star-scroll, .star-scroll *, .star-nav, .sidhuvud, .sidhuvud *, #mobilmeny, #mobilmeny *))::after {
       animation-duration: 0.001ms !important;
       /* Utan den här står hjälten osynlig under sin fördröjning, eftersom `both` och `backwards` håller starttillståndet (SB-13). */
       animation-delay: 0s !important;
@@ -638,7 +642,202 @@ html:has([data-engelsk-sida]) .sprak-sv {
   display: inline-flex;
 }
 
-/* Sidomenyns grupper är details, så att de går att fälla ut även utan JavaScript. Pilen vänds när gruppen är öppen. */
+/*
+ * Listen överst. Högst upp på sidan är den genomskinlig, så att sidans huvud går ända upp. När man scrollar eller öppnar
+ * panelen får den sidans färg och en linje under sig. Där webbläsaren kan styra en animation med scrollningen sköter CSS det,
+ * så att listen är rätt också innan JavaScript har kommit, till exempel när sidan laddas om en bit ner. Annars sätter
+ * site-header.tsx data-scrollad, och utan JavaScript har listen alltid sin bakgrund.
+ */
+.sidhuvud {
+  border-bottom: 1px solid transparent;
+  /* Textfärgen följer med bakgrunden, så att namnet inte byter färg före listen när den går från en mörk topp till sin bakgrund. */
+  transition:
+    background-color 0.3s,
+    border-color 0.3s,
+    color 0.3s;
+}
+.sidhuvud[data-scrollad],
+html:not(.js) .sidhuvud {
+  border-bottom-color: var(--color-line);
+  background: color-mix(in oklab, var(--color-paper) 92%, transparent);
+  backdrop-filter: blur(24px);
+}
+/* Oskärpan följer inte med i animationen: redan en oskärpa på noll ger listen ett eget lager högst upp på sidan. */
+@keyframes sidhuvud-bakgrund {
+  to {
+    border-bottom-color: var(--color-line);
+    background: color-mix(in oklab, var(--color-paper) 92%, transparent);
+  }
+}
+@supports (animation-timeline: scroll()) {
+  .sidhuvud:not([data-scrollad]) {
+    animation: sidhuvud-bakgrund linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 1rem;
+  }
+}
+/* Med fingret och utan genomskinlighet är bakgrunden hel, utan oskärpa. */
+@media (pointer: coarse), (prefers-reduced-transparency: reduce) {
+  .sidhuvud[data-scrollad],
+  html:not(.js) .sidhuvud {
+    background: var(--color-paper);
+    backdrop-filter: none;
+  }
+  @keyframes sidhuvud-bakgrund {
+    to {
+      border-bottom-color: var(--color-line);
+      background: var(--color-paper);
+    }
+  }
+}
+
+/*
+ * Över startsidans hero är listen genomskinlig tills den står över herons sista femtedel, som på förra sajten. Heron har en
+ * egen tidslinje för hur stor del av den som är förbi, och listens bakgrund följer den i stället för sidans scrollning, så att
+ * listen är rätt också före hydreringen. Efteråt sätter site-header.tsx data-scrollad vid samma gräns (HERO_FORBI). Där
+ * webbläsaren inte kan sådana tidslinjer är listen genomskinlig över heron tills JavaScript har kommit.
+ *
+ * Före hydreringen säger herons märke (data-startsida) att det är startsidan. Efteråt gäller data-sida, eftersom Next kan ha
+ * kvar förra sidan dold i dokumentet.
+ */
+body {
+  timeline-scope: --hero-yta, --hero-grans;
+}
+/* Utan egen inset räknas sidans scroll-padding in, och då är heron förbi en hel list för tidigt. */
+[data-hero-yta] {
+  view-timeline: --hero-yta block;
+  view-timeline-inset: 0px;
+}
+/*
+ * STAR-sidan och inbjudan till företag säger till med märket från hero-topp.tsx. Där får listen sin bakgrund tidigare: när
+ * herons egen logga (data-hero-grans) når det som ligger fast överst, så att loggan ser ut att flytta upp i listen. Hur högt
+ * det fasta är står i --hero-grans-topp. Det är också märkets scroll-margin-top, och där läser site-header.tsx det.
+ */
+[data-hero-grans] {
+  scroll-margin-top: var(--hero-grans-topp, var(--header-h));
+  view-timeline: --hero-grans block;
+  view-timeline-inset: var(--hero-grans-topp, var(--header-h)) 0px;
+}
+:is(.sidhuvud[data-sida="hem"], html:has(main [data-startsida]) .sidhuvud:not([data-sida]), html:has([data-hero-topp]) .sidhuvud):not([data-scrollad]) {
+  animation: none;
+}
+@supports (timeline-scope: --hero-yta) and (animation-range: exit-crossing 80% exit-crossing 85%) {
+  :is(.sidhuvud[data-sida="hem"], html:has(main [data-startsida]) .sidhuvud:not([data-sida])):not([data-scrollad]) {
+    animation: sidhuvud-bakgrund linear both;
+    animation-timeline: --hero-yta;
+    animation-range: exit-crossing 80% exit-crossing 85%;
+  }
+  html:has([data-hero-topp]) .sidhuvud:not([data-scrollad]) {
+    animation: sidhuvud-bakgrund linear both;
+    animation-timeline: --hero-grans;
+    animation-range: exit 0% exit 30%;
+  }
+}
+
+/*
+ * Över en topp som alltid är mörk (startsidans hero, STAR-himlen) står den genomskinliga listen mot mörkt också i ljust läge.
+ * Sidan säger till med märket från mork-topp.tsx, och listen får då mörka lägets färger tills den har fått sin bakgrund.
+ * Utan JavaScript har listen alltid sin bakgrund, så där gäller lägets färger.
+ */
+html.js:has([data-mork-topp]) .sidhuvud:not([data-scrollad]) {
+  --color-ink: #ecebe6;
+  --color-ink-2: #dedcd6;
+  --color-ink-3: #cfcdc6;
+  --color-ink-4: #bdbab3;
+  --color-paper: #121211;
+  --color-paper-2: #1a1a18;
+  --color-paper-3: #262522;
+  --color-white: #1b1b19;
+  --color-stone: #a4a199;
+  --color-stone-light: #6f6c66;
+  --color-line: #2a2926;
+  --color-red-deep: #ff5247;
+  --color-red-dark: #ff8a82;
+  color: var(--color-ink);
+}
+
+/*
+ * Loggan framför namnet i listen. På startsidan står den stora loggan i heron, så den lilla glider in först när listen har
+ * fått sin bakgrund, alltså när heron nästan är förbi. Startsidan känns igen på samma sätt som ovan.
+ */
+.sidhuvud-logga {
+  display: block;
+  width: 2rem;
+  margin-right: 0.625rem;
+  transition:
+    width 0.7s var(--ease-out-expo),
+    margin-right 0.7s var(--ease-out-expo),
+    scale 0.7s var(--ease-out-expo),
+    opacity 0.45s;
+}
+:is(.sidhuvud[data-sida="hem"], html:has(main [data-startsida]) .sidhuvud:not([data-sida])):not([data-scrollad]) .sidhuvud-logga {
+  width: 0;
+  margin-right: 0;
+  scale: 0.5;
+  opacity: 0;
+}
+/*
+ * På STAR-sidorna (märket data-hero-topp="star") byts sektionens logga mot STAR-dagens när listen har fått sin bakgrund. Den
+ * ligger ovanpå sektionens logga och tonas in medan den tonas ut. På andra sidor visas den inte, och hämtas därför inte heller.
+ */
+.sidhuvud-logga-star {
+  display: none;
+}
+html:has([data-hero-topp="star"]) .sidhuvud-logga {
+  position: relative;
+}
+html:has([data-hero-topp="star"]) .sidhuvud-logga > img {
+  transition:
+    opacity 0.45s,
+    rotate 0.7s var(--ease-out-expo);
+}
+html:has([data-hero-topp="star"]) .sidhuvud-logga-star {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+  opacity: 0;
+}
+html:has([data-hero-topp="star"]) .sidhuvud[data-scrollad] .sidhuvud-logga > img:first-child {
+  opacity: 0;
+}
+html:has([data-hero-topp="star"]) .sidhuvud[data-scrollad] .sidhuvud-logga-star {
+  opacity: 1;
+}
+
+/*
+ * Gruppernas rutor i menyraden. De öppnas av meny-rad.tsx (data-oppen), och utan JavaScript när man pekar på gruppen eller
+ * går dit med tangentbordet. Luften ovanför rutan hör till den, så att muspekaren inte lämnar gruppen på vägen ner.
+ */
+.meny-ruta {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  z-index: 10;
+  padding-top: 1.1rem;
+  translate: -50% -0.25rem;
+  opacity: 0;
+  visibility: hidden;
+  /* Rutan döljs först när den har tonat ut, och syns direkt när den öppnas, så att Tab når länkarna på en gång. */
+  transition:
+    opacity 0.16s,
+    translate 0.25s var(--ease-out-expo),
+    visibility 0s 0.16s;
+}
+.meny-rad li[data-oppen] > .meny-ruta,
+html:not(.js) .meny-rad li:is(:hover, :focus-within) > .meny-ruta {
+  translate: -50% 0;
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+.meny-rad li[data-oppen] .meny-pil {
+  rotate: 180deg;
+}
+
+/* Grupperna i menyträdet är details, så att de går att fälla ut även utan JavaScript. Pilen vänds när gruppen är öppen. */
 .meny-grupp > summary {
   list-style: none;
 }
@@ -649,7 +848,7 @@ html:has([data-engelsk-sida]) .sprak-sv {
   transform: rotate(180deg);
 }
 
-/* Telefonens meny öppnas med JavaScript. Utan det blir menyknappen en länk till sidfoten, som har samma länkar. */
+/* Menypanelen öppnas med JavaScript. Utan det blir menyknappen en länk till sidfoten, som har samma länkar. På datorn står menyn i listen. */
 .meny-utan-js {
   display: none;
 }
@@ -872,28 +1071,10 @@ html:not(.js) .meny-knapp {
   animation-fill-mode: backwards;
 }
 
-/* Millimeterpapperet bakom startsidans hero (HeroGrid). Tydligast kring loggan, som står i mitten över rubriken, och tonat mot kanterna. */
+/* Millimeterpapperet bakom inloggningens panel (HeroGrid), tonat mot kanterna. */
 .hero-rutnat-bas {
   mask-image: radial-gradient(ellipse 78% 78% at 50% 38%, black 15%, transparent 80%);
   animation: rutnat-in 1.4s 0.15s ease-out backwards;
-}
-/*
- * På startsidan läggs papperet efter loggan, så att dess ring står inskriven i de grova linjerna. HeroFit mäter loggan, sätter --rx
- * och --ry och märker heron, och först då tonas papperet in. Utan JavaScript ligger det från heronens hörn.
- */
-.hero .hero-rutnat-bas {
-  background-position: var(--rx, 0) var(--ry, 0);
-  opacity: 0;
-  animation: none;
-  transition: opacity 1.2s ease-out;
-}
-.hero[data-rutat] .hero-rutnat-bas {
-  opacity: 1;
-}
-@media (scripting: none) {
-  .hero .hero-rutnat-bas {
-    opacity: 1;
-  }
 }
 /* Inloggningens panel har loggan i mitten. */
 .hero-rutnat-mitt .hero-rutnat-bas {
@@ -1156,170 +1337,168 @@ html:not(.js) .handskrift {
   pointer-events: none;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .entre {
-    --papper: 0.1s;
-    --ring: 1.4s;
-    --skriv: 1.9s;
-  }
-  .entre .e-rita {
-    stroke-dasharray: 1 1.1;
-    animation: e-rita var(--t, 0.9s) cubic-bezier(0.6, 0, 0.2, 1) var(--d, 0s) backwards;
-  }
-  .entre .e-ton {
-    animation: e-ton var(--t, 0.5s) ease-out var(--d, 0s) backwards;
-  }
-  .entre .e-pop {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: e-pop var(--t, 0.55s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0s) backwards;
-  }
-  .entre .e-gro {
-    animation: e-pop var(--t, 0.6s) cubic-bezier(0.34, 1.4, 0.64, 1) var(--d, 0s) backwards;
-  }
-  .entre .e-fall {
-    animation:
-      e-fall 0.8s steps(7) var(--d, 0s) backwards,
-      e-ton 0.05s linear var(--d, 0s) backwards;
-  }
-  .entre .e-flyg {
-    transform-box: fill-box;
-    transform-origin: center;
-    animation: e-flyg var(--t, 0.8s) cubic-bezier(0.65, 0, 0.2, 1) var(--d, 0s) backwards;
-  }
-  .entre .e-scen {
-    display: block;
-    animation: e-bort 0.35s ease-in var(--scen-ut, 2.3s) forwards;
-  }
-  .entre .e-papper {
-    animation: e-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) var(--papper) backwards;
-  }
-  .entre .e-ring {
-    animation: logo-ring-in 0.9s var(--ease-out-expo) var(--ring) backwards;
-  }
-  .entre .e-skrift {
-    animation: e-skriv 0.9s cubic-bezier(0.5, 0, 0.3, 1) var(--skriv) backwards;
-  }
-  /* När entrén är klar står loggan still. Det som rör sig efteråt är utskottets eget: bladen, visaren. */
-  .entre .e-hel {
-    animation: e-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s backwards;
-  }
-  .utskott-sken {
-    animation: e-ton 1.8s ease-out 0.2s backwards;
-  }
+.entre {
+  --papper: 0.1s;
+  --ring: 1.4s;
+  --skriv: 1.9s;
+}
+.entre .e-rita {
+  stroke-dasharray: 1 1.1;
+  animation: e-rita var(--t, 0.9s) cubic-bezier(0.6, 0, 0.2, 1) var(--d, 0s) backwards;
+}
+.entre .e-ton {
+  animation: e-ton var(--t, 0.5s) ease-out var(--d, 0s) backwards;
+}
+.entre .e-pop {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: e-pop var(--t, 0.55s) cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0s) backwards;
+}
+.entre .e-gro {
+  animation: e-pop var(--t, 0.6s) cubic-bezier(0.34, 1.4, 0.64, 1) var(--d, 0s) backwards;
+}
+.entre .e-fall {
+  animation:
+    e-fall 0.8s steps(7) var(--d, 0s) backwards,
+    e-ton 0.05s linear var(--d, 0s) backwards;
+}
+.entre .e-flyg {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: e-flyg var(--t, 0.8s) cubic-bezier(0.65, 0, 0.2, 1) var(--d, 0s) backwards;
+}
+.entre .e-scen {
+  display: block;
+  animation: e-bort 0.35s ease-in var(--scen-ut, 2.3s) forwards;
+}
+.entre .e-papper {
+  animation: e-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) var(--papper) backwards;
+}
+.entre .e-ring {
+  animation: logo-ring-in 0.9s var(--ease-out-expo) var(--ring) backwards;
+}
+.entre .e-skrift {
+  animation: e-skriv 0.9s cubic-bezier(0.5, 0, 0.3, 1) var(--skriv) backwards;
+}
+/* När entrén är klar står loggan still. Det som rör sig efteråt är utskottets eget: bladen, visaren. */
+.entre .e-hel {
+  animation: e-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.5s backwards;
+}
+.utskott-sken {
+  animation: e-ton 1.8s ease-out 0.2s backwards;
+}
 
-  /* STIG: bollen studsar in från höger och rullar på plats. Sedan sluter sig ringen om den. */
-  .entre[data-motiv="plan"] {
-    --ring: 1.9s;
-    --skriv: 2.4s;
-  }
-  .entre[data-motiv="plan"] .e-papper {
-    display: none;
-  }
-  .entre[data-motiv="plan"] .e-bana {
-    animation:
-      e-boll-x 1.7s cubic-bezier(0.25, 0.5, 0.4, 1) 0.2s backwards,
-      e-boll-y 1.7s linear 0.2s backwards;
-  }
-  .entre[data-motiv="plan"] .e-inre {
-    animation: e-boll-rull 1.7s cubic-bezier(0.25, 0.5, 0.4, 1) 0.2s backwards;
-  }
+/* STIG: bollen studsar in från höger och rullar på plats. Sedan sluter sig ringen om den. */
+.entre[data-motiv="plan"] {
+  --ring: 1.9s;
+  --skriv: 2.4s;
+}
+.entre[data-motiv="plan"] .e-papper {
+  display: none;
+}
+.entre[data-motiv="plan"] .e-bana {
+  animation:
+    e-boll-x 1.7s cubic-bezier(0.25, 0.5, 0.4, 1) 0.2s backwards,
+    e-boll-y 1.7s linear 0.2s backwards;
+}
+.entre[data-motiv="plan"] .e-inre {
+  animation: e-boll-rull 1.7s cubic-bezier(0.25, 0.5, 0.4, 1) 0.2s backwards;
+}
 
-  /* SASU: navet skickar ut skivans hål längs ekrarna (scenen i motiv-utskott.tsx), och loggans bild tonas in under dem när de är framme. */
-  .entre[data-motiv="skiva"] {
-    --papper: 0.3s;
-    --ring: 1.4s;
-    --skriv: 2.1s;
-    --scen-ut: 2.05s;
-  }
-  .entre[data-motiv="skiva"] .e-bana {
-    animation: e-ton 0.25s ease-out 1.9s backwards;
-  }
-  /* Ekerns streck löper ut från navet: mönstret är tre streck och sedan tomt, och det skjuts in längs linjen. */
-  .entre .e-eker {
-    stroke-dasharray: 5.8 5.5 5.8 5.5 5.8 99;
-    animation: e-eker var(--t, 0.6s) cubic-bezier(0.3, 0, 0.2, 1) var(--d, 0s) backwards;
-  }
+/* SASU: navet skickar ut skivans hål längs ekrarna (scenen i motiv-utskott.tsx), och loggans bild tonas in under dem när de är framme. */
+.entre[data-motiv="skiva"] {
+  --papper: 0.3s;
+  --ring: 1.4s;
+  --skriv: 2.1s;
+  --scen-ut: 2.05s;
+}
+.entre[data-motiv="skiva"] .e-bana {
+  animation: e-ton 0.25s ease-out 1.9s backwards;
+}
+/* Ekerns streck löper ut från navet: mönstret är tre streck och sedan tomt, och det skjuts in längs linjen. */
+.entre .e-eker {
+  stroke-dasharray: 5.8 5.5 5.8 5.5 5.8 99;
+  animation: e-eker var(--t, 0.6s) cubic-bezier(0.3, 0, 0.2, 1) var(--d, 0s) backwards;
+}
 
-  /*
-   * UBU: signaturen skrivs först, över den tomma skivan, och trädet växer sedan upp bakom den ur ringens botten. Trädet står aldrig
-   * utan signaturen: det som ligger under den i loggan finns inte att visa, och lagningen av det syns som trasiga grenar.
-   */
-  .entre[data-motiv="trad"] {
-    --papper: 0.3s;
-    --skriv: 0.5s;
-    --ring: 1.7s;
-  }
-  .entre[data-motiv="trad"] .e-bana {
-    animation: e-vax 1.6s cubic-bezier(0.5, 0, 0.3, 1) 1s backwards;
-  }
-  /* Bladen vajar på sina skaft när de har slagit ut, vart och ett i sin takt. */
-  .entre[data-motiv="trad"] .e-gro {
-    animation:
-      e-pop var(--t, 0.6s) cubic-bezier(0.34, 1.4, 0.64, 1) var(--d, 0s) backwards,
-      e-vaj 4.6s ease-in-out calc(var(--d, 0s) * 2.5 + 3s) infinite alternate;
-  }
+/*
+ * UBU: signaturen skrivs först, över den tomma skivan, och trädet växer sedan upp bakom den ur ringens botten. Trädet står aldrig
+ * utan signaturen: det som ligger under den i loggan finns inte att visa, och lagningen av det syns som trasiga grenar.
+ */
+.entre[data-motiv="trad"] {
+  --papper: 0.3s;
+  --skriv: 0.5s;
+  --ring: 1.7s;
+}
+.entre[data-motiv="trad"] .e-bana {
+  animation: e-vax 1.6s cubic-bezier(0.5, 0, 0.3, 1) 1s backwards;
+}
+/* Bladen vajar på sina skaft när de har slagit ut, vart och ett i sin takt. */
+.entre[data-motiv="trad"] .e-gro {
+  animation:
+    e-pop var(--t, 0.6s) cubic-bezier(0.34, 1.4, 0.64, 1) var(--d, 0s) backwards,
+    e-vaj 4.6s ease-in-out calc(var(--d, 0s) * 2.5 + 3s) infinite alternate;
+}
 
-  /* I de tre som följer ritas motivet först. Skivan kommer när dess innehåll börjar visas, så att den aldrig står tom. */
-  /* StatPub: kranen kommer ner och ölen fylls på nerifrån. */
-  .entre[data-motiv="bubblor"] {
-    --papper: 0.6s;
-    --ring: 2s;
-    --skriv: 2.6s;
-  }
-  .entre[data-motiv="bubblor"] .e-bana {
-    animation: e-tappa 1.7s linear 0.7s backwards;
-  }
+/* I de tre som följer ritas motivet först. Skivan kommer när dess innehåll börjar visas, så att den aldrig står tom. */
+/* StatPub: kranen kommer ner och ölen fylls på nerifrån. */
+.entre[data-motiv="bubblor"] {
+  --papper: 0.6s;
+  --ring: 2s;
+  --skriv: 2.6s;
+}
+.entre[data-motiv="bubblor"] .e-bana {
+  animation: e-tappa 1.7s linear 0.7s backwards;
+}
 
-  /* eSTIG: stapeln läggs rad för rad och biten faller in uppifrån bakom ringen, i steg som i spelet. */
-  .entre[data-motiv="block"] {
-    --papper: 0.6s;
-    --ring: 1.6s;
-    --skriv: 2.5s;
-  }
-  .entre[data-motiv="block"] .e-bana {
-    animation: e-stapla 1.5s linear 0.7s backwards;
-  }
-  /* Biten är samma bild en gång till, beskuren till bitens ruta. Den ligger kvar ovanpå sig själv när den har landat. */
-  .entre[data-motiv="block"] .e-logga::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: var(--bild) center / 100% 100%;
-    clip-path: polygon(29.3% 20.3%, 50.3% 20.3%, 50.3% 27.6%, 43.4% 27.6%, 43.4% 34.5%, 36.2% 34.5%, 36.2% 27.6%, 29.3% 27.6%);
-    animation:
-      e-bit 0.6s steps(6) 1.6s backwards,
-      e-ton 0.05s linear 1.6s backwards;
-  }
-  .entre[data-motiv="block"] :is(.e-ring, .e-skrift) {
-    z-index: 2;
-  }
+/* eSTIG: stapeln läggs rad för rad och biten faller in uppifrån bakom ringen, i steg som i spelet. */
+.entre[data-motiv="block"] {
+  --papper: 0.6s;
+  --ring: 1.6s;
+  --skriv: 2.5s;
+}
+.entre[data-motiv="block"] .e-bana {
+  animation: e-stapla 1.5s linear 0.7s backwards;
+}
+/* Biten är samma bild en gång till, beskuren till bitens ruta. Den ligger kvar ovanpå sig själv när den har landat. */
+.entre[data-motiv="block"] .e-logga::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--bild) center / 100% 100%;
+  clip-path: polygon(29.3% 20.3%, 50.3% 20.3%, 50.3% 27.6%, 43.4% 27.6%, 43.4% 34.5%, 36.2% 34.5%, 36.2% 27.6%, 29.3% 27.6%);
+  animation:
+    e-bit 0.6s steps(6) 1.6s backwards,
+    e-ton 0.05s linear 1.6s backwards;
+}
+.entre[data-motiv="block"] :is(.e-ring, .e-skrift) {
+  z-index: 2;
+}
 
-  /* AMO: urtavlan sveps fram medurs från tolv, som av en visare. */
-  .entre[data-motiv="urtavla"] {
-    --papper: 0.6s;
-    --ring: 1.7s;
-    --skriv: 2.4s;
-  }
-  .entre[data-motiv="urtavla"] .e-bana {
-    animation: e-svep 1.3s linear 0.7s backwards;
-  }
-  .entre .e-tick {
-    transform-box: view-box;
-    transform-origin: center;
-    animation:
-      e-ton 0.4s ease-out 3s backwards,
-      e-varv 60s steps(60) 3s infinite;
-  }
+/* AMO: urtavlan sveps fram medurs från tolv, som av en visare. */
+.entre[data-motiv="urtavla"] {
+  --papper: 0.6s;
+  --ring: 1.7s;
+  --skriv: 2.4s;
+}
+.entre[data-motiv="urtavla"] .e-bana {
+  animation: e-svep 1.3s linear 0.7s backwards;
+}
+.entre .e-tick {
+  transform-box: view-box;
+  transform-origin: center;
+  animation:
+    e-ton 0.4s ease-out 3s backwards,
+    e-varv 60s steps(60) 3s infinite;
+}
 
-  /* SCB: flaggan hissas ut från stången och vajar till. */
-  .entre[data-motiv="vimplar"] .e-hel {
-    transform-origin: 8% 50%;
-    animation:
-      e-hissa 0.9s cubic-bezier(0.3, 0, 0.2, 1) 0.8s backwards,
-      e-vaja 1.8s ease-out 0.8s backwards;
-  }
+/* SCB: flaggan hissas ut från stången och vajar till. */
+.entre[data-motiv="vimplar"] .e-hel {
+  transform-origin: 8% 50%;
+  animation:
+    e-hissa 0.9s cubic-bezier(0.3, 0, 0.2, 1) 0.8s backwards,
+    e-vaja 1.8s ease-out 0.8s backwards;
 }
 
 @keyframes e-rita {
@@ -1937,11 +2116,6 @@ html:not(.js) .handskrift {
   }
   .logo-formler text {
     fill: color-mix(in srgb, currentColor 85%, transparent);
-  }
-}
-@media (prefers-reduced-motion: reduce) and (hover: hover) {
-  .floating-logo:hover .logo-formler text {
-    fill: color-mix(in srgb, currentColor 70%, transparent);
   }
 }
 
@@ -2579,6 +2753,10 @@ body {
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* Menypanelen ligger under väljaren i lagerordningen, så väljaren göms medan panelen är öppen. */
+body:has(#mobilmeny[data-oppen]) .hero-valjare {
+  visibility: hidden;
+}
 .hero-valjare-namn {
   padding: 0 0.5rem 0 0.7rem;
   color: var(--color-stone);
@@ -2658,7 +2836,7 @@ body {
 }
 
 /* ---------- Mörkt läge ---------- */
-/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 59) */
+/* (ändras den här raden byggs CSS:en om, så att nya klasser i komponenterna kommer med: 65) */
 
 /*
  * Utan genomskinlighetseffekter syns ingen oskärpa bakom något. Ytor av frostat glas (sidhuvudet på telefon, etiketter på bilder,
@@ -2722,4 +2900,8 @@ body {
   --color-stone-light: #7f796e;
   --color-red-deep: #c80000;
   --color-red-dark: #8f0000;
+}
+/* En ljus knapp på en sådan yta är vit med mörk text i båda lägena. Under muspekaren fick den annars mörka lägets papper och blev svart med svart text. */
+:root[data-tema="mork"] :is(.tema-fast, .star-sky, .bg-red, .bg-red-deep, .bg-star-navy) :is(.btn-light, .btn-ghost):hover {
+  background: #e5e0d6;
 }

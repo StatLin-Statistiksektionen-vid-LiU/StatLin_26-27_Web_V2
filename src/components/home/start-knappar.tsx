@@ -32,12 +32,19 @@ export function Lank({ href, className, children }: { href: string; className: s
   );
 }
 
+/*
+ * Knapparna står på en rad även på telefon. Under 400 px tas lite luft och textstorlek bort, så att de tre standardknapparna
+ * ryms ner till 360 px, och under 350 px försvinner även pilen. Längre texter bryter raden som vanligt.
+ */
+const RAD = "flex flex-wrap items-center gap-2.5 max-[25rem]:gap-1.5";
+const SMAL = "max-[25rem]:px-[0.55rem] max-[25rem]:text-[0.8rem] max-[21.875rem]:px-2 max-[21.875rem]:text-[0.76rem]";
+
 /** En knapp i heron, i samma storlek som genvägarna under den. Den första i raden är svart med en pil, resten är ljusa. */
 function KnappLank({ knapp, forsta }: { knapp: Knapp; forsta: boolean }) {
   return (
-    <Lank href={knapp.href} className={cn("btn btn-sm", forsta ? "btn-ink group" : "btn-ghost")}>
+    <Lank href={knapp.href} className={cn("btn btn-sm", SMAL, forsta ? "btn-ink group" : "btn-ghost")}>
       {knapp.text}
-      {forsta && <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5" />}
+      {forsta && <ArrowRight size={15} className="transition-transform duration-300 group-hover:translate-x-0.5 max-[21.875rem]:hidden" />}
     </Lank>
   );
 }
@@ -108,7 +115,7 @@ export function StartKnappar({ start, className }: { start: Start; className?: s
       }
       etikett="knapp"
       as="div"
-      className={cn("flex flex-wrap items-center gap-2.5", className)}
+      className={cn(RAD, className)}
       itemAs="div"
       itemClassName="flex rounded-full"
       falt={FALT}

@@ -1,4 +1,4 @@
-/* Hero 2 av tre förslag (hero-strom.tsx). Klasserna börjar på pst-. */
+/* Hero 2 av två (hero-strom.tsx). Klasserna börjar på pst-. */
 
 /* Heron är alltid mörk, i sajtens mörka färger, så att den går ihop med sidan i mörkt läge. Färgrollerna låses här oavsett tema. */
 .pst-hero {
@@ -109,11 +109,10 @@
   }
 }
 
+/* Loggans bredd och plats står i prov-hero.css. */
 .pst-logga {
   position: relative;
-  width: 181px;
   aspect-ratio: 1;
-  margin-top: 1.5rem;
 }
 .pst-text {
   width: 100%;
@@ -140,18 +139,19 @@
   display: none;
 }
 .pst-knapprad {
+  position: relative;
+  width: 100%;
   margin-top: 1.75rem;
   animation: fade-up 0.9s 0.16s var(--ease-out-expo) backwards;
 }
 .pst-knappar {
   justify-content: center;
 }
-/* På telefon står den första knappen ensam på sin rad, och de andra under den. */
-@media (width < 40rem) {
-  .pst-knappar > :first-child {
-    flex-basis: 100%;
-    justify-content: center;
-  }
+/* Scrollmarkören står vid högerkanten i höjd med knapparna, så att knapparna står kvar i mitten. */
+.pst-knapprad .pr-scroll {
+  position: absolute;
+  right: 0;
+  bottom: 0;
 }
 
 @media (min-width: 48rem) {
@@ -159,23 +159,12 @@
     padding-top: calc(var(--header-h) + 2.75rem);
     padding-bottom: 2.5rem;
   }
-  .pst-logga {
-    width: 272px;
-  }
   .pst-ingress {
     font-size: 1.1rem;
   }
 }
-@media (min-width: 64rem) {
-  .pst-logga {
-    margin-top: 2.25rem;
-  }
-}
-/* Dator med höjd nog: större logga och rubrik. På en lägre skärm syns raden med genvägar under heron utan att man scrollar. */
+/* Dator med höjd nog: större rubrik, och större logga (prov-hero.css). På en lägre skärm ryms de inte på en skärmhöjd. */
 @media (min-width: 64rem) and (min-height: 48rem) {
-  .pst-logga {
-    width: 362px;
-  }
   .pst-rubrik {
     font-size: min(2.9vw, 2.6rem);
   }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, MapPin, Star } from "@/components/icons";
+import { MorkTopp } from "@/components/layout/mork-topp";
 import { EmptySky } from "@/components/star/star-map";
 import "@/components/star/star.css";
 import { listLunchEvents } from "@/lib/data/events";
@@ -32,8 +33,10 @@ export default async function LunchPage({ searchParams }: PageProps<"/lunchforel
 
   return (
     <>
-      {/* Rubriken skalar med sektionens bredd och inte fönstrets, så att FÖRELÄSNINGAR ryms även bredvid sajtens sidomeny. */}
+      {/* Rubriken skalar med sektionens bredd och inte fönstrets, så att FÖRELÄSNINGAR ryms även när sektionen är smalare än fönstret. */}
       <section className="@container star-sky lunch-himmel relative isolate overflow-hidden pb-40 pt-[calc(var(--header-h)+3rem)] text-white md:pb-44 md:pt-[calc(var(--header-h)+5rem)]">
+        {/* Himlen är mörk i båda lägena, så listen överst får mörka lägets färger över den. */}
+        <MorkTopp />
         <VoteSky votes={totalVotes} />
         <div className="container-site">
           <p className="kicker text-white/70">För studenter · SASU</p>

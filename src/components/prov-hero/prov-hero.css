@@ -1,6 +1,6 @@
 /*
- * Tre förslag på startsidans hero, som styrelsen ska välja mellan. De väljs i redigeringsläget och visas på startsidan, se
- * src/lib/hero-val.ts. Det här är det som är gemensamt för de tre; var och en har sin egen fil.
+ * Två heroer för startsidan, som styrelsen ska välja mellan. De väljs i redigeringsläget och visas på startsidan, se
+ * src/lib/hero-val.ts. Det här är det som är gemensamt för de två; var och en har sin egen fil.
  */
 
 .pr-hero {
@@ -8,4 +8,102 @@
   isolation: isolate;
   overflow: hidden;
   border-bottom: 1px solid var(--color-line);
+}
+
+/*
+ * Heron fyller hela skärmen: raden med sektionens namn överst, loggan mitt i och rubriken med knapparna nederst. Bakgrunden
+ * ritas i bandet mellan raden och rubriken, med loggan i mitten, så utrymmet som blir över läggs lika över och under loggan.
+ *
+ * svh är skärmens höjd med webbläsarens fält framme. Knapparna syns då utan att man scrollar, och inget hoppar när
+ * adressfältet på telefonen försvinner. Är innehållet högre än skärmen, som på en telefon på tvären, växer heron i stället.
+ */
+.pr-inre {
+  min-height: 100svh;
+}
+.pr-rad {
+  margin-bottom: 1.5rem;
+}
+/*
+ * Loggan följer skärmens höjd. På en hög skärm växer den från sin vanliga bredd, så att den fyller sin del av bandet: knappt
+ * hälften av bandets höjd, upp till en största bredd. På en låg skärm, som en bärbar dator eller en telefon i en app med
+ * breda fält, krymper den i stället, så att rubriken och knapparna ryms på första skärmen: skärmens höjd minus det som är
+ * annat än loggan, vilket är omkring 345 px på telefon och 375 px på bredare skärmar. Hero 1 har ett annat upplägg nederst
+ * och därför egna, lite större mått i prov-strom-v1.css.
+ *
+ * Första bredden gäller där webbläsaren inte kan svh.
+ */
+.pr-logga {
+  width: 181px;
+  width: clamp(140px, min(100svh - 345px, max(181px, 45svh - 126px)), 272px);
+  max-width: 70vw;
+  margin-block: auto;
+}
+@media (min-width: 48rem) {
+  .pr-logga {
+    width: 272px;
+    width: clamp(181px, min(100svh - 375px, max(272px, 45svh - 150px)), 362px);
+  }
+}
+@media (min-width: 64rem) {
+  .pr-rad {
+    margin-bottom: 2.25rem;
+  }
+}
+/* Dator med höjd nog: större logga. På en lägre skärm ryms den inte på en skärmhöjd tillsammans med rubriken. */
+@media (min-width: 64rem) and (min-height: 48rem) {
+  .pr-logga {
+    width: 362px;
+    width: clamp(362px, 45svh - 110px, 440px);
+  }
+}
+/*
+ * En telefon på tvären är lägre än innehållet. Loggan och luften krymper då, så att också rubriken och knapparna ryms på
+ * första skärmen. Reglerna har heron framför sig för att gå före förslagens egna mått, som står i filer som läses senare.
+ */
+@media (max-height: 30rem) {
+  .pr-hero .pr-inre {
+    padding-top: calc(var(--header-h) + 0.75rem);
+    padding-bottom: 1rem;
+  }
+  .pr-hero .pr-rad {
+    margin-bottom: 0.75rem;
+  }
+  /* Skärmens höjd minus det som är annat än loggan, som här är omkring 250 px. */
+  .pr-hero .pr-logga {
+    width: 156px;
+    width: clamp(96px, 100svh - 250px, 181px);
+  }
+  /* Rubriken och knapparna, som står efter loggan. */
+  .pr-hero .pr-inre > :nth-child(n + 3) {
+    margin-top: 1rem;
+  }
+}
+
+/* Scrollmarkören bredvid knapparna (ProvScroll): ett lodrätt streck där en röd bit löper nedåt. Den syns bara på dator, som förr. */
+.pr-scroll {
+  display: none;
+}
+.pr-scroll-spar {
+  position: relative;
+  display: block;
+  width: 1px;
+  height: 3rem;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--color-ink) 15%, transparent);
+}
+.pr-scroll-lopare {
+  position: absolute;
+  inset: 0 0 50%;
+  background: var(--color-red);
+  animation: scroll-cue 2s ease-in-out infinite;
+}
+@media (min-width: 64rem) {
+  .pr-scroll {
+    display: flex;
+    flex: none;
+    width: 2rem;
+    height: 3rem;
+    align-items: center;
+    justify-content: center;
+  }
 }

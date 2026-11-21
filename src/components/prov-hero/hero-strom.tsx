@@ -1,22 +1,24 @@
 import { FloatingLogo } from "@/components/brand/floating-logo";
+import { MorkTopp } from "@/components/layout/mork-topp";
 import { IntroOnce } from "@/components/ui/intro-once";
-import { ProvFormler, ProvKicker, ProvKnappar, ProvText } from "./delar";
+import { ProvFormler, ProvKicker, ProvKnappar, ProvScroll, ProvText } from "./delar";
 import { StromFalt } from "./strom-falt";
 import "./prov-hero.css";
 import "./prov-strom.css";
 
 /*
- * Hero 2 av tre förslag (src/lib/hero-val.ts). Sektionens namn uppe i hörnet, loggan stilla i mitten och rubriken och knapparna
+ * Hero 2 av två (src/lib/hero-val.ts). Sektionens namn uppe i hörnet, loggan stilla i mitten och rubriken och knapparna
  * under den. Heron är alltid mörk, i sajtens mörka färger. Bakom står rutnätet, StatLin i jätteformat och prickarna, och genom
  * dem rullar seriens linje. Ordets bokstäver fylls med rött upp till linjen, och linjens band tänder rutnätet i rött (StromFalt).
  */
 export function HeroStrom() {
   return (
     <section data-startsida data-hero-yta className="pr-hero pst-hero">
+      <MorkTopp />
       <IntroOnce />
       <StromFalt />
-      <div className="container-site pst-inre">
-        <div data-pst-rad className="kicker pst-rad">
+      <div className="container-site pr-inre pst-inre">
+        <div data-pst-rad className="kicker pr-rad pst-rad">
           <p className="pst-kicker">
             <span className="pst-prick" aria-hidden />
             <ProvKicker />
@@ -25,7 +27,7 @@ export function HeroStrom() {
           <span data-pst-matt aria-hidden className="tabular pst-matt" />
         </div>
 
-        <figure className="pst-logga">
+        <figure className="pr-logga pst-logga">
           <FloatingLogo className="w-full" svavar={false} ring={<ProvFormler />} />
         </figure>
 
@@ -34,6 +36,7 @@ export function HeroStrom() {
         </div>
         <div className="pst-knapprad">
           <ProvKnappar className="pst-knappar" />
+          <ProvScroll />
         </div>
       </div>
     </section>

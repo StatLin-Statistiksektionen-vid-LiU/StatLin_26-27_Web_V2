@@ -20,7 +20,7 @@ import { UpcomingEvents } from "./upcoming-events";
 /*
  * Startsidan under heron börjar med genvägarna som en smal rad. Sedan kommer tre band med samma luft och samma rubrikstil: vad som
  * händer (kalendern och nyheterna), utskotten och vem du är (ny student eller företag). Ett bands två delar står bredvid varandra där
- * bandet är minst 896 pixlar brett. Bredden mäts på bandet och inte på fönstret, eftersom sidomenyn tar en del av fönstret från 1024 pixlar.
+ * bandet är minst 896 pixlar brett. Bredden mäts på bandet och inte på fönstret, eftersom bandet slutar växa vid sidans maxbredd.
  */
 const BAND = "@container py-10 md:py-14";
 const SPALTER = "container-site grid grid-cols-1 gap-x-12 @4xl:grid-cols-12";

@@ -148,7 +148,7 @@ export function Redigeringslist() {
   const fel = lage?.typ === "fel" ? lage.fel : undefined;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[65] flex justify-center px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] print:hidden lg:pl-[calc(var(--sidebar-w)+0.5rem)]">
+    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[65] flex justify-center px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] print:hidden">
       <div ref={ref} role="region" aria-label="Ändringar på sidan" className="redigeringslist pointer-events-auto">
         {lista && antal > 0 && (
           <ul className="redigeringslist-poster" aria-label="Osparade ändringar">

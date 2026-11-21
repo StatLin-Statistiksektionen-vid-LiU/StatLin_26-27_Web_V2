@@ -129,7 +129,7 @@ export function StromFalt() {
     const fy = fyllDuk.getContext("2d");
     if (!grund || !b || !c || !g || !fy || !yta || !logga || !rad || !text) return;
 
-    const stilla = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Bakgrunden spelas också när enheten har valt bort rörelse: hela heron är undantagen, se regeln i globals.css.
     // Telefon: lägre upplösning, färre bilder och en glöd utan skuggoskärpa.
     const grov = window.matchMedia("(pointer: coarse)").matches;
     const nu = performance.now();
@@ -198,10 +198,9 @@ export function StromFalt() {
     let typsnitt = false;
     let prickar: Prick[] = [];
 
-    // Tiden sedan starten. Den som kommer tillbaka till sidan, eller har valt bort rörelse, slipper introt.
-    let t = igen || stilla ? INTRO_SLUT + 9 : 0;
+    // Tiden sedan starten. Den som kommer tillbaka till sidan slipper introt.
+    let t = igen ? INTRO_SLUT + 9 : 0;
     let forskjutning = 0;
-    let andrad = true;
     let pek = { x: 0, y: 0 };
     let faste = 0;
     let grepp = 0;
@@ -599,30 +598,25 @@ export function StromFalt() {
         sa(Math.round(tathet * Math.min(88, Math.max(20, w / 17))), Math.round(tathet * Math.min(36, Math.max(8, (w * (zonBotten - zonTopp)) / 24000))));
       }
       flytta_prickar(1);
-      andrad = true;
       rita();
     };
 
     // Ett steg framåt i tiden. Serien och prickarna glider åt vänster, och en ny observation kommer in var gång serien har glidit ett steg.
     const fram = (dt: number) => {
       t += dt;
-      if (!stilla) {
-        forskjutning += FART * dt;
-        while (forskjutning >= steg) {
-          forskjutning -= steg;
-          serie.shift();
-          serie.push(nasta());
-          jamna();
-          skriv();
-        }
-        for (const p of prickar) {
-          p.x -= FART * p.fart * dt;
-          if (p.x < -40) fodd(p, w + 20 + 30 * Math.random());
-        }
+      forskjutning += FART * dt;
+      while (forskjutning >= steg) {
+        forskjutning -= steg;
+        serie.shift();
+        serie.push(nasta());
+        jamna();
+        skriv();
       }
-      const fore = grepp;
+      for (const p of prickar) {
+        p.x -= FART * p.fart * dt;
+        if (p.x < -40) fodd(p, w + 20 + 30 * Math.random());
+      }
       grepp += (faste - grepp) * (1 - Math.exp(-dt / 0.2));
-      if (Math.abs(grepp - fore) > 0.002 || grepp > 0.01) andrad = true;
       flytta_prickar(dt);
     };
 
@@ -635,9 +629,6 @@ export function StromFalt() {
       const dt = Math.min((tid - forra) / 1000, 0.05);
       forra = tid;
       fram(dt);
-      // Utan rörelse ritas bara om när något har ändrats: storleken eller prickarna som viker undan.
-      if (stilla && !andrad) return;
-      andrad = false;
       rita();
       if (t >= INTRO_SLUT && ut && !ut.dataset.pa) skriv();
     };

@@ -5,7 +5,7 @@ import { createContext, useContext, useSyncExternalStore, type ComponentType, ty
 import { RLista, type Falt } from "@/components/edit-mode/redigerbar";
 import { useBlock } from "@/components/edit-mode/utkast";
 import { BookOpen, Calendar, Chain, ChevronDown, Handshake, Home, Mail, Newspaper, Users } from "@/components/icons";
-import { synligMeny, type NavGroup, type NavItem } from "@/lib/navigation";
+import { menyMarkering, synligMeny, type NavGroup, type NavItem } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 type IconType = ComponentType<{ size?: number; className?: string }>;
@@ -45,11 +45,11 @@ function Dold() {
 }
 
 /**
- * Menyns träd: sm är datorns sidomeny, lg telefonens meny med större rader för fingret. Menyn kommer från blocket meny
- * (standard är NAV i navigation.ts). I redigeringsläget syns även dolda grupper och länkar, alla grupper är utfällda
- * och varje grupp kan få egna länkar.
+ * Menyns träd, i panelen som öppnas med menyknappen: telefonens meny, och på datorn stället där menyn ändras. Menyn kommer
+ * från blocket meny (standard är NAV i navigation.ts). I redigeringsläget syns även dolda grupper och länkar, alla grupper
+ * är utfällda och varje grupp kan få egna länkar. Grupperna är details, så att de går att fälla ut även utan JavaScript.
  */
-export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | "lg" }) {
+export function MenyTrad({ meny }: { meny: NavGroup[] }) {
   const kontext = useContext(MenyKontext);
   // Servern ritar menyn utan sökväg. Den sparade menyn hydreras först när den kommit, och då vet sidhuvudet redan
   // sökvägen: utan sökväg under hydreringen blir det samma HTML, och den markerade sidan kommer direkt efteråt.
@@ -62,22 +62,11 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
   const { varde, aktiv, andra } = useBlock("b:meny", meny);
   const grupper = aktiv ? varde : synligMeny(varde);
 
-  const active = (href: string) =>
-    pathname !== null && (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
-  // Undersidor med ankare (/foretag#kompetens) ska inte markeras som sidan själv.
-  const exact = (href: string) => !href.includes("#") && active(href);
-  const groupActive = (g: NavGroup) => active(g.href) || !!g.children?.some((c) => exact(c.href));
-  // Bara den undersida som passar sökvägen bäst markeras, så att Om StatLin (/sektionen) inte lyser bredvid Styrelsen på /sektionen/styrelsen.
-  const basta = grupper
-    .flatMap((g) => g.children ?? [])
-    .reduce<string | null>((b, c) => (exact(c.href) && (b === null || c.href.length > b.length) ? c.href : b), null);
+  const { aktiv: active, grupp: groupActive, basta } = menyMarkering(pathname, grupper);
 
-  const row = cn(
-    "flex w-full items-center gap-2.5 rounded-md px-2.5 transition-colors",
-    storlek === "sm" ? "h-8 text-[0.875rem] pointer-coarse:h-11" : "h-11 text-[1rem]",
-  );
+  const row = "flex h-11 w-full items-center gap-2.5 rounded-md px-2.5 text-[1rem] transition-colors";
   const rowState = (on: boolean) => (on ? "bg-ink/[0.06] font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink");
-  const iconSize = storlek === "sm" ? 16 : 18;
+  const iconSize = 18;
 
   const linkRow = (href: string, label: string, Icon: IconType) => {
     const on = active(href);
@@ -97,13 +86,9 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
         // På en undersida (ett evenemang, ett utskott) är raden inte sidan själv, men den är var man är. Det sägs då också till skärmläsare.
         aria-current={pathname === c.href ? "page" : here ? "true" : undefined}
         onClick={valj}
-        className={cn(
-          "relative flex items-center rounded-md px-2.5 transition-colors",
-          storlek === "sm" ? "h-7 text-[0.84rem] pointer-coarse:h-11" : "h-11 text-[0.95rem]",
-          here ? "bg-ink/[0.06] font-medium text-ink" : "text-stone hover:bg-ink/[0.04] hover:text-ink",
-        )}
+        className={cn("relative flex h-11 items-center rounded-md px-2.5 text-[0.95rem] transition-colors", rowState(here))}
       >
-        {here && <span aria-hidden className={cn("absolute top-1/2 h-4 w-px -translate-y-1/2 bg-red", storlek === "sm" ? "-left-[0.55rem]" : "-left-[0.7rem]")} />}
+        {here && <span aria-hidden className="absolute -left-[0.7rem] top-1/2 h-4 w-px -translate-y-1/2 bg-red" />}
         <span className={cn("truncate", c.hidden && "opacity-50")}>{c.label}</span>
         {c.hidden && <Dold />}
       </Link>
@@ -136,7 +121,7 @@ export function MenyTrad({ meny, storlek }: { meny: NavGroup[]; storlek: "sm" | 
           falt={LANK_FALT}
           ny={(): NavItem => ({ label: "", href: "" })}
           max={24}
-          className={cn("mb-1.5 mt-0.5 space-y-0.5 border-l border-line", storlek === "sm" ? "ml-[1.15rem] pl-2" : "ml-[1.35rem] pl-2.5")}
+          className="mb-1.5 ml-[1.35rem] mt-0.5 space-y-0.5 border-l border-line pl-2.5"
         />
       </details>
     );

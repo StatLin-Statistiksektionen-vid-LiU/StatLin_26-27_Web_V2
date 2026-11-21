@@ -5,12 +5,13 @@ import { LOGO_GEOMETRY as G, LOGO_VIEWBOX } from "@/lib/brand/logo-paths";
 
 /*
  * Bakgrunden i hero 1 (hero-strom-v1.tsx): rutnätet, StatLin i jätteformat och prickarna från heron före omgörningen, och genom
- * dem en rullande tidsserie. De hålls ihop av en sak: serien är ljuset. Allt i bakgrunden är grått tills seriens band
- * går över det, och då lyser det rött: rutnätets linjer, ordets konturer och prickarna.
- * Prickarna är seriens observationer. De kommer in från höger, glider åt vänster i seriens fart och ligger spridda kring bandets
- * mitt, så att serien går som en ryggrad genom svärmen. När seriens huvud når dem tänds de som ligger inom bandet. Längre bort
- * glider glesare och svagare prickar långsammare, som en fond. Musen är en lampa till: prickarna viker undan för den, och rutnätet
- * och ordet lyser rött omkring den.
+ * dem en rullande tidsserie med sitt konfidensband, också det därifrån: en svag röd ton som följer vart hack i linjen.
+ * Linjen går från heronens ena kant till den andra, och strax innanför högerkanten glider den senaste observationen längs
+ * den som en punkt, som förr. I introt ritas linjen först, och sedan kommer punkten.
+ * Prickarna är seriens observationer. De kommer in från höger, glider åt vänster i seriens fart och ligger spridda kring seriens
+ * glidande medelvärde, så att serien går som en ryggrad genom svärmen. När de har passerat punkten tänds de närmaste i rött.
+ * Längre bort glider glesare och svagare prickar långsammare, som en fond. Fonden och rutnätet täcker hela heron, också bakom
+ * raden överst och texten nederst, som bakgrunden gjorde före omgörningen. Prickarna viker undan för musen.
  * Serien är en slumpvandring: volatiliteten vandrar långsamt, ibland kommer en chock som
  * klingar av, och nivån dras tillbaka mot diagonalen. Allt räknas i loggans mått: höjden 1 är u pixlar, och loggans svarta ring
  * har radien 7,5 u.
@@ -21,31 +22,33 @@ type Prick = {
   x: number;
   y: number;
   nara: boolean;
-  /** Bandets mitt där observationen föddes, i seriens mått, och avståndet från den i pixlar. */
+  /** Seriens glidande medelvärde där observationen föddes, i seriens mått, och avståndet från det i pixlar. */
   mitt: number;
   res: number;
   inne: boolean;
   fart: number;
   r: number;
   a: number;
-  /** Pekarens knuff, hur mycket ljuset har tänt pricken, och läget som ritas. */
+  /** Pekarens knuff, hur mycket serien har tänt pricken, och läget som ritas. */
   ox: number;
   oy: number;
   tand: number;
   px: number;
   py: number;
 };
-
 /** Den svarta ringens ytterkant i loggan, som andel av loggans bredd. */
 const RING = (G.ringR + G.ringW / 2) / Number(LOGO_VIEWBOX.split(" ")[2]);
 /** Avståndet mellan observationerna i pixlar och farten åt vänster i pixlar per sekund. */
 const STEG = 14;
 const STEG_TELEFON = 10;
 const FART = 21;
-/** Så många observationer hålls i minnet. De sista är framtiden: serien är redan dragen dit prickarna kommer in vid högerkanten. */
-const PUNKTER = 340;
-const FRAMTID = 28;
-/** Den observation som är på väg in vid huvudet. */
+/**
+ * Så många observationer hålls i minnet, vilket räcker till en skärm på drygt 5000 px. De sista är framtiden: serien är
+ * redan dragen förbi högerkanten, dit linjen når och där prickarna kommer in.
+ */
+const PUNKTER = 400;
+const FRAMTID = 12;
+/** Den observation som är på väg in vid punkten. */
 const HI = PUNKTER - 1 - FRAMTID;
 /** Processens mjuka tak för avvikelsen, i processens eget mått, och hur många enheter det blir här. */
 const TAK = 140;
@@ -54,36 +57,60 @@ const BRUS = 5.5;
 /** Diagonalen stiger så många enheter från loggan ut till heronens kant, men aldrig brantare än så här. */
 const STIGNING = 6;
 const BRANTAST = 0.22;
-/** Seriens huvud står så långt ut mot högerkanten, räknat från loggan. */
-const HUVUD = 0.84;
-/** Bandets standardavvikelse i enheter, och hur många observationer det glidande medelvärdet väger in åt varje håll. */
+/** Punkten för den senaste observationen står så många pixlar innanför högerkanten: två steg, som i heron före omgörningen. */
+const HUVUD_KANT = 28;
+/** Observationernas standardavvikelse kring seriens glidande medelvärde, i enheter, och hur många observationer medelvärdet väger in åt varje håll. */
 const SIGMA_GRUND = 0.42;
 const SIGMA_VOL = 0.36;
 const FONSTER = 5;
-/** Ljuset i bandet: band på band, från 1,2 till 2,8 standardavvikelser, så att det är jämnt inne i bandet och tonas ut kring kanten. */
-const LJUS_LAGER = Array.from({ length: 8 }, (_, i) => 1.2 + (1.6 * i) / 7);
-const LJUS_ALFA = 0.13;
+/** Prickarna inom så många standardavvikelser från seriens glidande medelvärde är de som tänds. */
+const BAND = 2;
+/*
+ * Konfidensbandet kring linjen, som i heron före omgörningen (data-field.tsx): det följer vart hack i linjen, når lite längre
+ * under den än över och blir bredare när serien är orolig. Måtten är pixlar vid 800 px höjd: en fast del och en del per enhet
+ * volatilitet. Tonen är starkast överst och tonas ut nedåt: den börjar en bit över linjens högsta ände och slutar en bit under
+ * den lägsta, i andelar av heronens höjd.
+ */
+const BAND_OVER = [20, 10];
+const BAND_UNDER = [26, 12];
+const BAND_ALFA = 0.1;
+const BAND_TON = [0.14, 0.2];
+/** Under introt tonas bandet in bakom pennan över så många pixlar, i så många steg. */
+const BAND_FRAMKANT = 96;
+const BAND_STEG = 8;
 /** Kring loggan dras serien mot diagonalen, så att loggan står på linjen. */
 const FAST_VID_LOGGAN = 0.75;
 /** Rutnätets rutor i pixlar, som i heron före omgörningen, och ordet i bakgrunden. */
 const RUTA = 64;
 const ORD = "STATLIN";
-/** Observationerna sprids så många standardavvikelser kring bandets mitt. Bandet når två, så drygt hälften hamnar inom det. */
+/** Det grå rutnätet tonas ut i en ellips kring heronens mitt. Radien är en andel av heronens bredd och höjd, så att det når kanterna svagt. */
+const GRUND_RADIE = 0.57;
+/** Utanför bandet mellan raden ovanför loggan och rubriken ligger det rörliga kvar som en svagare fond bakom texten. */
+const FOND_STYRKA = 0.7;
+/** Fondens prickar: en per så många kvadratpixlar av heron, som i heron före omgörningen, mellan ett minsta och ett största antal. */
+const FOND_YTA = 16000;
+const FOND_MINST = 14;
+const FOND_FLEST = 80;
+/** Observationerna kring linjen: en per så många pixlar av heronens bredd, mellan ett minsta och ett största antal. */
+const NARA_AVSTAND = 34;
+const NARA_MINST = 10;
+const NARA_FLEST = 44;
+/** Observationerna sprids så många standardavvikelser kring medelvärdet. De inom två tänds, så drygt hälften. */
 const SPRIDNING = 2.6;
 /** Prickar närmare varandra än så här binds ihop med en linje. */
 const LANK = 96;
-/** Musen: inom så många pixlar viker prickarna undan, så långt som mest, och så långt når lampans ljus. */
+/** Musen: inom så många pixlar viker prickarna undan, och så långt som mest. */
 const VIK = 130;
 const KNUFF = 44;
-const LAMPA = 180;
-const LAMPA_LAGER = [0.3, 0.45, 0.62, 0.8, 1];
 /** Scenen är alltid mörk, så färgerna är fasta: bläck och sektionens röda. */
 const INK = "236,235,230";
 const ROD = "255,7,7";
-/** Introt: pennan ritar serien från vänsterkanten fram till huvudet. */
+/** Introt: pennan ritar serien från vänsterkanten till högerkanten. Sedan kommer punkten: den växer fram, och en ring går ut från den. */
 const PENNA_START = 0.25;
 const PENNA_TID = 2.1;
 const INTRO_SLUT = PENNA_START + PENNA_TID;
+const PUNKT_TID = 0.5;
+const KRUS_TID = 1.2;
 /** Två körningar så nära varandra är Reacts StrictMode, inte en sida som visas igen (se IntroOnce). */
 const SAMMA_START_MS = 200;
 let spelad = 0;
@@ -92,6 +119,11 @@ const mellan = (p: number) => Math.min(1, Math.max(0, p));
 const mjuk = (p: number) => {
   const q = mellan(p);
   return q * q * (3 - 2 * q);
+};
+/** Växer från 0 till 1 och går en aning över 1 på vägen, som en liten studs. */
+const studs = (p: number) => {
+  const q = mellan(p) - 1;
+  return 1 + 2.70158 * q * q * q + 1.70158 * q * q;
 };
 const brus = () => Math.sqrt(-2 * Math.log(Math.random() + 1e-9)) * Math.cos(2 * Math.PI * Math.random());
 /** Värdet i A vid ett läge mellan två observationer. */
@@ -112,11 +144,11 @@ export function StromFaltV1() {
     const yta = c?.closest("section");
     const logga = yta?.querySelector<HTMLElement>(".floating-logo");
     const rad = yta?.querySelector<HTMLElement>("[data-pst1-rad]");
-    const text = yta?.querySelector<HTMLElement>("[data-pst1-text]");
+    const botten = yta?.querySelector<HTMLElement>("[data-pst1-botten]");
     const ut = yta?.querySelector<HTMLElement>("[data-pst1-matt]");
-    if (!grund || !b || !c || !g || !yta || !logga || !rad || !text) return;
+    if (!grund || !b || !c || !g || !yta || !logga || !rad || !botten) return;
 
-    const stilla = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Bakgrunden spelas också när enheten har valt bort rörelse: hela heron är undantagen, se regeln i globals.css.
     // Telefon: lägre upplösning, färre bilder och en glöd utan skuggoskärpa.
     const grov = window.matchMedia("(pointer: coarse)").matches;
     const nu = performance.now();
@@ -143,7 +175,7 @@ export function StromFaltV1() {
     const serie = Array.from({ length: PUNKTER }, nasta);
     const medel: number[] = [];
     const sigma: number[] = [];
-    /** Bandets mitt och bredd: glidande medelvärden av avvikelsen och volatiliteten. */
+    /** Seriens glidande medelvärde och observationernas standardavvikelse kring det. */
     const jamna = () => {
       for (let i = 0; i < serie.length; i++) {
         let d = 0;
@@ -175,15 +207,12 @@ export function StromFaltV1() {
     let steg = grov ? STEG_TELEFON : STEG;
     let zonTopp = 0;
     let zonBotten = 0;
-    let ljus: CanvasPattern | null = null;
-    const rott = document.createElement("canvas");
     let typsnitt = false;
     let prickar: Prick[] = [];
 
-    // Tiden sedan starten. Den som kommer tillbaka till sidan, eller har valt bort rörelse, slipper introt.
-    let t = igen || stilla ? INTRO_SLUT + 9 : 0;
+    // Tiden sedan starten. Den som kommer tillbaka till sidan slipper introt.
+    let t = igen ? INTRO_SLUT + 9 : 0;
     let forskjutning = 0;
-    let andrad = true;
     let pek = { x: 0, y: 0 };
     let faste = 0;
     let grepp = 0;
@@ -193,7 +222,7 @@ export function StromFaltV1() {
     const av = (px: number, dev: number) => skala * dev * (1 - FAST_VID_LOGGAN * Math.exp(-(((px - cx) / (1.25 * ring)) ** 2)));
     const penna = () => (t >= INTRO_SLUT ? Infinity : mjuk((t - PENNA_START) / PENNA_TID) * (xh + 4 * steg));
 
-    /** Läget i heron för ett element, utan transformer: rubriken och raden ovanför loggan glider in med fade-up. */
+    /** Läget i heron för ett element, utan transformer: texten nederst och raden ovanför loggan glider in med fade-up. */
     const lage = (el: HTMLElement) => {
       let lx = 0;
       let ly = 0;
@@ -204,7 +233,7 @@ export function StromFaltV1() {
       return [lx, ly];
     };
 
-    /** Sätter en prick på läget px. En observation får sin plats kring bandets mitt just där, en prick i fonden var som helst i höjdled. */
+    /** Sätter en prick på läget px. En observation får sin plats kring seriens medelvärde just där, en prick i fonden var som helst i höjdled. */
     const fodd = (p: Prick, px: number) => {
       p.x = px;
       p.ox = p.oy = p.tand = 0;
@@ -213,9 +242,9 @@ export function StromFaltV1() {
         const s = u * las(sigma, i);
         p.mitt = las(medel, i);
         p.res = SPRIDNING * s * brus();
-        p.inne = Math.abs(p.res) < 2 * s;
+        p.inne = Math.abs(p.res) < BAND * s;
       } else {
-        p.y = zonTopp + Math.random() * (zonBotten - zonTopp);
+        p.y = Math.random() * h;
       }
     };
     const sa = (antalNara: number, antalFond: number) => {
@@ -229,8 +258,8 @@ export function StromFaltV1() {
           res: 0,
           inne: false,
           fart: nara ? 1 : 0.28 + 0.34 * Math.random(),
-          r: nara ? 1.1 + 1.2 * Math.random() : 0.7 + 0.7 * Math.random(),
-          a: nara ? 0.36 + 0.4 * Math.random() : 0.12 + 0.2 * Math.random(),
+          r: nara ? 1.1 + 1.2 * Math.random() : 0.8 + 1.2 * Math.random(),
+          a: nara ? 0.36 + 0.4 * Math.random() : 0.14 + 0.28 * Math.random(),
           ox: 0,
           oy: 0,
           tand: 0,
@@ -242,34 +271,28 @@ export function StromFaltV1() {
       });
     };
 
-    /** Rutnätet och ordet, i grått på den synliga grunden och i rött på den dolda duk som ljuset hämtar sitt mönster från. */
-    const bakgrund = (x: CanvasRenderingContext2D, duk: HTMLCanvasElement, rod: boolean) => {
+    /** Rutnätet och ordet i grått, på grunden. */
+    const bakgrund = (x: CanvasRenderingContext2D, duk: HTMLCanvasElement) => {
       duk.width = Math.round(w * skarpa);
       duk.height = Math.round(h * skarpa);
       x.setTransform(skarpa, 0, 0, skarpa, 0, 0);
       x.clearRect(0, 0, w, h);
-      if (rod) {
-        x.fillStyle = `rgba(${ROD},0.05)`;
-        x.fillRect(0, 0, w, h);
-      }
       // Rutnätets linjer går genom loggans mitt.
-      x.fillStyle = rod ? `rgba(${ROD},0.5)` : `rgba(${INK},0.085)`;
+      x.fillStyle = `rgba(${INK},0.085)`;
       for (let px = cx % RUTA; px < w; px += RUTA) x.fillRect(Math.round(px), 0, 1, h);
       for (let py = cy % RUTA; py < h; py += RUTA) x.fillRect(0, Math.round(py), w, 1);
-      if (!rod) {
-        // Det grå rutnätet är tydligast kring loggan och tonas ut mot kanterna. I ljuset syns det överallt.
-        const [rx, ry] = [0.62 * w, 0.95 * (zonBotten - zonTopp)];
-        x.save();
-        x.globalCompositeOperation = "destination-in";
-        x.translate(cx, cy);
-        x.scale(1, ry / rx);
-        const ton = x.createRadialGradient(0, 0, 0, 0, 0, rx);
-        ton.addColorStop(0.25, "#000");
-        ton.addColorStop(1, "#0000");
-        x.fillStyle = ton;
-        x.fillRect(-w, (-h * rx) / ry, 2 * w, (2 * h * rx) / ry);
-        x.restore();
-      }
+      // Det grå rutnätet täcker hela heron, som i heron före omgörningen: tydligast i mitten och uttonat mot kanterna.
+      const [rx, ry] = [GRUND_RADIE * w, GRUND_RADIE * h];
+      x.save();
+      x.globalCompositeOperation = "destination-in";
+      x.translate(w / 2, h / 2);
+      x.scale(1, ry / rx);
+      const ton = x.createRadialGradient(0, 0, 0, 0, 0, rx);
+      ton.addColorStop(0.375, "#000");
+      ton.addColorStop(1, "#0000");
+      x.fillStyle = ton;
+      x.fillRect(-w, (-h * rx) / ry, 2 * w, (2 * h * rx) / ry);
+      x.restore();
       // Ordet i konturer, lite bredare än heron, så att det skärs av i båda kanterna som förr.
       const satt = (storlek: number) => {
         x.font = `800 ${storlek}px "Archivo Variable", "Archivo", Arial, sans-serif`;
@@ -282,8 +305,8 @@ export function StromFaltV1() {
       satt(storlek);
       x.textAlign = "center";
       x.lineJoin = "round";
-      x.lineWidth = rod ? 1.75 : 1.5;
-      x.strokeStyle = rod ? `rgba(${ROD},0.95)` : `rgba(${INK},0.1)`;
+      x.lineWidth = 1.5;
+      x.strokeStyle = `rgba(${INK},0.1)`;
       x.strokeText(ORD, w / 2, cy + x.measureText("S").actualBoundingBoxAscent / 2);
       x.restore();
     };
@@ -298,26 +321,21 @@ export function StromFaltV1() {
       g.clearRect(0, 0, w, h);
       if (!w) return;
       const f = forskjutning / steg;
-      const lerp = (a: number, c2: number) => a + (c2 - a) * f;
       const in_ = mjuk(t / 1.4);
 
-      // Seriens synliga del, från vänsterkanten till huvudet: X och Y är linjen, M bandets mitt och S en standardavvikelse, i pixlar.
+      // Seriens synliga del, från strax utanför vänsterkanten till strax utanför högerkanten: X och Y är linjen i pixlar och V
+      // volatiliteten. Observationen HI - 1 står närmast till vänster om punkten.
       const antal = Math.min(HI - 1, Math.ceil(xh / steg) + 2);
+      const forbi = Math.ceil(HUVUD_KANT / steg) + 1;
       const X: number[] = [];
       const Y: number[] = [];
-      const M: number[] = [];
-      const S: number[] = [];
-      for (let i = HI - 1 - antal; i <= HI - 1; i++) {
+      const V: number[] = [];
+      for (let i = HI - 1 - antal; i <= HI - 1 + forbi; i++) {
         const px = xh - (f + HI - 1 - i) * steg;
         X.push(px);
         Y.push(ty(px) - av(px, serie[i].dev));
-        M.push(ty(px) - av(px, medel[i]));
-        S.push(u * sigma[i]);
+        V.push(serie[i].vol);
       }
-      X.push(xh);
-      Y.push(ty(xh) - av(xh, lerp(serie[HI - 1].dev, serie[HI].dev)));
-      M.push(ty(xh) - av(xh, lerp(medel[HI - 1], medel[HI])));
-      S.push(u * lerp(sigma[HI - 1], sigma[HI]));
       const sist = X.length - 1;
       const vid = (px: number, A: number[]) => {
         if (px <= X[0]) return A[0];
@@ -328,15 +346,6 @@ export function StromFaltV1() {
         }
         return A[sist];
       };
-      // Bandet smalnar av till en spets strax förbi huvudet.
-      const BX = [...X];
-      const BM = [...M];
-      const BS = [...S];
-      for (let k = 1; k <= 4; k++) {
-        BX.push(xh + k * steg);
-        BM.push(M[sist] - lutning * k * steg);
-        BS.push(S[sist] * (1 - k / 4.4));
-      }
 
       // Linjerna mellan prickar som ligger nära varandra. Två tända prickar får en röd linje.
       g.lineWidth = 1;
@@ -358,40 +367,41 @@ export function StromFaltV1() {
         }
       }
 
-      // Introt: pennan går från vänsterkanten till huvudet, och bara det som den har passerat lyser.
+      // Introt: pennan går från vänsterkanten till högerkanten, och bandet och linjen syns bara där den har gått.
       const spets = penna();
-      g.save();
+      // Konfidensbandet: en svag röd ton kring linjen.
+      const enhet = h / 800;
+      const ton = g.createLinearGradient(0, ty(w) - BAND_TON[0] * h, 0, ty(0) + BAND_TON[1] * h);
+      ton.addColorStop(0, `rgba(${ROD},${BAND_ALFA})`);
+      ton.addColorStop(1, `rgba(${ROD},0)`);
+      const band = new Path2D();
+      band.moveTo(X[0], Y[0] - (BAND_OVER[0] + BAND_OVER[1] * V[0]) * enhet);
+      for (let i = 1; i <= sist; i++) band.lineTo(X[i], Y[i] - (BAND_OVER[0] + BAND_OVER[1] * V[i]) * enhet);
+      for (let i = sist; i >= 0; i--) band.lineTo(X[i], Y[i] + (BAND_UNDER[0] + BAND_UNDER[1] * V[i]) * enhet);
+      band.closePath();
+      g.fillStyle = ton;
       if (spets < Infinity) {
-        g.beginPath();
-        g.rect(0, 0, Math.max(0, spets), h);
-        g.clip();
-      }
-      // Seriens ljus: rutnätet och ordet i rött inne i bandet, starkast i mitten.
-      if (ljus) {
-        g.fillStyle = ljus;
-        g.globalAlpha = LJUS_ALFA;
-        for (const s of LJUS_LAGER) {
+        // Under introt tonas bandet in i steg bakom pennan, så att det inte slutar med en tvär kant.
+        const fyll = (fran: number, till: number, alfa: number) => {
+          if (till <= Math.max(0, fran)) return;
+          g.save();
           g.beginPath();
-          for (let i = 0; i < BX.length; i++) g.lineTo(BX[i], BM[i] - s * BS[i]);
-          for (let i = BX.length - 1; i >= 0; i--) g.lineTo(BX[i], BM[i] + s * BS[i]);
-          g.closePath();
-          g.fill();
-        }
-      }
-      g.restore();
-
-      // Musens lampa: samma röda rutnät och ord i en cirkel kring pekaren.
-      if (ljus && grepp > 0.01) {
-        g.fillStyle = ljus;
-        g.globalAlpha = 0.1 * grepp;
-        for (const andel of LAMPA_LAGER) {
-          g.beginPath();
-          g.arc(pek.x, pek.y, LAMPA * andel, 0, 7);
-          g.fill();
-        }
+          g.rect(Math.max(0, fran), 0, till - Math.max(0, fran), h);
+          g.clip();
+          g.globalAlpha = alfa;
+          g.fill(band);
+          g.restore();
+        };
+        const bak = Math.floor(spets) - BAND_FRAMKANT;
+        const del = BAND_FRAMKANT / BAND_STEG;
+        fyll(0, bak, 1);
+        for (let k = 0; k < BAND_STEG; k++) fyll(bak + k * del, bak + (k + 1) * del, 1 - (k + 0.5) / BAND_STEG);
+      } else {
+        g.globalAlpha = 1;
+        g.fill(band);
       }
 
-      // Prickarna: grå, och röda i den mån ljuset har tänt dem.
+      // Prickarna: grå, och röda i den mån serien har tänt dem.
       for (const p of prickar) {
         const k = p.tand;
         g.fillStyle = k > 0.02 ? `rgb(${Math.round(236 + 19 * k)},${Math.round(235 - 228 * k)},${Math.round(230 - 223 * k)})` : `rgb(${INK})`;
@@ -430,36 +440,28 @@ export function StromFaltV1() {
       g.stroke(linje);
       g.restore();
 
-      // Huvudet: den senaste observationen, eller pennans spets under introt.
-      const hx = Math.min(spets, xh);
-      if (hx <= 0) return;
-      const hy = vid(hx, Y);
-      const andning = 0.75 + 0.25 * Math.sin((2 * Math.PI * t) / 2.8);
-      const sken = g.createRadialGradient(hx, hy, 0, hx, hy, 18);
-      sken.addColorStop(0, `rgba(${ROD},${0.45 * andning})`);
-      sken.addColorStop(1, `rgba(${ROD},0)`);
-      g.fillStyle = sken;
-      g.beginPath();
-      g.arc(hx, hy, 18, 0, 7);
-      g.fill();
-      g.fillStyle = `rgb(${ROD})`;
-      g.beginPath();
-      g.arc(hx, hy, 3.6, 0, 7);
-      g.fill();
-      // När pennan når fram går en ring ut från huvudet, en gång.
-      const krus = (t - INTRO_SLUT) / 1.4;
-      if (krus > 0 && krus < 1) {
-        g.strokeStyle = `rgb(${ROD})`;
-        g.lineWidth = 1.25;
-        g.globalAlpha = 0.6 * (1 - krus);
-        g.beginPath();
-        g.arc(hx, hy, 4 + 22 * mjuk(krus), 0, 7);
-        g.stroke();
-      }
+      // Den senaste observationen: en punkt som glider längs linjen strax innanför högerkanten. Den kommer när pennan har
+      // ritat linjen: den växer fram med en liten studs, och en ring går ut från den, en gång.
+      const sedan = t - INTRO_SLUT;
+      if (sedan <= 0) return;
+      const hy = vid(xh, Y);
+      g.fillStyle = g.strokeStyle = `rgb(${ROD})`;
       g.globalAlpha = 1;
+      g.beginPath();
+      g.arc(xh, hy, 3.5 * studs(sedan / PUNKT_TID), 0, 7);
+      g.fill();
+      const krus = sedan / KRUS_TID;
+      if (krus < 1) {
+        g.lineWidth = 1.25;
+        g.globalAlpha = 0.55 * (1 - krus);
+        g.beginPath();
+        g.arc(xh, hy, 4 + 20 * mjuk(krus), 0, 7);
+        g.stroke();
+        g.globalAlpha = 1;
+      }
     };
 
-    /** Prickarnas knuff från pekaren, ljuset som tänder dem och läget som ritas. */
+    /** Prickarnas knuff från pekaren, hur serien tänder dem och läget som ritas. */
     const flytta_prickar = (dt: number) => {
       const spets = Math.min(penna(), xh);
       const foljKnuff = 1 - Math.exp(-dt / 0.18);
@@ -468,7 +470,6 @@ export function StromFaltV1() {
         const by = p.nara ? ty(p.x) - av(p.x, p.mitt) - p.res : p.y;
         let mx = 0;
         let my = 0;
-        let lampa = 0;
         if (grepp > 0.01) {
           const dx = p.x - pek.x;
           const dy = by - pek.y;
@@ -478,11 +479,10 @@ export function StromFaltV1() {
             mx = (dx / d) * k;
             my = (dy / d) * k;
           }
-          if (d < LAMPA) lampa = grepp * (1 - d / LAMPA);
         }
         p.ox += (mx - p.ox) * foljKnuff;
         p.oy += (my - p.oy) * foljKnuff;
-        const mal = Math.max(p.nara && p.inne && p.x <= spets ? 1 : 0, lampa);
+        const mal = p.nara && p.inne && p.x <= spets ? 1 : 0;
         p.tand += (mal - p.tand) * foljLjus;
         p.px = p.x + p.ox;
         p.py = by + p.oy;
@@ -504,60 +504,51 @@ export function StromFaltV1() {
       const [lx, ly] = lage(logga);
       cx = lx + logga.offsetWidth / 2;
       cy = ly + logga.offsetHeight / 2;
-      xh = cx + HUVUD * (w - cx);
+      xh = w - HUVUD_KANT;
       lutning = Math.min(BRANTAST, (STIGNING * u) / Math.max(cx, w - cx));
       skala = (AMPLITUD * u) / TAK;
       steg = grov ? STEG_TELEFON : STEG;
       zonTopp = lage(rad)[1] + rad.offsetHeight;
-      zonBotten = lage(text)[1];
+      zonBotten = lage(botten)[1];
       yta.style.setProperty("--lx", `${cx}px`);
       yta.style.setProperty("--ly", `${cy}px`);
 
-      bakgrund(b, grund, false);
-      const rx = rott.getContext("2d");
-      if (rx) {
-        bakgrund(rx, rott, true);
-        ljus = g.createPattern(rott, "no-repeat");
-        ljus?.setTransform(new DOMMatrix().scale(1 / skarpa));
-      }
+      bakgrund(b, grund);
       // Grunden visas först när ordets typsnitt har kommit, så att det inte byter form inför ögonen.
       if (typsnitt) yta.dataset.rutat = "";
 
-      // Allt tonas ut innan det når raden ovanför loggan och rubriken under den, och det rörliga även mot heronens sidor.
-      const v = `linear-gradient(#0000 ${zonTopp}px, #000 ${zonTopp + 2.5 * u}px, #000 ${zonBotten - 2.5 * u}px, #0000 ${zonBotten}px)`;
-      grund.style.maskImage = v;
-      c.style.maskImage = `${v}, linear-gradient(90deg, #0000, #000 6%, #000 94%, #0000)`;
+      // Det rörliga är starkast mellan raden ovanför loggan och texten nederst. Utanför ligger det kvar som en svagare fond
+      // bakom texten, och det tonas ut mot heronens nederkant. Åt sidorna går det ända ut, så att linjen når båda kanterna.
+      // Rutnätet har sin egen toning, se bakgrund.
+      const svag = `rgb(0 0 0 / ${FOND_STYRKA})`;
+      const v = `linear-gradient(${svag} ${zonTopp}px, #000 ${zonTopp + 2.5 * u}px, #000 ${zonBotten - 2.5 * u}px, ${svag} ${zonBotten}px)`;
+      c.style.maskImage = `${v}, linear-gradient(#000 calc(100% - 5rem), #0000)`;
 
-      // Prickarna sås om när heron har bytt storlek: en observation per sjutton pixlar, och fonden efter ytan.
+      // Prickarna sås om när heron har bytt storlek: observationerna efter heronens bredd, färre på telefon, och fonden efter dess yta.
       if (Math.abs(w - forrW) > 1 || Math.abs(h - forrH) > 1 || !prickar.length) {
         const tathet = grov ? 0.6 : 1;
-        sa(Math.round(tathet * Math.min(88, Math.max(20, w / 17))), Math.round(tathet * Math.min(36, Math.max(8, (w * (zonBotten - zonTopp)) / 24000))));
+        sa(Math.round(tathet * Math.min(NARA_FLEST, Math.max(NARA_MINST, w / NARA_AVSTAND))), Math.round(Math.min(FOND_FLEST, Math.max(FOND_MINST, (w * h) / FOND_YTA))));
       }
       flytta_prickar(1);
-      andrad = true;
       rita();
     };
 
     // Ett steg framåt i tiden. Serien och prickarna glider åt vänster, och en ny observation kommer in var gång serien har glidit ett steg.
     const fram = (dt: number) => {
       t += dt;
-      if (!stilla) {
-        forskjutning += FART * dt;
-        while (forskjutning >= steg) {
-          forskjutning -= steg;
-          serie.shift();
-          serie.push(nasta());
-          jamna();
-          skriv();
-        }
-        for (const p of prickar) {
-          p.x -= FART * p.fart * dt;
-          if (p.x < -40) fodd(p, w + 20 + 30 * Math.random());
-        }
+      forskjutning += FART * dt;
+      while (forskjutning >= steg) {
+        forskjutning -= steg;
+        serie.shift();
+        serie.push(nasta());
+        jamna();
+        skriv();
       }
-      const fore = grepp;
+      for (const p of prickar) {
+        p.x -= FART * p.fart * dt;
+        if (p.x < -40) fodd(p, w + 20 + 30 * Math.random());
+      }
       grepp += (faste - grepp) * (1 - Math.exp(-dt / 0.2));
-      if (Math.abs(grepp - fore) > 0.002 || grepp > 0.01) andrad = true;
       flytta_prickar(dt);
     };
 
@@ -570,9 +561,6 @@ export function StromFaltV1() {
       const dt = Math.min((tid - forra) / 1000, 0.05);
       forra = tid;
       fram(dt);
-      // Utan rörelse ritas bara om när något har ändrats: storleken eller musens lampa.
-      if (stilla && !andrad) return;
-      andrad = false;
       rita();
       if (t >= INTRO_SLUT && ut && !ut.dataset.pa) skriv();
     };
@@ -580,7 +568,7 @@ export function StromFaltV1() {
     mat();
     skriv();
 
-    // Bara en mus är en lampa, och bara mellan raden ovanför loggan och rubriken.
+    // Prickarna viker bara undan för en mus, och bara mellan raden ovanför loggan och texten nederst.
     const flytta = (e: PointerEvent) => {
       if (e.pointerType !== "mouse") return;
       const r = yta.getBoundingClientRect();

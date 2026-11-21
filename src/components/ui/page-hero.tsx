@@ -55,7 +55,7 @@ export function PageHero({
 
 function titleSizes(text: string): CSSProperties {
   return {
-    // Versalerna mäts med tabellen i fitHeading. Största storleken är lugnare än i förra versionen, eftersom sidomenyn tar plats.
+    // Versalerna mäts med tabellen i fitHeading. Största storleken är lugnare än i förra versionen.
     // En kort rubrik som nästan ryms på en rad står på en rad, så att den inte bryts olika med reservfonten och Archivo.
     "--title-sm": fitHeading(text, { maxRem: 3.6, maxVw: 11, enRad: true }).fontSize,
     "--title-md": fitHeading(text, { maxRem: 4.8, maxVw: 6.2, enRad: true }).fontSize,

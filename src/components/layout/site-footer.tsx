@@ -10,8 +10,8 @@ import { AccentText } from "@/components/ui/accent-text";
 import { FooterSponsors } from "@/components/layout/sponsors";
 
 /*
- * Sidfoten ställs upp efter sin egen bredd och inte efter fönstrets (@container): sidomenyn tar plats från lg, så sidfoten är
- * smalare vid 1024 px än vid 1000. Där allt ryms på en rad (från 63rem) står märket och kontakten till vänster och länkarna till
+ * Sidfoten ställs upp efter sin egen bredd och inte efter fönstrets (@container), eftersom den slutar växa vid sidans
+ * maxbredd. Där allt ryms på en rad (från 63rem) står märket och kontakten till vänster och länkarna till
  * höger om en hårlinje. Smalare står märket och kontakten över länkarna: sloganen och kontakten bredvid varandra från @xl, i linje
  * med länkarnas spalter, som är fyra från @2xl och annars två. På telefon står allt under vartannat.
  */
@@ -154,6 +154,55 @@ async function SavedFooterLinks() {
   return <FooterLinks meny={synligMeny(await getBlock("meny"))} />;
 }
 
+/** Normalfördelningens täthet från −4σ till 4σ, som punkter i en ruta på 1000 × 230 med baslinjen på y = 220. */
+const KURVA = Array.from({ length: 121 }, (_, i) => {
+  const x = (i / 120) * 8 - 4;
+  return `${((i / 120) * 1000).toFixed(1)},${(220 - Math.exp(-(x * x) / 2) * 200).toFixed(1)}`;
+}).join(" ");
+
+const SKALA = ["−3σ", "−2σ", "−σ", "μ", "σ", "2σ", "3σ"];
+
+/**
+ * Normalkurvan och sektionens namn i kontur, sist i sidfoten före raden med upphovsrätten. Båda är dekor och läses inte upp.
+ * Kurvan sträcks efter bredden, så linjerna har vector-effect för att vara lika tunna överallt. Skalans steg står mitt under
+ * sina streck: strecken ligger på var åttondel av bredden, och rutnätet har sju spalter med en halv spalt luft på var sida.
+ * Namnet mäts i sidfotens egen bredd (cqw), så att det fyller raden utan att sticka ut.
+ */
+function Normalkurva() {
+  return (
+    <div aria-hidden className="pointer-events-none select-none pt-6 @min-[63rem]:pt-10">
+      <svg viewBox="0 0 1000 230" preserveAspectRatio="none" className="h-auto w-full text-red">
+        <defs>
+          <linearGradient id="sidfot-kurva" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="currentColor" stopOpacity="0.22" />
+            <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <line x1="0" x2="1000" y1="220" y2="220" className="stroke-ink/20" vectorEffect="non-scaling-stroke" />
+        {[-3, -2, -1, 1, 2, 3].map((s) => (
+          <line key={s} x1={500 + s * 125} x2={500 + s * 125} y1="215" y2="226" className="stroke-ink/30" vectorEffect="non-scaling-stroke" />
+        ))}
+        <polygon points={`0,220 ${KURVA} 1000,220`} fill="url(#sidfot-kurva)" />
+        <line x1="500" x2="500" y1="20" y2="226" className="stroke-ink/50" strokeDasharray="4 6" vectorEffect="non-scaling-stroke" />
+        <polyline points={KURVA} fill="none" stroke="currentColor" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      </svg>
+      <div className="mx-[6.25%] mt-2 grid grid-cols-7 text-center font-mono text-[0.65rem] text-stone">
+        {SKALA.map((steg) => (
+          <span key={steg} className={steg === "μ" ? "text-red" : undefined}>
+            {steg}
+          </span>
+        ))}
+      </div>
+      <div
+        translate="no"
+        className="display mt-9 whitespace-nowrap text-center text-[19cqw] leading-[0.78] text-transparent [-webkit-text-stroke:1px_color-mix(in_oklab,var(--color-ink)_16%,transparent)]"
+      >
+        StatLin
+      </div>
+    </div>
+  );
+}
+
 export function SiteFooter() {
   return (
     <footer id="sidfot" className="relative border-t border-line">
@@ -202,6 +251,8 @@ export function SiteFooter() {
             <SavedFooterLinks />
           </Suspense>
         </div>
+
+        <Normalkurva />
 
         <div className="flex flex-col gap-3 border-t border-line py-5 text-[0.8rem] text-stone @2xl:flex-row @2xl:items-center @2xl:justify-between">
           <p>

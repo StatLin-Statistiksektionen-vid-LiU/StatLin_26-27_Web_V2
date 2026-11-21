@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS, getSettings } from "@/lib/data/content";
 import { START } from "@/lib/innehall/block/start";
 import { getBlock, textVarde } from "@/lib/innehall/server";
 
-/* Samma texter, knappar och formelring som dagens hero (home/hero.tsx), så att de tre förslagen visar sajtens riktiga innehåll. */
+/* Texterna, knapparna, formelringen och scrollmarkören som de två heroerna delar. */
 
 async function Kicker() {
   const s = await getSettings();
@@ -80,5 +80,16 @@ export function ProvFormler() {
     <Suspense fallback={null}>
       <Formler />
     </Suspense>
+  );
+}
+
+/** Scrollmarkören bredvid knapparna. Den leder till det som kommer efter heron, se startsida.tsx. */
+export function ProvScroll() {
+  return (
+    <a href="#utforska" aria-label="Scrolla vidare" className="pr-scroll">
+      <span className="pr-scroll-spar">
+        <span className="pr-scroll-lopare" />
+      </span>
+    </a>
   );
 }

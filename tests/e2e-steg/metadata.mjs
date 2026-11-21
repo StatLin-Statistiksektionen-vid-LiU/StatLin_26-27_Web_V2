@@ -111,9 +111,9 @@ export default async function metadataSteg({ BASE, browser, page, step, switchAc
     ];
     for (const [from, to] of pairs) {
       await visitor.goto(`${BASE}${from}`);
-      // Rubriken är ett av hålen i skalet, så när den syns har menyn också fått adressen. På datorn sitter språklänken i sidomenyn.
+      // Rubriken är ett av hålen i skalet, så när den syns har menyn också fått adressen. På datorn sitter språklänken i listen överst.
       await visitor.locator("main h1").first().waitFor();
-      const link = visitor.locator("aside a[hreflang]").first();
+      const link = visitor.locator("header a[hreflang]").first();
       await waitForHydration(visitor, link);
       assert.equal(await link.getAttribute("href"), to, `Från ${from}`);
     }

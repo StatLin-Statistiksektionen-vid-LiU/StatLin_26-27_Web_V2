@@ -92,3 +92,21 @@ export function synligMeny(meny: NavGroup[]): NavGroup[] {
     .map((g) => (g.children ? { ...g, children: g.children.filter((c) => !c.hidden) } : g))
     .map((g) => (g.children && g.children.length === 0 ? { label: g.label, href: g.href } : g));
 }
+
+/**
+ * Vad i menyn som ska markeras för en sökväg. `aktiv` gäller en länk och dess undersidor, `grupp` en grupp, och `basta` är
+ * den undersida som passar sökvägen bäst: bara den markeras, så att Om StatLin (/sektionen) inte lyser bredvid Styrelsen på
+ * /sektionen/styrelsen. Utan sökväg markeras ingenting.
+ */
+export function menyMarkering(pathname: string | null, grupper: NavGroup[]) {
+  const aktiv = (href: string) => pathname !== null && (href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/"));
+  // Undersidor med ankare (/foretag#kompetens) ska inte markeras som sidan själv.
+  const exakt = (href: string) => !href.includes("#") && aktiv(href);
+  return {
+    aktiv,
+    grupp: (g: NavGroup) => aktiv(g.href) || !!g.children?.some((c) => exakt(c.href)),
+    basta: grupper
+      .flatMap((g) => g.children ?? [])
+      .reduce<string | null>((b, c) => (exakt(c.href) && (b === null || c.href.length > b.length) ? c.href : b), null),
+  };
+}

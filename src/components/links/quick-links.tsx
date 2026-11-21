@@ -28,7 +28,7 @@ const shortcuts = (links: LinkItem[]) =>
     return href ? [{ ...l, href }] : [];
   });
 
-/** Måtten är valda så att sju genvägar ryms på en rad bredvid sidomenyn i ett 1280 pixlar brett fönster. */
+/** Måtten är valda så att sju genvägar ryms på en rad från ungefär 1024 pixlars bredd. */
 const chipClass = "group inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-white px-2 text-[0.82rem] font-medium text-ink transition-colors hover:border-ink/25 hover:bg-paper-2/60 pointer-coarse:h-11 max-md:w-full max-md:min-w-0";
 const chipIconClass = "text-stone transition-colors group-hover:text-red";
 

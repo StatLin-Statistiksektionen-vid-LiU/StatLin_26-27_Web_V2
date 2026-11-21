@@ -5,11 +5,15 @@ import { newVisitor, uniqueId, waitForHydration } from "../e2e-hjalp.mjs";
 const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true };
 const TABLET = { viewport: { width: 1024, height: 768 }, isMobile: true, hasTouch: true };
 
-/** Animationer som tar slut och som kör just nu. Pulsen och gungningen är oändliga och får fortsätta. Nexts egna verktyg ligger i en shadow root. */
+/**
+ * Animationer som tar slut och som kör just nu. Pulsen och gungningen är oändliga och får fortsätta. Nexts egna verktyg ligger i en shadow root.
+ * Listens bakgrund följer scrollen i stället för klockan, och står som "running" så länge sidan inte har scrollat förbi dess sträcka.
+ * Den spelar alltså ingenting, så bara animationer på dokumentets egen tidslinje räknas.
+ */
 const runningOnce = () =>
   document
     .getAnimations()
-    .filter((a) => a.animationName && a.playState === "running" && a.effect?.getComputedTiming().iterations !== Infinity && a.effect?.target?.getRootNode() === document)
+    .filter((a) => a.animationName && a.playState === "running" && a.timeline === document.timeline && a.effect?.getComputedTiming().iterations !== Infinity && a.effect?.target?.getRootNode() === document)
     .map((a) => a.animationName);
 
 /** Väntar tills sidan har slutat scrolla och svarar med var den står. */
@@ -42,7 +46,8 @@ export default async function publiktSteg({ BASE, browser, step }) {
     const toEvents = page.locator('[data-startsida] a[href="/utskott"]').first();
     await waitForHydration(page, toEvents);
     await page.waitForFunction(() => {
-      const finite = document.getAnimations().filter((a) => a.animationName && a.playState === "running" && a.effect?.getComputedTiming().iterations !== Infinity);
+      // Bara det som går efter klockan: listens bakgrund följer scrollen och blir aldrig klar (se runningOnce).
+      const finite = document.getAnimations().filter((a) => a.animationName && a.playState === "running" && a.timeline === document.timeline && a.effect?.getComputedTiming().iterations !== Infinity);
       return finite.length === 0;
     }, null, { timeout: 15_000 });
     await toEvents.click();
@@ -55,21 +60,99 @@ export default async function publiktSteg({ BASE, browser, step }) {
     await context.close();
   });
 
-  await step("Ett tryck öppnar menygruppen på surfplatta, och nästa tryck stänger den", async () => {
-    // Surfplattan på 1024 px får datorns sidomeny. Grupperna där är details som står kvar öppna, inte rullgardiner,
-    // så ett tryck utanför ska inte längre stänga dem. Den delen av steget är borttagen.
+  await step("Ett tryck öppnar menygruppen på surfplatta, och nästa tryck eller ett tryck utanför stänger den", async () => {
+    // Surfplattan på 1024 px får datorns list med menyn på en rad. Gruppernas rutor öppnas med ett tryck, eftersom det inte finns någon pekare att hålla över dem.
     const { context, page } = await visit(TABLET, "/kontakt");
-    const group = page.locator("aside .meny-grupp").first();
-    const summary = group.locator("summary");
+    const group = page.locator(".meny-rad > li", { has: page.locator("button") }).first();
+    const button = group.locator("button");
     const link = group.locator("a").first();
-    await waitForHydration(page, summary);
-    await summary.tap();
+    await waitForHydration(page, button);
+    await button.tap();
     await link.waitFor();
-    assert.equal(await group.evaluate((details) => details.open), true);
-    await summary.tap();
+    assert.equal(await button.getAttribute("aria-expanded"), "true");
+    await button.tap();
     await link.waitFor({ state: "hidden" });
-    await summary.tap();
+    assert.equal(await button.getAttribute("aria-expanded"), "false");
+    await button.tap();
     await link.waitFor();
+    // Utanför rutan, i sidans vänstra marginal där inget annat tar emot trycket.
+    await page.touchscreen.tap(8, 600);
+    await link.waitFor({ state: "hidden" });
+    await context.close();
+  });
+
+  await step("Listen har ljus text över en topp som alltid är mörk, också i ljust läge", async () => {
+    // Förslagen på hero är mörka i båda lägena. Listen är genomskinlig högst upp på sidan, så där lånar den mörka lägets färger
+    // (mork-topp.tsx). I ljust läge stod annars mörk text mot det mörka, och med musen över en länk försvann den helt.
+    const LIGHT = "rgb(236, 235, 230)";
+    const DARK = "rgb(20, 20, 19)";
+    const { context, page } = await newVisitor(browser, { viewport: { width: 1280, height: 800 } });
+    await context.addInitScript(() => localStorage.setItem("statlin-tema", "ljust"));
+    await page.goto(`${BASE}/hero/1`);
+    const name = page.locator('header a[aria-label="StatLin, startsida"] span[translate]');
+    const events = page.locator(".meny-rad > li > a", { hasText: "Evenemang" });
+    const colorIs = async (locator, color) =>
+      page.waitForFunction(([element, wanted]) => getComputedStyle(element).color === wanted, [await locator.elementHandle(), color], { timeout: 5000 });
+    await waitForHydration(page, events);
+    await colorIs(name, LIGHT);
+    await events.hover();
+    await colorIs(events, LIGHT);
+    // Mitt i heron är listen fortfarande genomskinlig, och texten ljus.
+    const height = await page.locator("[data-hero-yta]").evaluate((el) => el.offsetHeight);
+    await page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), height * 0.6);
+    await page.waitForTimeout(400);
+    await colorIs(name, LIGHT);
+    // Förbi heron har listen sin bakgrund i lägets färg, och då gäller lägets mörka text.
+    await page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), height + 100);
+    await colorIs(name, DARK);
+    await colorIs(events, DARK);
+    // Efter ett sidbyte ligger heron kvar dold i dokumentet. Märket är borta, så listen följer läget på nästa sida.
+    await events.click();
+    await page.waitForURL(`${BASE}/evenemang`);
+    assert.equal(await page.locator(".pr-hero").count(), 1, "heron ska ligga kvar dold, annars provar steget ingenting");
+    assert.equal(await page.locator("[data-mork-topp]").count(), 0);
+    await colorIs(name, DARK);
+    await context.close();
+  });
+
+  await step("Listen är genomskinlig över startsidans hero tills den står över herons sista femtedel", async () => {
+    // Som på förra sajten: bakgrunden och loggan framför namnet kommer först när heron nästan är förbi (HERO_FORBI i site-header.tsx).
+    const { context, page } = await newVisitor(browser, { viewport: { width: 1280, height: 800 } });
+    await page.goto(`${BASE}/hero/1`);
+    const header = page.locator("header.sidhuvud");
+    const name = header.locator('a[aria-label="StatLin, startsida"] span[translate]');
+    await waitForHydration(page, header.locator(".meny-rad > li > a").first());
+    // Namnet står i versaler med LIN i rött. I koden står StatLin, så att det kopieras och läses upp så.
+    assert.equal(await name.textContent(), "StatLin");
+    assert.equal(await name.evaluate((el) => getComputedStyle(el).textTransform), "uppercase");
+    assert.equal(await name.locator("span").evaluate((el) => getComputedStyle(el).color), "rgb(255, 7, 7)");
+    const height = await page.locator("[data-hero-yta]").evaluate((el) => el.offsetHeight);
+    const scrollTo = (top) => page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), top);
+    const state = () =>
+      header.evaluate((el) => ({
+        scrolled: el.hasAttribute("data-scrollad"),
+        background: getComputedStyle(el).backgroundColor,
+        logo: Math.round(el.querySelector(".sidhuvud-logga").getBoundingClientRect().width),
+      }));
+    const logoIs = (width) =>
+      page.waitForFunction((wanted) => Math.round(document.querySelector("header .sidhuvud-logga").getBoundingClientRect().width) === wanted, width, { timeout: 5000 });
+    assert.deepEqual(await state(), { scrolled: false, background: "rgba(0, 0, 0, 0)", logo: 0 }, "högst upp");
+    await scrollTo(height * 0.7);
+    await page.waitForTimeout(400);
+    assert.deepEqual(await state(), { scrolled: false, background: "rgba(0, 0, 0, 0)", logo: 0 }, "sju tiondelar ner i heron");
+    await scrollTo(height * 0.9);
+    await logoIs(32);
+    assert.equal((await state()).scrolled, true, "över herons sista del");
+    // Tillbaka upp i heron släpper listen bakgrunden och loggan igen.
+    await scrollTo(height * 0.5);
+    await logoIs(0);
+    assert.equal((await state()).scrolled, false, "tillbaka i heron");
+    // En vanlig sida har loggan hela tiden, och bakgrunden kommer så fort man har börjat scrolla.
+    await page.goto(`${BASE}/kontakt`);
+    await waitForHydration(page, header.locator(".meny-rad > li > a").first());
+    assert.equal((await state()).logo, 32);
+    await scrollTo(40);
+    await page.waitForFunction(() => document.querySelector("header.sidhuvud").hasAttribute("data-scrollad"), null, { timeout: 5000 });
     await context.close();
   });
 
@@ -183,11 +266,11 @@ export default async function publiktSteg({ BASE, browser, step }) {
     assert.deepEqual(missed, []);
     await context.close();
 
-    // Startsidan har ingen Scrolla vidare-länk längre. Datorns minsta mål är nu sidomenyns rader: undersidorna, språket, temaknappen och Poster.
-    // Grupperna fälls ut, så att undersidorna också mäts. Alla ska vara minst 24 px åt båda hållen.
+    // Startsidan har ingen Scrolla vidare-länk längre. Datorns minsta mål är nu listens: menyraden med undersidorna, sökningen, språket, temaknappen och Poster.
+    // Gruppernas rutor visas, så att undersidorna också mäts. Alla ska vara minst 24 px åt båda hållen.
     const { context: desktop, page: wide } = await visit({}, "/");
-    await wide.locator("aside details").evaluateAll((groups) => groups.forEach((group) => (group.open = true)));
-    const { measured, small } = await wide.locator("aside").locator("a[href], button, summary").evaluateAll((targets) => {
+    await wide.locator("header .meny-ruta").evaluateAll((panels) => panels.forEach((panel) => (panel.style.visibility = "visible")));
+    const { measured, small } = await wide.locator("header").locator("a[href], button").evaluateAll((targets) => {
       const shown = targets.filter((target) => target.getClientRects().length);
       const small = shown.flatMap((target) => {
         const box = target.getBoundingClientRect();
@@ -195,7 +278,7 @@ export default async function publiktSteg({ BASE, browser, step }) {
       });
       return { measured: shown.length, small };
     });
-    assert.ok(measured >= 20, `bara ${measured} mål i sidomenyn`);
+    assert.ok(measured >= 20, `bara ${measured} mål i listen`);
     assert.deepEqual(small, []);
     await desktop.close();
   });

@@ -95,8 +95,9 @@ export function useSkrivning<T extends HTMLElement>(nyckel: string, prov: string
       satt("klar");
       return;
     }
-    // Med reducerad rörelse visas texten som den är, men typsnittet hämtas ändå först när texten är nära.
-    const lugn = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Med reducerad rörelse visas texten som den är, men typsnittet hämtas ändå först när texten är nära. Startsidans hero är
+    // undantagen: den är likadan vad enheten än har valt, se regeln i globals.css.
+    const lugn = window.matchMedia("(prefers-reduced-motion: reduce)").matches && !el.closest(".pr-hero");
     const t0 = performance.now();
     let laddad = false;
     let synlig = lugn;
